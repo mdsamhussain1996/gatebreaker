@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Gatebreaker Level Editor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --accent: #22c55e;
+      --accent-hover: #16a34a;
+      --text: #f8fafc;
+      --text-dim: #94a3b8;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    h1 { font-size: 16px; font-weight: 700; color: #4ade80; display: flex; align-items: center; gap: 6px; }
+    select, button, input {
+      background: #0f172a;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    button.primary {
+      background: var(--accent);
+      color: #052e16;
+      font-weight: 600;
+      border: none;
+    }
+    button.primary:hover { background: var(--accent-hover); }
+    .main-layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+    .palette {
+      width: 220px;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      padding: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .palette-group h3 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+    }
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+    .tool-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px;
+      font-size: 12px;
+      border-radius: 4px;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      text-align: left;
+    }
+    .tool-btn.active {
+      border-color: #4ade80;
+      background: #14532d;
+      color: #bbf7d0;
+    }
+    .tool-icon {
+      width: 18px;
+      height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      border-radius: 3px;
+      background: #334155;
+      font-size: 11px;
+    }
+    .viewport {
+      flex: 1;
+      overflow: auto;
+      background: #090d16;
+      position: relative;
+      padding: 20px;
+    }
+    canvas {
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      border: 1px solid #334155;
+      image-rendering: pixelated;
+      cursor: crosshair;
+    }
+    .status-bar {
+      background: var(--panel);
+      border-top: 1px solid var(--border);
+      padding: 4px 16px;
+      font-size: 12px;
+      color: var(--text-dim);
+      display: flex;
+      justify-content: space-between;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      width: 600px;
+      max-width: 90vw;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    textarea {
+      width: 100%;
+      height: 280px;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: #f8fafc;
+      font-family: monospace;
+      font-size: 11px;
+      padding: 8px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1><span>🛠</span> Level Editor</h1>
+    <label>Level:
+      <select id="levelSelect"></select>
+    </label>
+    <label>Theme:
+      <select id="themeSelect">
+        <option value="green_hills">1. Green Hills</option>
+        <option value="autumn_forest">2. Autumn Forest</option>
+        <option value="desert_ruins">3. Desert Ruins</option>
+        <option value="frozen_peaks">4. Frozen Peaks</option>
+        <option value="crystal_caves">5. Crystal Caves</option>
+        <option value="volcano_fortress">6. Volcano Fortress</option>
+      </select>
+    </label>
+    <button id="btnPlaytest" class="primary">▶ Playtest</button>
+    <button id="btnExport">Export</button>
+    <button id="btnImport">Import</button>
+    <button id="btnClear">Clear Grid</button>
+  </header>
+
+  <div class="main-layout">
+    <aside class="palette">
+      <div class="palette-group">
+        <h3>Terrain Tiles</h3>
+        <div class="tool-grid" id="terrainTools"></div>
+      </div>
+      <div class="palette-group">
+        <h3>Items & Props</h3>
+        <div class="tool-grid" id="itemTools"></div>
+      </div>
+      <div class="palette-group">
+        <h3>Enemies & Boss</h3>
+        <div class="tool-grid" id="enemyTools"></div>
+      </div>
+    </aside>
+
+    <main class="viewport">
+      <canvas id="editorCanvas"></canvas>
+    </main>
+  </div>
+
+  <footer class="status-bar">
+    <span id="cursorPos">Row: 0, Col: 0</span>
+    <span id="stats">Coins: 0 | Stars: 0 | Enemies: 0</span>
+  </footer>
+
+  <div class="modal" id="ioModal">
+    <div class="modal-content">
+      <h2 id="modalTitle">Export Level ASCII</h2>
+      <textarea id="ioText" spellcheck="false"></textarea>
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button id="modalClose">Close</button>
+        <button id="modalAction" class="primary">Copy</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { LEVELS } from './src/levels.js';
+    import { TS } from './src/constants.js';
+    import { THEMES } from './src/themes.js';
+
+    const TOOLS = [
+      { char: '.', name: 'Air / Eraser', group: 'terrain', color: '#1e293b' },
+      { char: '#', name: 'Solid Terrain', group: 'terrain', color: '#593822' },
+      { char: '=', name: 'One-Way Cap', group: 'terrain', color: '#4ade80' },
+      { char: '~', name: 'Rope Bridge', group: 'terrain', color: '#b45309' },
+      { char: 'H', name: 'Ladder', group: 'terrain', color: '#fbbf24' },
+      { char: '|', name: 'Hanging Rope', group: 'terrain', color: '#d97706' },
+      { char: 'X', name: 'Crate', group: 'terrain', color: '#92400e' },
+      
+      { char: 'P', name: 'Hero Start', group: 'items', color: '#38bdf8' },
+      { char: 'K', name: 'Key', group: 'items', color: '#eab308' },
+      { char: 'G', name: 'Exit Gate', group: 'items', color: '#a855f7' },
+      { char: 'c', name: 'Coin', group: 'items', color: '#facc15' },
+      { char: 'g', name: 'Gem', group: 'items', color: '#c084fc' },
+      { char: 's', name: 'Star', group: 'items', color: '#f59e0b' },
+      { char: 'h', name: 'Heart', group: 'items', color: '#ef4444' },
+      { char: 'C', name: 'Chest', group: 'items', color: '#d97706' },
+      { char: '*', name: 'Checkpoint', group: 'items', color: '#3b82f6' },
+      { char: '^', name: 'Spikes', group: 'items', color: '#f87171' },
+
+      { char: 'm', name: 'Walker', group: 'enemies', color: '#ec4899' },
+      { char: 'S', name: 'Hedgehog', group: 'enemies', color: '#f97316' },
+      { char: 'B', name: 'World Boss', group: 'enemies', color: '#dc2626' }
+    ];
+
+    let selectedTool = '#';
+    let currentLevel = JSON.parse(JSON.stringify(LEVELS[0]));
+    let rows = currentLevel.rows.map(r => r.split(''));
+    const ROWS = rows.length;
+    const COLS = rows[0].length;
+
+    const canvas = document.getElementById('editorCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = COLS * TS;
+    canvas.height = ROWS * TS;
+
+    // Build Palette
+    TOOLS.forEach(t => {
+      const btn = document.createElement('button');
+      btn.className = 'tool-btn' + (t.char === selectedTool ? ' active' : '');
+      btn.innerHTML = `<span class="tool-icon" style="color:${t.color}">${t.char}</span><span>${t.name}</span>`;
+      btn.onclick = () => {
+        document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedTool = t.char;
+      };
+      const container = t.group === 'terrain' ? document.getElementById('terrainTools')
+                      : t.group === 'items' ? document.getElementById('itemTools')
+                      : document.getElementById('enemyTools');
+      container.appendChild(btn);
+    });
+
+    // Populate Level Select
+    const levelSelect = document.getElementById('levelSelect');
+    LEVELS.forEach((l, idx) => {
+      const opt = document.createElement('option');
+      opt.value = idx;
+      opt.textContent = `${l.id}: ${l.name}`;
+      levelSelect.appendChild(opt);
+    });
+    levelSelect.onchange = (e) => {
+      currentLevel = JSON.parse(JSON.stringify(LEVELS[e.target.value]));
+      rows = currentLevel.rows.map(r => r.split(''));
+      document.getElementById('themeSelect').value = currentLevel.theme || 'green_hills';
+      render();
+    };
+
+    function render() {
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Grid Lines
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = 1;
+      for (let c = 0; c <= COLS; c++) {
+        ctx.beginPath(); ctx.moveTo(c * TS, 0); ctx.lineTo(c * TS, ROWS * TS); ctx.stroke();
+      }
+      for (let r = 0; r <= ROWS; r++) {
+        ctx.beginPath(); ctx.moveTo(0, r * TS); ctx.lineTo(COLS * TS, r * TS); ctx.stroke();
+      }
+
+      let coinCount = 0, starCount = 0, enemyCount = 0;
+
+      // Draw Cells
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const ch = rows[r][c];
+          const px = c * TS, py = r * TS;
+          if (ch === '#') {
+            ctx.fillStyle = '#593822';
+            ctx.fillRect(px, py, TS, TS);
+            ctx.strokeStyle = '#382315';
+            ctx.strokeRect(px + 0.5, py + 0.5, TS - 1, TS - 1);
+          } else if (ch === '=') {
+            ctx.fillStyle = '#4ade80';
+            ctx.fillRect(px, py, TS, 8);
+          } else if (ch === '~') {
+            ctx.strokeStyle = '#b45309';
+            ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.moveTo(px, py + 4); ctx.lineTo(px + TS, py + 4); ctx.stroke();
+          } else if (ch === 'H') {
+            ctx.fillStyle = '#fbbf24';
+            ctx.fillRect(px + 4, py, 4, TS);
+            ctx.fillRect(px + TS - 8, py, 4, TS);
+            ctx.fillRect(px + 4, py + 8, TS - 12, 3);
+            ctx.fillRect(px + 4, py + 20, TS - 12, 3);
+          } else if (ch === '|') {
+            ctx.strokeStyle = '#d97706';
+            ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.moveTo(px + TS/2, py); ctx.lineTo(px + TS/2, py + TS); ctx.stroke();
+          } else if (ch === 'X') {
+            ctx.fillStyle = '#92400e';
+            ctx.fillRect(px + 2, py + 2, TS - 4, TS - 4);
+          } else if (ch === 'P') {
+            ctx.fillStyle = '#38bdf8';
+            ctx.beginPath(); ctx.arc(px + TS/2, py + TS/2, 10, 0, Math.PI * 2); ctx.fill();
+          } else if (ch === 'K') {
+            ctx.fillStyle = '#eab308';
+            ctx.beginPath(); ctx.arc(px + TS/2, py + TS/2, 8, 0, Math.PI * 2); ctx.fill();
+          } else if (ch === 'G') {
+            ctx.fillStyle = '#a855f7';
+            ctx.fillRect(px, py, TS * 2, TS * 3);
+          } else if (ch === 'c') {
+            coinCount++;
+            ctx.fillStyle = '#facc15';
+            ctx.beginPath(); ctx.arc(px + TS/2, py + TS/2, 5, 0, Math.PI * 2); ctx.fill();
+          } else if (ch === 's') {
+            starCount++;
+            ctx.fillStyle = '#f59e0b';
+            ctx.beginPath(); ctx.arc(px + TS/2, py + TS/2, 8, 0, Math.PI * 2); ctx.fill();
+          } else if (ch === 'm' || ch === 'S') {
+            enemyCount++;
+            ctx.fillStyle = ch === 'm' ? '#ec4899' : '#f97316';
+            ctx.fillRect(px + 4, py + 8, TS - 8, TS - 8);
+          } else if (ch === 'B') {
+            enemyCount++;
+            ctx.fillStyle = '#dc2626';
+            ctx.fillRect(px, py, TS * 2, TS * 2);
+          } else if (ch === '*') {
+            ctx.fillStyle = '#3b82f6';
+            ctx.fillRect(px + 10, py + 4, 12, TS - 4);
+          } else if (ch === '^') {
+            ctx.fillStyle = '#f87171';
+            ctx.beginPath();
+            ctx.moveTo(px, py + TS); ctx.lineTo(px + TS/2, py + TS - 12); ctx.lineTo(px + TS, py + TS);
+            ctx.fill();
+          }
+        }
+      }
+
+      document.getElementById('stats').textContent = `Coins: ${coinCount} | Stars: ${starCount} | Enemies: ${enemyCount}`;
+    }
+
+    let isDrawing = false;
+    function setTile(e) {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const c = Math.floor(x / TS);
+      const r = Math.floor(y / TS);
+      if (c >= 0 && c < COLS && r >= 0 && r < ROWS) {
+        rows[r][c] = (e.buttons === 2) ? '.' : selectedTool;
+        render();
+      }
+    }
+
+    canvas.onmousedown = (e) => { isDrawing = true; setTile(e); };
+    window.onmousemove = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const c = Math.floor(x / TS);
+      const r = Math.floor(y / TS);
+      if (c >= 0 && c < COLS && r >= 0 && r < ROWS) {
+        document.getElementById('cursorPos').textContent = `Row: ${r}, Col: ${c} [${rows[r][c]}]`;
+      }
+      if (isDrawing) setTile(e);
+    };
+    window.onmouseup = () => { isDrawing = false; };
+    canvas.oncontextmenu = (e) => { e.preventDefault(); };
+
+    // Export Modal
+    document.getElementById('btnExport').onclick = () => {
+      const ascii = rows.map(r => r.join('')).map(s => `'${s}'`).join(',\n');
+      document.getElementById('ioText').value = ascii;
+      document.getElementById('ioModal').classList.add('active');
+    };
+    document.getElementById('modalClose').onclick = () => {
+      document.getElementById('ioModal').classList.remove('active');
+    };
+    document.getElementById('modalAction').onclick = () => {
+      navigator.clipboard.writeText(document.getElementById('ioText').value);
+      alert('Copied to clipboard!');
+    };
+
+    // Playtest Button
+    document.getElementById('btnPlaytest').onclick = () => {
+      window.open('index.html', '_blank');
+    };
+
+    render();
+  </script>
+</body>
+</html>

@@ -11,6 +11,8 @@ import { parseLevel } from '../src/level.js';
 import { Game } from '../src/game.js';
 import { MushroomWalker } from '../src/enemies.js';
 
+import { THEMES, getTheme } from '../src/themes.js';
+
 let passed = 0, failed = 0;
 const section = name => console.log(`\n${name}`);
 function test(name, fn) {
@@ -50,7 +52,11 @@ section('1. Level data');
 LEVELS.forEach(def => {
   const lv = parseLevel(def);
   test(`L${def.id} "${def.name}": parses with equal row lengths`, () => assert.deepEqual(lv.errors, []));
-  test(`L${def.id}: has start, key and gate`, () => { assert.ok(lv.start); assert.ok(lv.key); assert.ok(lv.gate); });
+  test(`L${def.id}: has start, key (or boss) and gate`, () => {
+    assert.ok(lv.start, 'missing start');
+    assert.ok(lv.key || (lv.bosses && lv.bosses.length > 0), 'missing key or boss');
+    assert.ok(lv.gate, 'missing gate');
+  });
   test(`L${def.id}: only known tile characters`, () => {
     for (const row of lv.world.tiles) for (const ch of row) assert.ok('.#=~H|X'.includes(ch), `unknown tile '${ch}'`);
   });
@@ -58,19 +64,34 @@ LEVELS.forEach(def => {
     const w = lv.world;
     assert.ok(!overlapsSolid(w, lv.start.x - HERO.w / 2, lv.start.feetY - HERO.h, HERO.w, HERO.h), 'hero start in solid');
     for (const m of lv.walkers) assert.ok(!overlapsSolid(w, m.x - 13, m.feetY - 24, 26, 24), `walker at ${m.c},${m.r} in solid`);
+    for (const s of lv.hedgehogs) assert.ok(!overlapsSolid(w, s.x - 13, s.feetY - 24, 26, 24), `hedgehog at ${s.c},${s.r} in solid`);
     for (const c of lv.coins) assert.ok(!overlapsSolid(w, c.x - 7, c.y - 7, 14, 14), `coin at ${c.x},${c.y} in solid`);
-    assert.ok(!overlapsSolid(w, lv.key.x - 8, lv.key.y - 12, 16, 24), 'key in solid');
+    if (lv.key) assert.ok(!overlapsSolid(w, lv.key.x - 8, lv.key.y - 12, 16, 24), 'key in solid');
     const gx = lv.gate.c * TS, gy = (lv.gate.r + 1) * TS - 96;
     assert.ok(!overlapsSolid(w, gx, gy, 64, 96), 'gate in solid');
   });
-  test(`L${def.id}: hero start, walkers and gate stand on ground`, () => {
+  test(`L${def.id}: hero start, walkers/hedgehogs and gate stand on ground`, () => {
     const w = lv.world;
     const ground = (c, r) => w.isSolid(c, r + 1) || w.isOneWay(c, r + 1);
     assert.ok(ground(lv.start.c, lv.start.r), 'start not on ground');
     for (const m of lv.walkers) assert.ok(ground(m.c, m.r), `walker ${m.c},${m.r} floating`);
+    for (const s of lv.hedgehogs) assert.ok(ground(s.c, s.r), `hedgehog ${s.c},${s.r} floating`);
     assert.ok(ground(lv.gate.c, lv.gate.r) && ground(lv.gate.c + 1, lv.gate.r), 'gate floating');
   });
   test(`L${def.id}: 60–120 coins`, () => assert.ok(lv.coins.length >= 60 && lv.coins.length <= 120, `got ${lv.coins.length}`));
+  test(`L${def.id}: theme exists and has all painters`, () => {
+    const th = getTheme(def.theme);
+    assert.ok(th, `theme ${def.theme} missing`);
+    assert.ok(th.sky && th.sky.length >= 2, 'sky gradient missing');
+    assert.ok(typeof th.parallax?.far === 'function', 'parallax far missing');
+    assert.ok(typeof th.parallax?.mid === 'function', 'parallax mid missing');
+    assert.ok(typeof th.parallax?.near === 'function', 'parallax near missing');
+    assert.ok(typeof th.terrain?.soil === 'function', 'terrain soil missing');
+    assert.ok(typeof th.terrain?.cap === 'function', 'terrain cap missing');
+    assert.ok(typeof th.terrain?.bridge === 'function', 'terrain bridge missing');
+    assert.ok(typeof th.terrain?.ladder === 'function', 'terrain ladder missing');
+    assert.ok(typeof th.terrain?.rope === 'function', 'terrain rope missing');
+  });
 });
 
 // ------------------------------------------------------------------ 2. reachability
@@ -145,6 +166,7 @@ function bfs(graph, startKey) {
   const q = [graph.nodes.get(startKey)];
   while (q.length) {
     const n = q.shift();
+    if (!n) continue;
     for (const m of n.edges) { const k = graph.key(m.c, m.r); if (!seen.has(k)) { seen.add(k); q.push(m); } }
   }
   return seen;
@@ -155,21 +177,37 @@ LEVELS.forEach(def => {
   const graph = buildGraph(lv.world);
   const startKey = graph.key(lv.start.c, lv.start.r);
   const fromStart = bfs(graph, startKey);
+  const target = lv.key ? lv.key : lv.bosses[0];
   const keyNodes = [...fromStart].map(k => graph.nodes.get(k)).filter(n =>
-    n.kind === 'stand' && Math.abs(n.c - lv.key.c) <= 1 && lv.key.r >= n.r - 3 && lv.key.r <= n.r);
-  test(`L${def.id}: start → key is reachable`, () => assert.ok(keyNodes.length > 0, 'no reachable standing cell near the key'));
+    n && n.kind === 'stand' && Math.abs(n.c - target.c) <= 1 && target.r >= n.r - 3 && target.r <= n.r);
+  test(`L${def.id}: start → key is reachable`, () => assert.ok(keyNodes.length > 0, 'no reachable standing cell near the key/boss'));
   test(`L${def.id}: key → gate is reachable`, () => {
     const from = keyNodes[0];
     const seen = bfs(graph, graph.key(from.c, from.r));
-    const ok = [...seen].some(k => { const n = graph.nodes.get(k); return n.kind === 'stand' && n.r === lv.gate.r && n.c >= lv.gate.c - 1 && n.c <= lv.gate.c + 2; });
+    const ok = [...seen].some(k => { const n = graph.nodes.get(k); return n && n.kind === 'stand' && n.r === lv.gate.r && n.c >= lv.gate.c - 1 && n.c <= lv.gate.c + 2; });
     assert.ok(ok, 'gate not reachable from the key');
   });
   test(`L${def.id}: every coin is reachable (or reachable by a short jump)`, () => {
-    const standNodes = [...fromStart].map(k => graph.nodes.get(k));
+    const standNodes = [...fromStart].map(k => graph.nodes.get(k)).filter(n => n && n.kind === 'stand');
     for (const coin of lv.coins) {
       const cc = Math.floor(coin.x / TS), cr = Math.floor(coin.y / TS);
       const ok = standNodes.some(n => Math.abs(n.c - cc) <= 2 && cr >= n.r - 4 && cr <= n.r + 1);
       assert.ok(ok, `coin at ${cc},${cr} unreachable`);
+    }
+  });
+  test(`L${def.id}: every star is reachable`, () => {
+    const standNodes = [...fromStart].map(k => graph.nodes.get(k)).filter(n => n && n.kind === 'stand');
+    for (const s of lv.stars) {
+      const sc = Math.floor(s.x / TS), sr = Math.floor(s.y / TS);
+      const ok = standNodes.some(n => Math.abs(n.c - sc) <= 2 && sr >= n.r - 4 && sr <= n.r + 1);
+      assert.ok(ok, `star at ${sc},${sr} unreachable`);
+    }
+  });
+  test(`L${def.id}: checkpoints are reachable`, () => {
+    const standNodes = [...fromStart].map(k => graph.nodes.get(k)).filter(n => n && n.kind === 'stand');
+    for (const cp of lv.checkpoints) {
+      const ok = standNodes.some(n => Math.abs(n.c - cp.c) <= 2 && cp.r >= n.r - 3 && cp.r <= n.r);
+      assert.ok(ok, `checkpoint at ${cp.c},${cp.r} unreachable`);
     }
   });
 });
@@ -507,6 +545,47 @@ test('camera follows the hero and stays clamped inside the level', () => {
   g.player.place(g.world.w - 40, 300);
   stepGame(g, 240);
   assert.ok(g.cam.x <= g.world.w - 960 + 0.01 && g.cam.x >= g.world.w - 960 - 1, `cam.x ${g.cam.x}`);
+});
+test('spiky hedgehog: stomping hurts the hero, knife kills it', () => {
+  const g = newGame(LEVELS.find(l => l.id === '1-2'));
+  const h = g.hedgehogs[0];
+  assert.ok(h, 'no hedgehog in 1-2');
+  // Hero lands on top of hedgehog
+  g.player.place(h.x + h.w / 2, h.y - 20);
+  g.player.vy = 200;
+  stepGame(g, 5);
+  assert.equal(g.player.hearts, 2, 'hero was not hurt stomping hedgehog');
+  assert.ok(!h.dead, 'hedgehog died from stomp');
+
+  // Knife slash kills hedgehog
+  h.speed = 0;
+  g.player.invuln = 99;
+  g.player.place(h.x - 14, h.y + h.h);
+  g.player.face = 1;
+  stepGame(g, 1, I({ knifePressed: true, knifeHeld: true }));
+  stepGame(g, 4);
+  assert.ok(h.dead, 'hedgehog did not die from knife');
+});
+test('boss: Mushroom King can be defeated with 3 hits, key drops on death', () => {
+  const g = newGame(LEVELS.find(l => l.id === '1-3'));
+  assert.ok(g.bosses.length === 1, 'boss not spawned in 1-3');
+  const boss = g.bosses[0];
+  assert.equal(boss.hp, 3);
+  // Hit 1
+  boss.hit(g);
+  assert.equal(boss.hp, 2);
+  assert.ok(boss.invuln > 0);
+  // Advance past invulnerability
+  stepGame(g, 60);
+  boss.hit(g);
+  assert.equal(boss.hp, 1);
+  stepGame(g, 60);
+  boss.hit(g);
+  assert.equal(boss.hp, 0);
+  assert.ok(boss.dead);
+  // Key spawned by boss
+  assert.ok(g.key, 'key did not spawn on boss defeat');
+  assert.equal(g.key.state, 'rest');
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

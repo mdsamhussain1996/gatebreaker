@@ -51,8 +51,31 @@
             <li><b>Knife</b> X / J <i>(↓ + X in the air = pogo)</i></li>
             <li><b>Goal</b> grab the key, reach the gate</li>
           </ul>
-          <button id="btnStart" class="btn primary">▶ Play Level 1</button>
+          <div class="title-btns">
+            <button id="btnStart" class="btn primary">▶ Play Game</button>
+            <button id="btnMap" class="btn">🗺 Select Level / World Map</button>
+          </div>
           <p class="credit">Made by Dr. Md Samshad Hussain Ansari</p>
+        </div>
+      </section>
+
+      <!-- World Map -->
+      <section id="screen-map" class="screen" hidden aria-labelledby="mapH">
+        <div class="card map-card">
+          <div class="map-header">
+            <button id="btnPrevWorld" class="round-btn" aria-label="Previous World">◀</button>
+            <div class="map-world-title">
+              <h2 id="mapWorldName">World 1: Green Hills</h2>
+              <span id="mapStarsTotal" class="stars-badge">★ 0 / 18 Stars</span>
+            </div>
+            <button id="btnNextWorld" class="round-btn" aria-label="Next World">▶</button>
+          </div>
+          <div id="mapNodes" class="map-nodes">
+            <!-- Populated dynamically via UI -->
+          </div>
+          <div class="map-actions">
+            <button id="btnMapBack" class="btn">◀ Back to Title</button>
+          </div>
         </div>
       </section>
 
@@ -62,6 +85,7 @@
           <h2 id="pauseH">Paused</h2>
           <button id="btnResume" class="btn primary">▶ Resume</button>
           <button id="btnRestart" class="btn">↻ Restart level</button>
+          <button id="btnMapFromPause" class="btn">🗺 World Map</button>
         </div>
       </section>
 
@@ -71,7 +95,9 @@
           <h2 id="completeH">Level Complete!</h2>
           <div class="stars" id="completeStars" aria-label="Rating">★★★</div>
           <p id="completeStats" class="stats"></p>
-          <button id="btnAgain" class="btn primary">↻ Play again</button>
+          <button id="btnNextLevel" class="btn primary">▶ Next Level</button>
+          <button id="btnAgain" class="btn">↻ Play again</button>
+          <button id="btnMapFromComplete" class="btn">🗺 World Map</button>
         </div>
       </section>
 
@@ -81,6 +107,7 @@
           <h2 id="overH">Out of lives</h2>
           <p class="stats">The islands win this time…</p>
           <button id="btnRetry" class="btn primary">↻ Try again</button>
+          <button id="btnMapFromOver" class="btn">🗺 World Map</button>
         </div>
       </section>
     </div>
