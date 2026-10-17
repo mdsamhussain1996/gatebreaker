@@ -1,9 +1,9 @@
 /**
  * Automated Screenshot Capture for Gatebreaker Phase 1
  */
-const { spawn } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+import { spawn } from 'child_process';
+import fs from 'fs';
+import path from 'path';
 
 const outDir = '/Users/newtonuser/.gemini/antigravity-ide/brain/3d548fb5-2b76-41d6-95e2-088477819984';
 
@@ -45,7 +45,10 @@ async function captureScreen(width, height, setupFnStr, filename, isMobile = fal
         await new Promise(r => setTimeout(r, 600));
 
         if (setupFnStr) {
-          send('Runtime.evaluate', { expression: setupFnStr });
+          send('Runtime.evaluate', {
+            expression: `(async () => { ${setupFnStr} })()`,
+            awaitPromise: true
+          });
           await new Promise(r => setTimeout(r, 600));
         }
 
@@ -75,48 +78,73 @@ async function captureScreen(width, height, setupFnStr, filename, isMobile = fal
 }
 
 async function run() {
-  console.log('Capturing screenshots for Gatebreaker Phase 1...');
+  console.log('Capturing screenshots for Gatebreaker v2 (Platformer Prototype)...');
 
   // 1. Laptop Title Screen (1366x768)
-  await captureScreen(1366, 768, '', 'gb_laptop_title.png', false);
+  await captureScreen(1366, 768, '', 'gb2_laptop_title.png', false);
 
   // 2. Laptop Game Screen (1366x768)
   await captureScreen(1366, 768, `
-    document.getElementById('btnStartGame').click();
-  `, 'gb_laptop_game.png', false);
+    await new Promise(res => {
+      const t = setInterval(() => {
+        if (window.gatebreaker) {
+          clearInterval(t);
+          window.gatebreaker.resetGame();
+          res();
+        }
+      }, 30);
+    });
+  `, 'gb2_laptop_game.png', false);
 
   // 3. Laptop Level Complete (1366x768)
   await captureScreen(1366, 768, `
-    document.getElementById('btnStartGame').click();
-    const g = window.gb.getGame();
-    g.inventory.coins = 6;
-    g.stats.slimesKilled = 4;
-    g.timeElapsed = 48;
-    g.hero.damageTaken = 12;
-    window.gb.showCompleteScreen(g);
-  `, 'gb_laptop_complete.png', false);
+    await new Promise(res => {
+      const t = setInterval(() => {
+        if (window.gatebreaker) {
+          clearInterval(t);
+          window.gatebreaker.resetGame();
+          const g = window.gatebreaker.getState();
+          g.hero.hasKey = true;
+          g.gate.unlocked = true;
+          g.levelComplete = true;
+          g.time = 36;
+          document.getElementById('screen-complete').hidden = false;
+          document.getElementById('completeTime').textContent = '00:36';
+          res();
+        }
+      }, 30);
+    });
+  `, 'gb2_laptop_complete.png', false);
 
-  // 4. Phone Portrait Game (390x844)
-  await captureScreen(390, 844, `
-    document.body.classList.add('touch-device');
-    document.getElementById('btnStartGame').click();
-    const base = document.getElementById('joystick-base');
-    base.style.display = 'block';
-    base.style.left = '90px';
-    base.style.top = '650px';
-  `, 'gb_phone_portrait_game.png', true);
-
-  // 5. Phone Landscape Game (844x390)
+  // 4. Phone Landscape Game (844x390)
   await captureScreen(844, 390, `
     document.body.classList.add('touch-device');
-    document.getElementById('btnStartGame').click();
-    const base = document.getElementById('joystick-base');
-    base.style.display = 'block';
-    base.style.left = '100px';
-    base.style.top = '280px';
-  `, 'gb_phone_landscape_game.png', true);
+    await new Promise(res => {
+      const t = setInterval(() => {
+        if (window.gatebreaker) {
+          clearInterval(t);
+          window.gatebreaker.resetGame();
+          res();
+        }
+      }, 30);
+    });
+  `, 'gb2_phone_landscape_game.png', true);
 
-  console.log('All screenshots captured successfully!');
+  // 5. Phone Portrait Game (390x844)
+  await captureScreen(390, 844, `
+    document.body.classList.add('touch-device');
+    await new Promise(res => {
+      const t = setInterval(() => {
+        if (window.gatebreaker) {
+          clearInterval(t);
+          window.gatebreaker.resetGame();
+          res();
+        }
+      }, 30);
+    });
+  `, 'gb2_phone_portrait_game.png', true);
+
+  console.log('All Gatebreaker v2 screenshots captured successfully!');
 }
 
 run();

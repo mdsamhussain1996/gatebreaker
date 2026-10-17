@@ -1,0 +1,12 @@
+{
+  "name": "gatebreaker",
+  "version": "2.0.0",
+  "description": "Side-view puzzle-platformer in ancient jungle ruins",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/run.js"
+  },
+  "keywords": ["game", "platformer", "canvas", "webaudio"],
+  "author": "Dr. Md Samshad Hussain Ansari",
+  "license": "MIT"
+}
