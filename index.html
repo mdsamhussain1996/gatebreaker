@@ -3,149 +3,105 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Gatebreaker — Top-Down Action Adventure</title>
-  <meta name="description" content="Explore dungeon levels, fight monsters, find the key, and open the gate in this top-down arcade action-adventure.">
-  <meta name="theme-color" content="#0a0c10">
+  <title>Gatebreaker — Floating Islands Platformer</title>
+  <meta name="description" content="Gatebreaker: a side-view platformer across floating grass islands. Run, jump, climb ladders and ropes, grab the key and open the gate. Made by Dr. Md Samshad Hussain Ansari.">
+  <meta name="theme-color" content="#1b2740">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="game-container">
-    <canvas id="gameCanvas" width="960" height="448" tabindex="0"></canvas>
+  <div id="app">
+    <div id="stage">
+      <canvas id="gameCanvas" width="960" height="540" aria-label="Gatebreaker game view"></canvas>
 
-    <!-- Top In-Game HUD -->
-    <header id="hud" aria-label="Game Heads-Up Display">
-      <div class="hud-left">
-        <div class="hud-bar-wrap" title="Hero Health">
-          <span class="hud-icon" aria-hidden="true">❤️</span>
-          <div class="hp-track">
-            <div id="hpFill" class="hp-fill" style="width: 100%;"></div>
+      <!-- HUD -->
+      <header id="hud" aria-label="Heads-up display" hidden>
+        <div class="hud-left">
+          <div class="panel" id="hudStatus">
+            <span class="hud-lives" title="Lives">Rook ×<b id="hudLives">3</b></span>
+            <span class="hud-hearts" id="hudHearts" title="Hearts" aria-label="Hearts">♥♥♥</span>
           </div>
-          <span id="hpText" style="font-size:12px; font-weight:700; min-width:32px;">100</span>
-        </div>
-        <div class="hud-stats">
-          <div class="stat-pill" title="Coins collected">
-            <span aria-hidden="true">🪙</span>
-            <span id="coinCount">0</span>
-          </div>
-          <div id="keyPill" class="stat-pill key-pill" title="Gate Key status">
-            <span aria-hidden="true">🗝️</span>
-            <span id="keyStatus">NO KEY</span>
+          <div class="panel" id="hudCoinsPanel">
+            <span class="coin-dot" aria-hidden="true"></span><b id="hudCoins">0</b>
+            <span class="key-slot" id="hudKey" title="Gate key">🗝</span>
           </div>
         </div>
-      </div>
-
-      <div class="hud-center">
-        <div id="objectiveText" class="objective-box">FIND THE KEY</div>
-      </div>
-
-      <div class="hud-right">
-        <button id="btnPause" class="hud-btn" title="Pause game (P or Esc)" aria-label="Pause Game">⏸️</button>
-      </div>
-    </header>
-
-    <!-- Bottom Weapon HUD -->
-    <div id="hud-bottom">
-      <div id="slotKnife" class="weapon-slot selected" title="Knife (Always equipped)">
-        <span>🗡️</span> <span>Knife</span>
-      </div>
-      <div id="slotGun" class="weapon-slot" style="opacity: 0.5;" title="Gun (Find in dungeon)">
-        <span>🔫</span> <span>Gun: —</span>
-      </div>
-    </div>
-
-    <!-- Notification Toasts -->
-    <div id="toast-container" aria-live="polite"></div>
-
-    <!-- Touch Virtual Controls (Shown on Touch Devices) -->
-    <div id="touch-controls">
-      <div id="joystick-zone">
-        <div id="joystick-base">
-          <div id="joystick-thumb"></div>
+        <div class="hud-right">
+          <div class="panel" title="Level time">⏱ <b id="hudTime">0:00</b></div>
+          <button class="panel round-btn" id="btnPause" aria-label="Pause (P or Esc)">❚❚</button>
         </div>
-      </div>
-      <div id="touch-actions">
-        <button id="touchAttack" class="touch-btn attack-btn" aria-label="Attack with Knife">🗡️</button>
-      </div>
-    </div>
+      </header>
 
-    <!-- Screen: Title -->
-    <div id="screen-title" class="screen-overlay">
-      <div class="modal-card">
-        <h1 class="game-title">GATEBREAKER</h1>
-        <p class="game-subtitle">A Top-Down Dungeon Adventure</p>
-        <div class="instructions-list">
-          <p><strong>Controls:</strong></p>
-          <ul>
-            <li><strong>Move:</strong> WASD or Arrow keys (or touch joystick)</li>
-            <li><strong>Aim:</strong> Mouse cursor / facing direction</li>
-            <li><strong>Attack:</strong> Left-Click, Space, or J (or red button)</li>
-            <li><strong>Goal:</strong> Find the <strong>Key</strong> and reach the <strong>Gate</strong>!</li>
+      <div id="toast" role="status" aria-live="polite"></div>
+      <div id="fps" hidden></div>
+
+      <!-- Title -->
+      <section id="screen-title" class="screen" aria-labelledby="titleH">
+        <div class="card">
+          <h1 id="titleH">GATEBREAKER</h1>
+          <p class="sub">Floating-islands platformer · Phase 1 feel prototype</p>
+          <ul class="controls">
+            <li><b>Move</b> ← → / A D</li>
+            <li><b>Jump</b> Space / Z / K <i>(hold = higher)</i></li>
+            <li><b>Climb</b> ↑ ↓ / W S on ladders &amp; ropes</li>
+            <li><b>Drop through</b> ↓ + Jump on planks &amp; bridges</li>
+            <li><b>Knife</b> X / J <i>(↓ + X in the air = pogo)</i></li>
+            <li><b>Goal</b> grab the key, reach the gate</li>
           </ul>
+          <button id="btnStart" class="btn primary">▶ Play Level 1</button>
+          <p class="credit">Made by Dr. Md Samshad Hussain Ansari</p>
         </div>
-        <div class="btn-group">
-          <button id="btnStartGame" class="btn btn-primary">⚔️ Enter Level 1: The Cellar</button>
-          <button id="btnHowToPlay" class="btn">📜 Instructions & Lore</button>
+      </section>
+
+      <!-- Pause -->
+      <section id="screen-pause" class="screen" hidden aria-labelledby="pauseH">
+        <div class="card small">
+          <h2 id="pauseH">Paused</h2>
+          <button id="btnResume" class="btn primary">▶ Resume</button>
+          <button id="btnRestart" class="btn">↻ Restart level</button>
         </div>
+      </section>
+
+      <!-- Level complete -->
+      <section id="screen-complete" class="screen" hidden aria-labelledby="completeH">
+        <div class="card small">
+          <h2 id="completeH">Level Complete!</h2>
+          <div class="stars" id="completeStars" aria-label="Rating">★★★</div>
+          <p id="completeStats" class="stats"></p>
+          <button id="btnAgain" class="btn primary">↻ Play again</button>
+        </div>
+      </section>
+
+      <!-- Game over -->
+      <section id="screen-gameover" class="screen" hidden aria-labelledby="overH">
+        <div class="card small">
+          <h2 id="overH">Out of lives</h2>
+          <p class="stats">The islands win this time…</p>
+          <button id="btnRetry" class="btn primary">↻ Try again</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Touch controls -->
+    <div id="touch-controls" aria-hidden="true">
+      <div id="dpad">
+        <button class="tbtn t-up" data-act="up" aria-label="Up">▲</button>
+        <button class="tbtn t-left" data-act="left" aria-label="Left">◀</button>
+        <button class="tbtn t-right" data-act="right" aria-label="Right">▶</button>
+        <button class="tbtn t-down" data-act="down" aria-label="Down">▼</button>
+      </div>
+      <div id="actions">
+        <button class="tbtn t-knife" data-act="knife" aria-label="Knife">🗡</button>
+        <button class="tbtn t-jump" data-act="jump" aria-label="Jump">JUMP</button>
       </div>
     </div>
 
-    <!-- Screen: Pause -->
-    <div id="screen-pause" class="screen-overlay" hidden>
-      <div class="modal-card">
-        <h2 class="game-title" style="font-size: 28px;">PAUSED</h2>
-        <p class="game-subtitle">Take a breather, adventurer</p>
-        <div class="btn-group">
-          <button id="btnResume" class="btn btn-primary">▶️ Resume</button>
-          <button id="btnRestartLevel" class="btn">🔄 Restart Level</button>
-          <button id="btnQuitTitle" class="btn">🚪 Quit to Title</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Screen: Level Complete -->
-    <div id="screen-complete" class="screen-overlay" hidden>
-      <div class="modal-card">
-        <h2 class="game-title" style="font-size: 28px; color: #86efac;">GATE UNLOCKED!</h2>
-        <p class="game-subtitle">Level 1: The Cellar Cleared</p>
-        <div class="stats-grid">
-          <div class="stat-item">
-            <div class="stat-label">Time</div>
-            <div id="completeTime" class="stat-val">00:00</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-label">Coins Collected</div>
-            <div id="completeCoins" class="stat-val gold">0 / 0</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-label">Enemies Defeated</div>
-            <div id="completeEnemies" class="stat-val">0 / 0</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-label">Damage Taken</div>
-            <div id="completeDamage" class="stat-val">0 HP</div>
-          </div>
-        </div>
-        <div class="btn-group">
-          <button id="btnPlayAgain" class="btn btn-primary">🔄 Play Level 1 Again</button>
-          <button id="btnCompleteTitle" class="btn">🚪 Title Screen</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Screen: Game Over -->
-    <div id="screen-gameover" class="screen-overlay" hidden>
-      <div class="modal-card">
-        <h2 class="game-title" style="font-size: 28px; color: #f87171;">FALLEN IN BATTLE</h2>
-        <p class="game-subtitle">The dungeon claims another soul...</p>
-        <div class="btn-group">
-          <button id="btnRetry" class="btn btn-primary">🔄 Try Again</button>
-          <button id="btnGameOverTitle" class="btn">🚪 Title Screen</button>
-        </div>
-      </div>
-    </div>
+    <div id="rotate-hint">↻ Rotate your phone for the best view</div>
   </div>
 
-  <script src="game.js"></script>
+  <script type="module" src="src/main.js"></script>
 </body>
 </html>
