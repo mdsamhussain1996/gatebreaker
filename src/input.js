@@ -1,107 +1,99 @@
 /**
- * Gatebreaker v2 — Input System (Keyboard + Virtual Touch Controls)
+ * Gatebreaker — input: keyboard + multi-touch pointer buttons.
+ * Presses are latched so the fixed-timestep sim never misses (or double-counts) a tap.
  */
-
 import { initAudio } from './audio.js';
+
+const KEY_MAP = {
+  left: ['arrowleft', 'a'],
+  right: ['arrowright', 'd'],
+  up: ['arrowup', 'w'],
+  down: ['arrowdown', 's'],
+  jump: [' ', 'z', 'k'],
+  knife: ['x', 'j']
+};
 
 export class InputManager {
   constructor() {
     this.keys = new Set();
-    this.prevJump = false;
-    this.jumpPressed = false;   // edge-triggered
-    this.jumpHeld = false;      // continuous
-    this.downPressed = false;
-    this.left = false;
-    this.right = false;
-    this.up = false;
-    this.down = false;
-    this.knifePressed = false;
-    this.knifeHeld = false;
-    this.prevKnife = false;
+    this.touch = { left: false, right: false, up: false, down: false, jump: false, knife: false };
+    this.latchJump = false;
+    this.latchKnife = false;
+    this.latchPause = false;
+    // polled state
+    this.left = this.right = this.up = this.down = false;
+    this.jumpHeld = this.jumpPressed = false;
+    this.knifeHeld = this.knifePressed = false;
     this.pausePressed = false;
-
-    // Touch button states
-    this.touchLeft = false;
-    this.touchRight = false;
-    this.touchUp = false;
-    this.touchDown = false;
-    this.touchJump = false;
-    this.touchKnife = false;
+    this.onPause = null;
   }
 
-  setup(canvas) {
+  setup() {
     if (typeof window === 'undefined') return;
 
     window.addEventListener('keydown', e => {
       initAudio();
       const k = e.key.toLowerCase();
+      if (e.repeat) { if (Object.values(KEY_MAP).some(a => a.includes(k))) e.preventDefault(); return; }
+      if (KEY_MAP.jump.includes(k)) this.latchJump = true;
+      if (KEY_MAP.knife.includes(k)) this.latchKnife = true;
+      if (k === 'p' || k === 'escape') { this.latchPause = true; if (this.onPause) this.onPause(); }
       this.keys.add(k);
-      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k)) {
+      if (Object.values(KEY_MAP).some(a => a.includes(k))) e.preventDefault();
+    });
+    window.addEventListener('keyup', e => this.keys.delete(e.key.toLowerCase()));
+    window.addEventListener('blur', () => { this.keys.clear(); for (const k in this.touch) this.touch[k] = false; });
+
+    // Touch / pointer buttons: <button data-act="jump">
+    document.querySelectorAll('[data-act]').forEach(el => {
+      const act = el.dataset.act;
+      const down = e => {
         e.preventDefault();
-      }
-    });
-
-    window.addEventListener('keyup', e => {
-      const k = e.key.toLowerCase();
-      this.keys.delete(k);
-    });
-
-    this.setupTouchControls();
-  }
-
-  setupTouchControls() {
-    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    if (isTouch) {
-      document.body.classList.add('touch-device');
-    }
-
-    const bindTouch = (id, onStart, onEnd) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.addEventListener('touchstart', e => {
         initAudio();
-        e.preventDefault();
-        onStart();
-      }, { passive: false });
-
-      const handleEnd = e => {
-        e.preventDefault();
-        onEnd();
+        try { el.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ }
+        this.touch[act] = true;
+        el.classList.add('pressed');
+        if (act === 'jump') this.latchJump = true;
+        if (act === 'knife') this.latchKnife = true;
       };
-      el.addEventListener('touchend', handleEnd, { passive: false });
-      el.addEventListener('touchcancel', handleEnd, { passive: false });
-    };
+      const up = e => {
+        e.preventDefault();
+        this.touch[act] = false;
+        el.classList.remove('pressed');
+      };
+      el.addEventListener('pointerdown', down);
+      el.addEventListener('pointerup', up);
+      el.addEventListener('pointercancel', up);
+      el.addEventListener('lostpointercapture', up);
+      el.addEventListener('contextmenu', e => e.preventDefault());
+    });
 
-    bindTouch('btnTouchLeft', () => { this.touchLeft = true; }, () => { this.touchLeft = false; });
-    bindTouch('btnTouchRight', () => { this.touchRight = true; }, () => { this.touchRight = false; });
-    bindTouch('btnTouchUp', () => { this.touchUp = true; }, () => { this.touchUp = false; });
-    bindTouch('btnTouchDown', () => { this.touchDown = true; }, () => { this.touchDown = false; });
-    bindTouch('btnTouchJump', () => { this.touchJump = true; }, () => { this.touchJump = false; });
-    bindTouch('btnTouchKnife', () => { this.touchKnife = true; }, () => { this.touchKnife = false; });
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) document.body.classList.add('touch-device');
   }
 
-  update() {
-    const k = this.keys;
+  held(name) {
+    return this.touch[name] || KEY_MAP[name].some(k => this.keys.has(k));
+  }
 
-    this.left = k.has('a') || k.has('arrowleft') || this.touchLeft;
-    this.right = k.has('d') || k.has('arrowright') || this.touchRight;
-    this.up = k.has('w') || k.has('arrowup') || this.touchUp;
-    this.down = k.has('s') || k.has('arrowdown') || this.touchDown;
+  /** Call once per simulation step. */
+  poll() {
+    this.left = this.held('left');
+    this.right = this.held('right');
+    this.up = this.held('up');
+    this.down = this.held('down');
+    this.jumpPressed = this.latchJump;
+    this.knifePressed = this.latchKnife;
+    this.jumpHeld = this.held('jump') || this.jumpPressed;
+    this.knifeHeld = this.held('knife') || this.knifePressed;
+    this.latchJump = false;
+    this.latchKnife = false;
+  }
 
-    const currentJump = k.has(' ') || k.has('z') || k.has('k') || this.touchJump;
-    this.jumpPressed = currentJump && !this.prevJump;
-    this.jumpHeld = currentJump;
-    this.prevJump = currentJump;
-
-    const currentKnife = k.has('x') || k.has('j') || this.touchKnife;
-    this.knifePressed = currentKnife && !this.prevKnife;
-    this.knifeHeld = currentKnife;
-    this.prevKnife = currentKnife;
-
-    this.pausePressed = k.has('p') || k.has('escape');
-    if (this.pausePressed) {
-      k.delete('p');
-      k.delete('escape');
-    }
+  /** Test helper: set a synthetic state. */
+  static synthetic(state = {}) {
+    return Object.assign({
+      left: false, right: false, up: false, down: false,
+      jumpHeld: false, jumpPressed: false, knifeHeld: false, knifePressed: false
+    }, state);
   }
 }

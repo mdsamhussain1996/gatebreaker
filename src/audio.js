@@ -18,6 +18,27 @@ export function initAudio() {
   }
 }
 
+export function setVolumes(sfx, music) {
+  if (typeof sfx === 'number') soundVolume = sfx;
+  if (typeof music === 'number') musicVolume = music;
+}
+
+/** One synthesized blip: oscillator sweeping f0 -> f1 over dur seconds. */
+function tone(type, f0, f1, dur, vol, delay = 0) {
+  const t = actx.currentTime + delay;
+  const osc = actx.createOscillator();
+  const gain = actx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(f0, t);
+  if (f1 !== f0) osc.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  gain.gain.setValueAtTime(vol * soundVolume, t);
+  gain.gain.exponentialRampToValueAtTime(0.01, t + dur);
+  osc.connect(gain);
+  gain.connect(actx.destination);
+  osc.start(t);
+  osc.stop(t + dur + 0.01);
+}
+
 export function playSound(type) {
   if (!actx || actx.state !== 'running') return;
   const t = actx.currentTime;
@@ -136,6 +157,25 @@ export function playSound(type) {
       gain.connect(actx.destination);
       osc.start(t);
       osc.stop(t + 0.16);
+    } else if (type === 'coin') {
+      tone('square', 988, 988, 0.07, 0.12);
+      tone('square', 1319, 1319, 0.16, 0.12, 0.07);
+    } else if (type === 'hurt') {
+      tone('sawtooth', 330, 90, 0.28, 0.3);
+    } else if (type === 'grab') {
+      tone('triangle', 300, 420, 0.06, 0.18);
+    } else if (type === 'drop') {
+      tone('sine', 420, 200, 0.12, 0.18);
+    } else if (type === 'creak') {
+      tone('sawtooth', 120, 150, 0.14, 0.07);
+      tone('sawtooth', 150, 100, 0.12, 0.05, 0.1);
+    } else if (type === 'locked') {
+      tone('square', 180, 150, 0.12, 0.2);
+      tone('square', 150, 120, 0.16, 0.2, 0.12);
+    } else if (type === 'levelClear') {
+      [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5, 1318.5].forEach((f, i) => tone('triangle', f, f, 0.22, 0.28, 0.55 + i * 0.13));
+    } else if (type === 'gameOver') {
+      [392, 330, 262, 196].forEach((f, i) => tone('triangle', f, f * 0.97, 0.3, 0.3, i * 0.22));
     }
   } catch (err) {
     // Audio synthesis failure should never crash the game

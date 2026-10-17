@@ -1,104 +1,81 @@
 /**
- * Gatebreaker v2 — Level Data
- * Level 1: First Steps (Jungle Ruins Feel Prototype)
+ * Gatebreaker — level data.
+ *
+ * LEGEND (one character = one 32x32 tile)
+ *   .  empty air
+ *   #  solid soil (blocks from every side)
+ *   =  one-way platform: grass-topped island cap, or a thin plank when nothing solid is below
+ *   ~  one-way rope bridge (sags under the hero)
+ *   H  ladder (climb with Up/Down; the top tile of a ladder is a one-way surface you can stand on)
+ *   |  hanging rope (climbable, no standing surface)
+ *   X  breakable crate (solid until slashed; drops coins)
+ *   P  hero start (hero stands on the tile below)
+ *   K  key (floats, centre of the cell)
+ *   G  exit gate marker = bottom-left cell of the 2x3-tile gate (the gate stands on the tile below)
+ *   c  coin
+ *   m  Mushroom Walker enemy (stands on the tile below)
  */
-
-import { TS, BEETLEBOT_SPEED, BEETLEBOT_W, BEETLEBOT_H } from './constants.js';
-import { createHero } from './entities.js';
-
-export const LEVEL_1_MAP = [
-  '##############################',
-  '#..........................G.#',
-  '#...................##########',
-  '#.......====........#........#',
-  '#.......|...........#........#',
-  '#.......|....C......#........#',
-  '#.......|..#######..#........#',
-  '#.......|..#.....#..#........#',
-  '#...======.#.....#..#........#',
-  '#...|......#.....#..#........#',
-  '#...|......#######..#........#',
-  '#...|...............#........#',
-  '#...|...e...........#........#',
-  '#..###############..#........#',
-  '#...................#........#',
-  '#P..................#........#',
-  '##############################'
-];
-
-export function parseLevel(mapLines) {
-  const h = mapLines.length;
-  const w = mapLines[0].length;
-  const tiles = [];
-  const crates = [];
-  const enemies = [];
-  let gate = null;
-  let heroSpawn = { x: 48, y: 440 };
-
-  for (let ty = 0; ty < h; ty++) {
-    const row = [];
-    const line = mapLines[ty];
-    for (let tx = 0; tx < w; tx++) {
-      const ch = line[tx] || '#';
-      const px = tx * TS;
-      const py = ty * TS;
-
-      if (ch === 'P') {
-        heroSpawn = { x: px + 6, y: py + 4 };
-        row.push('.');
-      } else if (ch === 'G') {
-        gate = { x: px, y: py, w: TS, h: TS, unlocked: false };
-        row.push('.');
-      } else if (ch === 'C') {
-        crates.push({ x: px + 2, y: py + 4, w: 28, h: 28, contents: 'key', opened: false });
-        row.push('.');
-      } else if (ch === 'e') {
-        enemies.push({
-          x: px,
-          y: py + 14,
-          w: BEETLEBOT_W,
-          h: BEETLEBOT_H,
-          speed: BEETLEBOT_SPEED,
-          dir: 1,
-          hp: 1,
-          dead: false
-        });
-        row.push('.');
-      } else {
-        row.push(ch); // '#', '=', '|', '.'
-      }
-    }
-    tiles.push(row);
+export const LEVELS = [
+  {
+    id: 1,
+    name: 'Feel Prototype',
+    targetTime: 150,
+    hints: [
+      { c: 2, r: 39, text: "Move: ← → or A / D" },
+      { c: 8, r: 39, text: "Jump: Space — hold to go higher" },
+      { c: 12, r: 39, text: "Rope bridges bounce under your feet" },
+      { c: 19, r: 39, text: "Climb the ladder: Up / Down" },
+      { c: 24, r: 33, text: "Slash: X — stomp or knife the mushroom!" },
+      { c: 6, r: 17, text: "Hanging rope: climb, then jump off sideways" },
+      { c: 15, r: 17, text: "Down + Jump drops through thin planks" },
+      { c: 24, r: 6, text: "Grab the key on the high plank!" },
+      { c: 40, r: 6, text: "The gate needs the key" }
+    ],
+    rows: [
+      '................................................',
+      '................................................',
+      '................................................',
+      '..........................K.....................',
+      '.........................cc.....................',
+      '.........................==.....................',
+      '.....................cc.c...c.c....c.c.c.c.G....',
+      '....................c==~~~~~~~~~~===============',
+      '..................cc.............###############',
+      '.................c==..............#############.',
+      '.......cc..m.ccc...................###########..',
+      '...c|============...............................',
+      '....|############...............................',
+      '...c|.##########................................',
+      '....|...........................................',
+      '...c|...........................................',
+      '....|...........................................',
+      '....|..c.c.m..c.c.c.............................',
+      '....=================H..........................',
+      '....#################H..........................',
+      '.....###############.H..........................',
+      '.....................H..........................',
+      '.....................H..........................',
+      '.....................H..........................',
+      '.....................H..........................',
+      '.....................H..c.c.c.c...c.c.c....ccXc.',
+      '.....................===========~~~~~~~~~~======',
+      '.....................###########......ccc.######',
+      '......................#########.....cc.==..####.',
+      '...................................c........##..',
+      '.................................cc.==..........',
+      '................................c...............',
+      '.........................cc..cc..==.............',
+      '........................c..m....................',
+      '.....................H==========................',
+      '.....................H##########................',
+      '.....................H.########.................',
+      '...........cc........H..######..................',
+      '...cc...c.c..c.cc..ccH..........................',
+      '...P..X..........X...H..........................',
+      '.=========~~~~========..........................',
+      '.#########....########..........................',
+      '..#######......######...........................',
+      '...#####........####............................'
+    ]
   }
-
-  return {
-    w,
-    h,
-    pixelW: w * TS,
-    pixelH: h * TS,
-    tiles,
-    heroSpawn,
-    gate,
-    crates,
-    enemies
-  };
-}
-
-export function createLevelState(mapLines = LEVEL_1_MAP) {
-  const parsed = parseLevel(mapLines);
-  return {
-    tiles: parsed.tiles,
-    pixelW: parsed.pixelW,
-    pixelH: parsed.pixelH,
-    hero: createHero(parsed.heroSpawn.x, parsed.heroSpawn.y),
-    gate: parsed.gate,
-    crates: parsed.crates,
-    enemies: parsed.enemies,
-    keyItem: null,
-    particles: [],
-    time: 0,
-    camera: { x: 0, y: 0 },
-    levelComplete: false,
-    gameOver: false
-  };
-}
+];

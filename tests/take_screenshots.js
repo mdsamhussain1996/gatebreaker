@@ -45,11 +45,21 @@ async function captureScreen(width, height, setupFnStr, filename, isMobile = fal
         await new Promise(r => setTimeout(r, 600));
 
         if (setupFnStr) {
-          send('Runtime.evaluate', {
-            expression: `(async () => { ${setupFnStr} })()`,
-            awaitPromise: true
+          await new Promise((evalRes) => {
+            const evalId = id;
+            const evalHandler = (evt) => {
+              const m = JSON.parse(evt.data);
+              if (m.id === evalId) {
+                ws.removeEventListener('message', evalHandler);
+                setTimeout(evalRes, 400);
+              }
+            };
+            ws.addEventListener('message', evalHandler);
+            send('Runtime.evaluate', {
+              expression: `(async () => { ${setupFnStr} })()`,
+              awaitPromise: true
+            });
           });
-          await new Promise(r => setTimeout(r, 600));
         }
 
         ws.onmessage = (evt) => {
@@ -87,46 +97,42 @@ async function run() {
   await captureScreen(1366, 768, `
     await new Promise(res => {
       const t = setInterval(() => {
-        if (window.gatebreaker) {
+        if (window.__gb) {
           clearInterval(t);
-          window.gatebreaker.resetGame();
-          res();
+          window.__gb.startPlay();
+          setTimeout(res, 300);
         }
-      }, 30);
+      }, 50);
     });
   `, 'gb2_laptop_game.png', false);
 
-  // 3. Laptop Level Complete (1366x768)
+  // 3. Laptop Action / Slash Screen (1366x768)
   await captureScreen(1366, 768, `
     await new Promise(res => {
       const t = setInterval(() => {
-        if (window.gatebreaker) {
+        if (window.__gb) {
           clearInterval(t);
-          window.gatebreaker.resetGame();
-          const g = window.gatebreaker.getState();
-          g.hero.hasKey = true;
-          g.gate.unlocked = true;
-          g.levelComplete = true;
-          g.time = 36;
-          document.getElementById('screen-complete').hidden = false;
-          document.getElementById('completeTime').textContent = '00:36';
-          res();
+          window.__gb.startPlay();
+          // Simulate a jump and knife slash
+          const p = window.__gb.game.player;
+          p.x = 220; p.y = 380; p.vy = -300; p.slashT = 0.12;
+          setTimeout(res, 200);
         }
-      }, 30);
+      }, 50);
     });
-  `, 'gb2_laptop_complete.png', false);
+  `, 'gb2_laptop_action.png', false);
 
   // 4. Phone Landscape Game (844x390)
   await captureScreen(844, 390, `
     document.body.classList.add('touch-device');
     await new Promise(res => {
       const t = setInterval(() => {
-        if (window.gatebreaker) {
+        if (window.__gb) {
           clearInterval(t);
-          window.gatebreaker.resetGame();
-          res();
+          window.__gb.startPlay();
+          setTimeout(res, 300);
         }
-      }, 30);
+      }, 50);
     });
   `, 'gb2_phone_landscape_game.png', true);
 
@@ -135,12 +141,12 @@ async function run() {
     document.body.classList.add('touch-device');
     await new Promise(res => {
       const t = setInterval(() => {
-        if (window.gatebreaker) {
+        if (window.__gb) {
           clearInterval(t);
-          window.gatebreaker.resetGame();
-          res();
+          window.__gb.startPlay();
+          setTimeout(res, 300);
         }
-      }, 30);
+      }, 50);
     });
   `, 'gb2_phone_portrait_game.png', true);
 
