@@ -35,8 +35,8 @@ const FIXED_DT = 1 / 60; // 60 FPS fixed simulation step
 /* ---------------- 2. Level Definitions ---------------- */
 const LEVEL_1_ASCII = [
   '##############################',
-  '#P...c.....#........c........#',
-  '#..........#.................#',
+  '#....c.....#........c........#',
+  '#..P.......#.................#',
   '#...c......#....s...######...#',
   '#..........t........#....#...#',
   '######..####........#.K..#...#',
@@ -56,7 +56,7 @@ const LEVELS = [
     name: 'The Cellar',
     hint: 'Move with WASD / Stick. Swing your knife with Space / Click.',
     map: LEVEL_1_ASCII,
-    darkness: 0.45
+    darkness: 0.30
   }
 ];
 
@@ -716,11 +716,9 @@ function stepGame(g, input, dt = FIXED_DT) {
     if (ft.life <= 0) g.floatingTexts.splice(i, 1);
   }
 
-  // 8. Smooth Camera Follow with Aim Lookahead
-  const lookX = Math.cos(hero.aimAngle) * 36;
-  const lookY = Math.sin(hero.aimAngle) * 36;
-  const targetCamX = hero.x + lookX;
-  const targetCamY = hero.y + lookY;
+  // 8. Smooth Camera Follow centred on hero
+  const targetCamX = hero.x;
+  const targetCamY = hero.y;
   g.camera.x += (targetCamX - g.camera.x) * (dt * 8);
   g.camera.y += (targetCamY - g.camera.y) * (dt * 8);
 
@@ -840,40 +838,40 @@ function render(ctx, g, cvWidth, cvHeight) {
       const varIdx = seed % 4;
 
       if (tile === '.' || tile === 'G') {
-        // Floor tile (stone tiles with subtle seams and shade variations)
-        ctx.fillStyle = varIdx === 0 ? '#1e2430' : (varIdx === 1 ? '#1a202c' : '#1f2735');
+        // Floor tile: warm dungeon flagstone, lighter and warmer than walls (clear contrast)
+        ctx.fillStyle = varIdx === 0 ? '#645e54' : (varIdx === 1 ? '#5e584f' : (varIdx === 2 ? '#686258' : '#5a544a'));
         ctx.fillRect(px, py, TS, TS);
 
-        // Subtle tile borders
-        ctx.strokeStyle = '#141822';
+        // Warm stone tile seams
+        ctx.strokeStyle = '#423c34';
         ctx.lineWidth = 1;
         ctx.strokeRect(px + 0.5, py + 0.5, TS - 1, TS - 1);
 
-        // Occasional stone flecks / moss
+        // Occasional warm stone tile flecks
         if (seed % 7 === 0) {
-          ctx.fillStyle = '#273449';
+          ctx.fillStyle = '#7d7567';
           ctx.fillRect(px + 6, py + 8, 4, 3);
         }
       }
 
       if (tile === '#' || tile === 't') {
-        // Pseudo-3D wall: Top face (lighter) and front face (darker)
+        // Pseudo-3D wall: Top face (lighter stone) and front face (darker stone)
         const isFloorBelow = (ty + 1 < mapH) && (tiles[ty + 1][tx] === '.' || tiles[ty + 1][tx] === 'G');
 
-        // Top face
-        ctx.fillStyle = '#374151';
+        // Top face (lighter stone)
+        ctx.fillStyle = '#475569';
         ctx.fillRect(px, py, TS, isFloorBelow ? TS - 10 : TS);
 
         // Highlight bevel on top
-        ctx.fillStyle = '#4b5563';
+        ctx.fillStyle = '#64748b';
         ctx.fillRect(px, py, TS, 3);
         ctx.fillRect(px, py, 3, isFloorBelow ? TS - 10 : TS);
 
         if (isFloorBelow) {
           // Dark front face
-          ctx.fillStyle = '#1f2937';
+          ctx.fillStyle = '#1e293b';
           ctx.fillRect(px, py + TS - 10, TS, 10);
-          ctx.fillStyle = '#111827';
+          ctx.fillStyle = '#0f172a';
           ctx.fillRect(px, py + TS - 2, TS, 2);
         }
 
@@ -1031,7 +1029,39 @@ function render(ctx, g, cvWidth, cvHeight) {
     }
   }
 
-  // Render Hero
+  // Render Particles
+  for (const p of g.particles) {
+    const alpha = Math.max(0, p.life / p.maxLife);
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = alpha;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // Dynamic Dungeon Lighting Pass
+  renderLighting(ctx, g, camX, camY, zoom, cvWidth, cvHeight);
+
+  // Render Hero AFTER the darkness layer so the hero is never darkened
+  drawHero(ctx, g);
+
+  // Render Floating Text
+  for (const ft of g.floatingTexts) {
+    const alpha = Math.max(0, ft.life / ft.maxLife);
+    ctx.fillStyle = ft.color;
+    ctx.globalAlpha = alpha;
+    ctx.font = 'bold 12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(ft.text, ft.x, ft.y);
+  }
+  ctx.globalAlpha = 1;
+
+  ctx.restore();
+}
+
+/* ---------------- 10. Hero Rendering ---------------- */
+function drawHero(ctx, g) {
   const hero = g.hero;
   ctx.save();
   ctx.translate(hero.x, hero.y);
@@ -1042,48 +1072,55 @@ function render(ctx, g, cvWidth, cvHeight) {
     // Walk bob
     const walkBob = Math.sin(hero.walkAnim) * 1.5;
 
-    // Hero shadow
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+    // Small shadow under hero
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
     ctx.beginPath();
-    ctx.ellipse(0, hero.radius + 1, hero.radius * 0.9, 4, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, hero.radius + 2, hero.radius * 0.95, 4.5, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Hero Cloak & Hood
-    // Main cloak body
-    ctx.fillStyle = '#0f766e'; // teal adventurer tunic
+    // Main cloak body with light outline (2 px, #f5e6c8)
     ctx.beginPath();
     ctx.arc(0, walkBob, hero.radius, 0, Math.PI * 2);
+    ctx.fillStyle = '#0d9488'; // vibrant teal adventurer tunic
     ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#f5e6c8'; // 2 px light outline (#f5e6c8)
+    ctx.stroke();
 
     // Hood rim / face shadow
     ctx.fillStyle = '#115e59';
     ctx.beginPath();
-    ctx.arc(0, walkBob - 2, hero.radius * 0.8, 0, Math.PI * 2);
+    ctx.arc(0, walkBob - 1.5, hero.radius * 0.75, 0, Math.PI * 2);
     ctx.fill();
 
-    // Determined adventurer face & eyes facing aim angle
+    // Determined adventurer face & glowing eyes facing aim angle
     const eyeDist = 4;
     const ex = Math.cos(hero.aimAngle) * eyeDist;
-    const ey = Math.sin(hero.aimAngle) * eyeDist + walkBob - 2;
+    const ey = Math.sin(hero.aimAngle) * eyeDist + walkBob - 1.5;
 
     ctx.fillStyle = '#fef08a'; // bright glowing eyes under hood
     ctx.beginPath();
-    ctx.arc(ex - 2, ey, 1.5, 0, Math.PI * 2);
-    ctx.arc(ex + 2, ey, 1.5, 0, Math.PI * 2);
+    ctx.arc(ex - 2, ey, 1.8, 0, Math.PI * 2);
+    ctx.arc(ex + 2, ey, 1.8, 0, Math.PI * 2);
     ctx.fill();
 
     // Knife weapon in hand rotating with aim
     ctx.save();
     ctx.rotate(hero.aimAngle);
 
-    // Hand
+    // Hand with light outline
     ctx.fillStyle = '#d97706';
     ctx.beginPath();
     ctx.arc(hero.radius + 2, 4, 3, 0, Math.PI * 2);
     ctx.fill();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#f5e6c8';
+    ctx.stroke();
 
-    // Knife blade
-    ctx.fillStyle = '#e2e8f0';
+    // Knife blade with crisp outline
+    ctx.fillStyle = '#f8fafc';
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(hero.radius + 4, 4);
     ctx.lineTo(hero.radius + 18, 2);
@@ -1091,6 +1128,7 @@ function render(ctx, g, cvWidth, cvHeight) {
     ctx.lineTo(hero.radius + 4, 6);
     ctx.closePath();
     ctx.fill();
+    ctx.stroke();
 
     ctx.restore();
 
@@ -1104,7 +1142,7 @@ function render(ctx, g, cvWidth, cvHeight) {
       const startAngle = -KNIFE_ARC / 2;
       const endAngle = startAngle + KNIFE_ARC * swingPct;
       ctx.arc(0, 0, HERO_RADIUS + KNIFE_REACH, startAngle, endAngle);
-      ctx.strokeStyle = `rgba(254, 240, 138, ${0.8 - swingPct * 0.6})`;
+      ctx.strokeStyle = `rgba(254, 240, 138, ${0.9 - swingPct * 0.6})`;
       ctx.lineWidth = 4;
       ctx.stroke();
 
@@ -1113,36 +1151,9 @@ function render(ctx, g, cvWidth, cvHeight) {
   }
 
   ctx.restore();
-
-  // Render Particles
-  for (const p of g.particles) {
-    const alpha = Math.max(0, p.life / p.maxLife);
-    ctx.fillStyle = p.color;
-    ctx.globalAlpha = alpha;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.globalAlpha = 1;
-
-  // Render Floating Text
-  for (const ft of g.floatingTexts) {
-    const alpha = Math.max(0, ft.life / ft.maxLife);
-    ctx.fillStyle = ft.color;
-    ctx.globalAlpha = alpha;
-    ctx.font = 'bold 12px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(ft.text, ft.x, ft.y);
-  }
-  ctx.globalAlpha = 1;
-
-  // Dynamic Dungeon Lighting Pass
-  renderLighting(ctx, g, camX, camY, zoom, cvWidth, cvHeight);
-
-  ctx.restore();
 }
 
-/* ---------------- 10. Dynamic Lighting Layer ---------------- */
+/* ---------------- 11. Dynamic Lighting Layer ---------------- */
 function renderLighting(ctx, g, camX, camY, zoom, cvWidth, cvHeight) {
   // Save state for darkness compositing
   ctx.save();
@@ -1150,20 +1161,22 @@ function renderLighting(ctx, g, camX, camY, zoom, cvWidth, cvHeight) {
   // Screen-space overlay
   ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-  // Render ambient darkness
-  const darknessAlpha = g.levelDef.darkness || 0.45;
+  // Render ambient darkness (Level 1 <= 0.35)
+  const darknessAlpha = g.levelDef.darkness !== undefined ? g.levelDef.darkness : 0.30;
   ctx.fillStyle = `rgba(5, 7, 12, ${darknessAlpha})`;
   ctx.fillRect(0, 0, cvWidth, cvHeight);
 
   // Cut light circles using 'destination-out'
   ctx.globalCompositeOperation = 'destination-out';
 
-  // 1. Hero lantern light
+  // 1. Hero lantern light (centred on hero, bright radius ~180 px with soft edge)
   const hScreenX = (g.hero.x - camX) * zoom;
   const hScreenY = (g.hero.y - camY) * zoom;
-  const heroLightRadius = 110 * zoom;
-  const heroGrad = ctx.createRadialGradient(hScreenX, hScreenY, 20 * zoom, hScreenX, hScreenY, heroLightRadius);
-  heroGrad.addColorStop(0, 'rgba(0, 0, 0, 0.95)');
+  const heroLightRadius = 180 * zoom;
+  const heroGrad = ctx.createRadialGradient(hScreenX, hScreenY, 35 * zoom, hScreenX, hScreenY, heroLightRadius);
+  heroGrad.addColorStop(0, 'rgba(0, 0, 0, 1.0)');
+  heroGrad.addColorStop(0.55, 'rgba(0, 0, 0, 0.85)');
+  heroGrad.addColorStop(0.82, 'rgba(0, 0, 0, 0.35)');
   heroGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
   ctx.fillStyle = heroGrad;
   ctx.beginPath();
