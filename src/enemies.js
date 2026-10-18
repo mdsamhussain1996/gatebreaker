@@ -33,6 +33,9 @@ export class Enemy {
     this.deathColor = '#ffffff';
   }
 
+  get cx() { return this.x + this.w / 2; }
+  get cy() { return this.y + this.h / 2; }
+
   isAsleep(g) {
     const camX = g.cam ? g.cam.x : (g.player ? g.player.x : this.homeX);
     const camY = g.cam ? g.cam.y : (g.player ? g.player.y : this.homeY);

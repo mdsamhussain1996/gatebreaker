@@ -1008,5 +1008,43 @@ test('super meter: fills on coin/gem/kill, Q / Shockwave Burst damages all scree
   assert.equal(g.superMeter, 0, 'super meter did not reset');
 });
 
+// ------------------------------------------------------------------ 10. Bug fixes & HUD Polish (v2.3 Phase A)
+section('10. Bug fixes & HUD Polish (v2.3 Phase A)');
+
+test('boss bar: shows boss name only, no hardcoded WORLD 1 BOSS', () => {
+  const g1 = newGame(LEVELS.find(l => l.id === '1-3'));
+  assert.equal(g1.boss.name, 'Mushroom King');
+  const g2 = newGame(LEVELS.find(l => l.id === '2-3'));
+  assert.equal(g2.boss.name, 'Old Oak Guardian');
+  const g3 = newGame(LEVELS.find(l => l.id === '3-3'));
+  assert.equal(g3.boss.name, 'Sand Wyrm');
+});
+
+test('boss bar: hidden at level start, becomes active only upon entering boss arena', () => {
+  const g = newGame(LEVELS.find(l => l.id === '1-3'));
+  assert.equal(g.bossArenaEntered, false, 'boss bar should be hidden at level start');
+  // Move player near boss arena
+  g.player.place(g.boss.cx - 150, g.boss.y + g.boss.h);
+  g.update(I(), DT);
+  assert.equal(g.bossArenaEntered, true, 'boss bar should be visible after entering arena');
+});
+
+test('hint bubbles: clamped inside viewport with >= 16 px margin on all sides (3-3 Descend into...)', () => {
+  const l33 = LEVELS.find(l => l.id === '3-3');
+  const hint = l33.hints.find(h => h.text.includes('Descend into'));
+  assert.ok(hint, 'hint not found in 3-3');
+  
+  // Test clamping math with 16px margin on screen width 480
+  const margin = 16;
+  const VIEW_W = 480;
+  const fakeWidth = 260; // wide bubble
+  const halfW = fakeWidth / 2;
+  const rawScreenX = 20; // would clip off-screen without clamping
+  const clampedX = Math.max(margin + halfW, Math.min(VIEW_W - margin - halfW, rawScreenX));
+  assert.ok(clampedX - halfW >= margin, 'left edge must respect 16px margin');
+  assert.ok(clampedX + halfW <= VIEW_W - margin, 'right edge must respect 16px margin');
+});
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);
+

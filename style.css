@@ -84,19 +84,25 @@ body.touch-device #touch-controls.active { display: block; }
 @media (prefers-reduced-motion: reduce) { .key-slot.on { animation: none; } #toast { transition: none; } }
 
 /* ---------- Super Meter & Power-up HUD ---------- */
-.super-bar-bg { width: 60px; height: 10px; background: rgba(40, 25, 15, 0.4); border-radius: 6px; overflow: hidden; border: 1.5px solid var(--wood); }
-.super-bar-fill { height: 100%; background: linear-gradient(90deg, #eab308, #facc15); transition: width .15s ease-out; }
+.hud-tag { font-size: 0.70em; font-weight: 800; letter-spacing: 0.08em; color: #a8794c; margin-right: 2px; user-select: none; }
+.super-bar-bg { width: 68px; height: 10px; background: rgba(40, 25, 15, 0.55); border-radius: 6px; overflow: hidden; border: 1.5px solid var(--wood); box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4); }
+.super-bar-fill { height: 100%; background: linear-gradient(90deg, #f59e0b, #eab308, #ef4444); box-shadow: 0 0 6px rgba(250, 204, 21, 0.6); transition: width .15s ease-out; }
+.super-bar-fill.ready { animation: superBarGlow 0.8s infinite alternate; }
+@keyframes superBarGlow { to { box-shadow: 0 0 12px #facc15, 0 0 4px #ef4444; filter: brightness(1.25); } }
+.super-ready-label { font-size: 0.75em; font-weight: 800; color: #facc15; text-shadow: 0 0 8px rgba(250, 204, 21, 0.8), 0 1px 2px #000; margin-left: 2px; display: none; animation: superPulse 0.8s infinite alternate; }
+.super-ready-label.on { display: inline-block; }
 .super-icon { font-size: 1.1em; color: #a16207; opacity: .45; transition: all .2s; }
 .super-icon.ready { color: #facc15; opacity: 1; filter: drop-shadow(0 0 6px #fef08a); animation: superPulse 0.8s infinite alternate; }
 
-.powerup-ring { width: 1.6em; height: 1.6em; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.25); border: 2px solid #38bdf8; position: relative; }
-.powerup-ammo { font-weight: 700; color: #0284c7; }
+.powerup-ring { width: 1.6em; height: 1.6em; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.2); border: 1.5px solid rgba(138, 90, 43, 0.4); position: relative; font-size: 0.9em; }
+.powerup-ring.active { background: rgba(255, 255, 255, 0.35); border-color: #38bdf8; box-shadow: 0 0 8px rgba(56, 189, 248, 0.6); }
+.powerup-ammo { font-weight: 700; color: #0284c7; font-size: 0.85em; }
 .powerup-flash { animation: powerupFlash 0.4s infinite alternate; }
 @keyframes powerupFlash { to { opacity: 0.2; } }
 
-.hud-abilities { display: flex; gap: 0.35em; padding: 0.2em 0.5em; }
-.ability-slot { font-size: 1.05em; opacity: 0.22; filter: grayscale(1); transition: opacity .25s, filter .25s; }
-.ability-slot.on { opacity: 1; filter: drop-shadow(0 0 4px #facc15); }
+.hud-abilities { display: flex; align-items: center; gap: 0.35em; padding: 0.2em 0.5em; }
+.ability-slot { font-size: 1.05em; opacity: 0.25; filter: grayscale(1); border: 1.5px dashed rgba(138, 90, 43, 0.4); border-radius: 6px; padding: 1px 3px; line-height: 1; transition: opacity .25s, filter .25s, border-color .25s, box-shadow .25s; }
+.ability-slot.on { opacity: 1; filter: drop-shadow(0 0 4px #facc15); border: 1.5px solid rgba(250, 204, 21, 0.8); background: rgba(250, 204, 21, 0.15); box-shadow: 0 0 6px rgba(250, 204, 21, 0.35); }
 
 /* ---------- Touch extra buttons ---------- */
 .t-super { width: 72px; height: 72px; right: 124px; bottom: 94px; font-size: 26px; background: rgba(250, 204, 21, .35); border-color: rgba(254, 240, 138, .85); color: #fef08a; animation: superPulse 1s infinite alternate; }

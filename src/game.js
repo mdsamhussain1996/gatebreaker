@@ -108,6 +108,7 @@ export class Game {
     this.snapCamera();
     this.state = 'playing';
     this.shake = 0;
+    this.bossArenaEntered = false;
   }
 
   restart() { this.load(this.def); }
@@ -280,6 +281,14 @@ export class Game {
     if (this.gate) {
       this.gate.update(this, dt);
       this.updateGate();
+    }
+
+    // Boss arena entry detection
+    if (this.boss && !this.boss.dead && !this.bossArenaEntered) {
+      const dist = Math.hypot(p.cx - this.boss.cx, p.cy - this.boss.cy);
+      if (dist < 340 || p.cx >= this.boss.x - 220) {
+        this.bossArenaEntered = true;
+      }
     }
 
     this.updateEffects(dt);

@@ -91,17 +91,30 @@ export function updateHud(game) {
   // Super meter
   const superFill = Math.min(100, Math.max(0, game.superMeter || 0));
   const fillEl = $('hudSuperFill');
-  if (fillEl) fillEl.style.width = superFill + '%';
+  if (fillEl) {
+    fillEl.style.width = superFill + '%';
+    fillEl.classList.toggle('ready', superFill >= 100);
+  }
   const iconEl = $('hudSuperIcon');
   if (iconEl) iconEl.classList.toggle('ready', superFill >= 100);
+  const readyEl = $('hudSuperReady');
+  if (readyEl) {
+    readyEl.textContent = superFill >= 100 ? 'SUPER READY (Q)' : '';
+    readyEl.classList.toggle('on', superFill >= 100);
+  }
 
   // Active Power-up slot
   const puPanel = $('hudPowerupPanel');
   if (puPanel) {
+    const icon = $('hudPowerupIcon');
+    const ring = $('hudPowerupRing');
+    const ammoEl = $('hudPowerupAmmo');
     if (p.powerup) {
-      puPanel.style.display = 'flex';
-      $('hudPowerupIcon').textContent = p.powerup.icon || '⭐';
-      const ammoEl = $('hudPowerupAmmo');
+      if (icon) icon.textContent = p.powerup.icon || '⭐';
+      if (ring) {
+        ring.classList.add('active');
+        ring.classList.toggle('powerup-flash', typeof p.powerup.duration === 'number' && p.powerup.duration <= 2.2);
+      }
       if (ammoEl) {
         if (p.powerup.type === 'blaster') {
           ammoEl.style.display = 'inline';
@@ -110,12 +123,10 @@ export function updateHud(game) {
           ammoEl.style.display = 'none';
         }
       }
-      const ring = $('hudPowerupRing');
-      if (ring) {
-        ring.classList.toggle('powerup-flash', typeof p.powerup.duration === 'number' && p.powerup.duration <= 2.2);
-      }
     } else {
-      puPanel.style.display = 'none';
+      if (icon) icon.textContent = '—';
+      if (ring) ring.classList.remove('active', 'powerup-flash');
+      if (ammoEl) ammoEl.style.display = 'none';
     }
   }
 

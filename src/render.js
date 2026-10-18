@@ -187,7 +187,7 @@ export class Renderer {
 
     // 8. Screen space overlays: Gate edge arrow & Boss health bar
     this.drawGateArrow(ctx, g, camX, camY);
-    if (g.boss) this.drawBossHealthBar(ctx, g.boss);
+    if (g.boss && g.bossArenaEntered) this.drawBossHealthBar(ctx, g.boss);
   }
 
   // ------------------------------------------------------------ background
@@ -982,11 +982,11 @@ export class Renderer {
     const bw = 240, bh = 14;
     const bx = (VIEW_W - bw) / 2, by = 48;
     ctx.save();
-    // Name
+    // Name (show boss name only)
     ctx.font = '700 13px Fredoka, sans-serif';
     ctx.fillStyle = '#fed7aa';
     ctx.textAlign = 'center';
-    ctx.fillText(`${boss.name.toUpperCase()} (WORLD 1 BOSS)`, VIEW_W / 2, by - 6);
+    ctx.fillText(boss.name.toUpperCase(), VIEW_W / 2, by - 6);
 
     // Background bar
     ctx.fillStyle = '#1c1917';
@@ -1003,6 +1003,15 @@ export class Renderer {
     ctx.beginPath();
     ctx.roundRect(bx + 2, by + 2, (bw - 4) * pct, bh - 4, 4);
     ctx.fill();
+
+    // Phase notches
+    if (boss.maxHp > 1) {
+      for (let i = 1; i < boss.maxHp; i++) {
+        const nx = bx + (bw * (i / boss.maxHp));
+        ctx.fillStyle = '#1c1917';
+        ctx.fillRect(nx - 1, by + 1, 2, bh - 2);
+      }
+    }
     ctx.restore();
   }
 
@@ -1174,11 +1183,27 @@ export class Renderer {
     const a = Math.min(1, Math.max(0, (140 - minDist) / 45));
     ctx.font = '600 13px Fredoka, sans-serif';
     ctx.textAlign = 'center';
-    const w = ctx.measureText(nearest.text).width + 24;
+    const textWidth = ctx.measureText(nearest.text).width;
+    const w = textWidth + 24;
+    const h = 28;
+    const halfW = w / 2;
+
+    // Nearest hint screen position
+    const camX = g.cam.x, camY = g.cam.y;
+    const rawScreenX = nearest.x - camX;
+    const rawScreenY = (nearest.y - 74) - camY;
+
+    // Clamp bubble within view with 16 px margin
+    const margin = 16;
+    const clampedScreenX = Math.max(margin + halfW, Math.min(VIEW_W - margin - halfW, rawScreenX));
+    const clampedScreenY = Math.max(margin, Math.min(VIEW_H - margin - h, rawScreenY));
+
+    // Convert back to world coordinates since ctx is translated by -camX, -camY
+    const drawX = clampedScreenX + camX;
+    const drawY = clampedScreenY + camY;
+
     ctx.save();
     ctx.globalAlpha = a;
-    // Position comfortably high (y - 74) so it is never obstructed by bottom buttons
-    const bubbleY = nearest.y - 74;
     ctx.fillStyle = '#fff6dc';
     ctx.strokeStyle = '#8a5a2b';
     ctx.lineWidth = 2.5;
@@ -1186,13 +1211,13 @@ export class Renderer {
     ctx.shadowBlur = 6;
     ctx.shadowOffsetY = 2;
     ctx.beginPath();
-    ctx.roundRect(nearest.x - w / 2, bubbleY, w, 28, 10);
+    ctx.roundRect(drawX - halfW, drawY, w, h, 10);
     ctx.fill();
     ctx.shadowBlur = 0;
     ctx.stroke();
 
     ctx.fillStyle = '#4a2f22';
-    ctx.fillText(nearest.text, nearest.x, bubbleY + 18);
+    ctx.fillText(nearest.text, drawX, drawY + 18);
     ctx.restore();
   }
 
