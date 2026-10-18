@@ -1178,6 +1178,88 @@ test('coins distribution: max 8 coins in a straight line, arcs and trails', () =
   }
 });
 
+// ------------------------------------------------------------------ 12. Boss Events & Art Polish (Phase C & D)
+section('12. Boss Events & Art Polish (v2.3 Phase C & D)');
+
+test('boss arena lock: entering locks exit behind hero and clamps camera to arena', () => {
+  const g = newGame(LEVELS.find(l => l.id === '1-3'));
+  const boss = g.boss;
+  assert.ok(boss, 'boss missing in 1-3');
+  assert.equal(g.arenaLocked, false, 'arena should not be locked initially');
+
+  // Move player into arena proximity
+  g.player.place(boss.x - 120, boss.y + boss.h);
+  stepGame(g, 2);
+  assert.equal(g.bossArenaEntered, true, 'bossArenaEntered not set');
+  assert.equal(g.arenaLocked, true, 'arenaLocked not set');
+  assert.ok(g.arenaLeft !== null, 'arenaLeft not set');
+
+  const lockX = g.arenaLeft;
+  g.skipBossIntro();
+  // Try to move left of arenaLeft
+  g.player.place(lockX - 40, boss.y + boss.h);
+  g.player.vx = -150;
+  stepGame(g, 1, I({ left: true }));
+  assert.ok(g.player.x >= lockX, `player bypassed arena lock: ${g.player.x} < ${lockX}`);
+  assert.ok(g.cam.x >= lockX - 180, `camera scrolled past arena lock: ${g.cam.x} < ${lockX - 180}`);
+});
+
+test('boss intro: 2s timer, pans camera to boss, and any key skips intro', () => {
+  const g = newGame(LEVELS.find(l => l.id === '1-3'));
+  const boss = g.boss;
+  g.startBossIntro(boss);
+  assert.ok(g.bossIntro, 'bossIntro not started');
+  assert.equal(g.bossIntro.timer, 2.0);
+  assert.equal(g.bossIntro.title, boss.name.toUpperCase());
+
+  // Advancing with no input counts down
+  stepGame(g, 10, I());
+  assert.ok(g.bossIntro.timer < 2.0, 'timer should count down');
+
+  // Pressing any button skips intro immediately
+  stepGame(g, 1, I({ jumpPressed: true }));
+  assert.equal(g.bossIntro, null, 'button press did not skip boss intro');
+});
+
+test('boss phase change & defeat: phase hit-stop, arena change, defeat slow-mo, key beam, and arena unlock', () => {
+  const g = newGame(LEVELS.find(l => l.id === '1-3'));
+  const boss = g.boss;
+  g.arenaLocked = true;
+  g.arenaLeft = 300;
+
+  // First hit -> phase transition hit-stop & SFX
+  boss.hit(g);
+  assert.equal(boss.hp, 2);
+  assert.equal(g.hitStop, 0.35, 'hitStop not set to 0.35s on phase hit');
+
+  // Advance game and defeat boss
+  stepGame(g, 60);
+  boss.hit(g);
+  assert.equal(boss.hp, 1);
+  stepGame(g, 60);
+  boss.hit(g);
+  assert.equal(boss.hp, 0);
+  assert.ok(boss.dead, 'boss not marked dead');
+
+  // Verify defeat state
+  assert.equal(g.arenaLocked, false, 'arenaLocked not cleared on boss defeat');
+  assert.equal(g.slowMo, 0.6, 'slowMo not set to 0.6s on defeat');
+  assert.ok(g.keyBeam, 'keyBeam not created');
+  assert.equal(g.keyBeam.timer, 6.0);
+  assert.ok(g.coins.length > 5, 'bouncing defeat coins not spawned');
+});
+
+test('art polish: 4 parallax layers, atmosphere, foreground layer, and 8 decorative props', () => {
+  for (const def of LEVELS) {
+    const th = getTheme(def.theme);
+    assert.ok(typeof th.parallax?.far === 'function', `${def.theme}: far parallax missing`);
+    assert.ok(typeof th.parallax?.mid === 'function', `${def.theme}: mid parallax missing`);
+    assert.ok(typeof th.parallax?.near === 'function', `${def.theme}: near parallax missing`);
+    assert.ok(typeof th.parallax?.foliage === 'function', `${def.theme}: 4th foliage parallax missing`);
+  }
+});
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);
+
 

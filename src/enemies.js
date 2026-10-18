@@ -4,7 +4,7 @@
  * off-screen sleep (> 1.5 screens), hit-stop on kills, and telegraph timers.
  */
 import { moveX, moveY, groundAtPoint } from './physics.js';
-import { Key } from './items.js';
+import { Key, Coin } from './items.js';
 import { TS } from './constants.js';
 
 let nextId = 1;
@@ -937,10 +937,19 @@ export class MushroomKing extends Enemy {
   hit(g, dmg = 1, fromDir = 0) {
     if (this.dead || this.invuln > 0) return false;
     this.hp -= dmg;
-    this.flash = 0.35;
-    this.invuln = 0.8;
+    this.flash = 0.45;
+    this.invuln = 0.5;
     this.squash = 0.7;
-    g.shake = 5;
+    if (g) g.shake = 8;
+
+    // Boss Phase transition (hit-stop 0.35s, sfx, arena change)
+    if (this.hp > 0 && g) {
+      g.hitStop = 0.35;
+      g.sfx('bossPhase');
+      if (typeof g.spawnArenaSpores === 'function') {
+        g.spawnArenaSpores(this.x + this.w / 2, this.y + this.h / 2);
+      }
+    }
 
     // Moving enemy summon phase at HP <= 2
     if (this.hp <= 2 && !this.hasSummoned && g) {
@@ -954,19 +963,43 @@ export class MushroomKing extends Enemy {
 
     if (this.hp <= 0) {
       this.dead = true;
-      g.sfx('bossDie');
-      for (let i = 0; i < 20; i++) g.poof(this.x + Math.random() * this.w, this.y + Math.random() * this.h, '#f59e0b');
-      g.addScore(1000, this.x + this.w / 2, this.y - 10);
-      g.toast('Mushroom King defeated! 🗝');
-
       const keyX = this.x + this.w / 2;
       const keyY = this.y + this.h / 2;
-      const droppedKey = new Key(keyX, keyY);
-      droppedKey.homeX = keyX; droppedKey.homeY = keyY; droppedKey.state = 'rest';
-      g.key = droppedKey;
+      if (g) {
+        g.arenaLocked = false;
+        g.slowMo = 0.6;
+        g.sfx('bossDie');
+        g.sfx('bossVictory');
+        g.keyBeam = { x: keyX, y: keyY, timer: 6.0 };
+        for (let i = 0; i < 35; i++) {
+          g.particles.push({
+            x: this.x + Math.random() * this.w,
+            y: this.y + Math.random() * this.h,
+            vx: (Math.random() - 0.5) * 320,
+            vy: -140 - Math.random() * 260,
+            life: 0.8 + Math.random() * 0.5,
+            size: 4 + Math.random() * 4,
+            color: ['#f59e0b', '#fbbf24', '#ef4444', '#ffffff', '#a855f7'][Math.floor(Math.random() * 5)],
+            g: 600
+          });
+        }
+        for (let i = 0; i < 10; i++) {
+          const coin = new Coin(keyX, keyY - 8, true);
+          const angle = (i / 10) * Math.PI * 2;
+          coin.vx = Math.cos(angle) * (100 + Math.random() * 120);
+          coin.vy = -200 - Math.random() * 150;
+          g.coins.push(coin);
+        }
+        g.addScore(1000, keyX, this.y - 10);
+        g.toast('Mushroom King defeated! 🗝');
+
+        const droppedKey = new Key(keyX, keyY);
+        droppedKey.homeX = keyX; droppedKey.homeY = keyY; droppedKey.state = 'rest';
+        g.key = droppedKey;
+      }
       return true;
     }
-    g.sfx('knifeHit');
+    if (g) g.sfx('knifeHit');
     return false;
   }
 }
@@ -1025,11 +1058,20 @@ export class OldOakGuardian extends Enemy {
   hit(g, dmg = 1, fromDir = 0) {
     if (this.dead || this.invuln > 0) return false;
     this.hp -= dmg;
-    this.flash = 0.4;
-    this.invuln = 1.0;
+    this.flash = 0.45;
+    this.invuln = 0.5;
     this.state = 'hurt';
     this.timer = 0.7;
-    g.shake = 6;
+    if (g) g.shake = 8;
+
+    // Boss Phase transition (hit-stop 0.35s, sfx, arena leaves)
+    if (this.hp > 0 && g) {
+      g.hitStop = 0.35;
+      g.sfx('bossPhase');
+      if (typeof g.spawnArenaLeaves === 'function') {
+        g.spawnArenaLeaves(this.x + this.w / 2, this.y + this.h / 2);
+      }
+    }
 
     // Moving enemy summon phase at HP <= 2
     if (this.hp <= 2 && !this.hasSummoned && g) {
@@ -1041,19 +1083,43 @@ export class OldOakGuardian extends Enemy {
 
     if (this.hp <= 0) {
       this.dead = true;
-      g.sfx('bossDie');
-      for (let i = 0; i < 25; i++) g.poof(this.x + Math.random() * this.w, this.y + Math.random() * this.h, '#ca8a04');
-      g.addScore(1500, this.x + this.w / 2, this.y - 10);
-      g.toast('Old Oak Guardian defeated! 🗝');
-
       const keyX = this.x + this.w / 2;
       const keyY = this.y + this.h / 2;
-      const droppedKey = new Key(keyX, keyY);
-      droppedKey.homeX = keyX; droppedKey.homeY = keyY; droppedKey.state = 'rest';
-      g.key = droppedKey;
+      if (g) {
+        g.arenaLocked = false;
+        g.slowMo = 0.6;
+        g.sfx('bossDie');
+        g.sfx('bossVictory');
+        g.keyBeam = { x: keyX, y: keyY, timer: 6.0 };
+        for (let i = 0; i < 35; i++) {
+          g.particles.push({
+            x: this.x + Math.random() * this.w,
+            y: this.y + Math.random() * this.h,
+            vx: (Math.random() - 0.5) * 320,
+            vy: -140 - Math.random() * 260,
+            life: 0.8 + Math.random() * 0.5,
+            size: 4 + Math.random() * 4,
+            color: ['#ca8a04', '#ea580c', '#f59e0b', '#ffffff', '#16a34a'][Math.floor(Math.random() * 5)],
+            g: 600
+          });
+        }
+        for (let i = 0; i < 10; i++) {
+          const coin = new Coin(keyX, keyY - 8, true);
+          const angle = (i / 10) * Math.PI * 2;
+          coin.vx = Math.cos(angle) * (100 + Math.random() * 120);
+          coin.vy = -200 - Math.random() * 150;
+          g.coins.push(coin);
+        }
+        g.addScore(1500, keyX, this.y - 10);
+        g.toast('Old Oak Guardian defeated! 🗝');
+
+        const droppedKey = new Key(keyX, keyY);
+        droppedKey.homeX = keyX; droppedKey.homeY = keyY; droppedKey.state = 'rest';
+        g.key = droppedKey;
+      }
       return true;
     }
-    g.sfx('knifeHit');
+    if (g) g.sfx('knifeHit');
     return false;
   }
 }
@@ -1112,11 +1178,20 @@ export class SandWyrm extends Enemy {
   hit(g, dmg = 1, fromDir = 0) {
     if (this.dead || this.invuln > 0) return false;
     this.hp -= dmg;
-    this.flash = 0.4;
-    this.invuln = 1.0;
+    this.flash = 0.45;
+    this.invuln = 0.5;
     this.state = 'hurt';
     this.timer = 0.7;
-    g.shake = 6;
+    if (g) g.shake = 8;
+
+    // Boss Phase transition (hit-stop 0.35s, sfx, arena sand tremor)
+    if (this.hp > 0 && g) {
+      g.hitStop = 0.35;
+      g.sfx('bossPhase');
+      if (typeof g.spawnArenaSandTremor === 'function') {
+        g.spawnArenaSandTremor(this.x + this.w / 2, this.homeY);
+      }
+    }
 
     // Moving enemy summon phase at HP <= 2
     if (this.hp <= 2 && !this.hasSummoned && g) {
@@ -1128,19 +1203,43 @@ export class SandWyrm extends Enemy {
 
     if (this.hp <= 0) {
       this.dead = true;
-      g.sfx('bossDie');
-      for (let i = 0; i < 25; i++) g.poof(this.x + Math.random() * this.w, this.y + Math.random() * this.h, '#ea580c');
-      g.addScore(2000, this.x + this.w / 2, this.y - 10);
-      g.toast('Sand Wyrm defeated! 🗝');
-
       const keyX = this.x + this.w / 2;
       const keyY = this.y + this.h / 2;
-      const droppedKey = new Key(keyX, keyY);
-      droppedKey.homeX = keyX; droppedKey.homeY = keyY; droppedKey.state = 'rest';
-      g.key = droppedKey;
+      if (g) {
+        g.arenaLocked = false;
+        g.slowMo = 0.6;
+        g.sfx('bossDie');
+        g.sfx('bossVictory');
+        g.keyBeam = { x: keyX, y: keyY, timer: 6.0 };
+        for (let i = 0; i < 35; i++) {
+          g.particles.push({
+            x: this.x + Math.random() * this.w,
+            y: this.y + Math.random() * this.h,
+            vx: (Math.random() - 0.5) * 320,
+            vy: -140 - Math.random() * 260,
+            life: 0.8 + Math.random() * 0.5,
+            size: 4 + Math.random() * 4,
+            color: ['#ea580c', '#f59e0b', '#fef08a', '#ffffff', '#dc2626'][Math.floor(Math.random() * 5)],
+            g: 600
+          });
+        }
+        for (let i = 0; i < 10; i++) {
+          const coin = new Coin(keyX, keyY - 8, true);
+          const angle = (i / 10) * Math.PI * 2;
+          coin.vx = Math.cos(angle) * (100 + Math.random() * 120);
+          coin.vy = -200 - Math.random() * 150;
+          g.coins.push(coin);
+        }
+        g.addScore(2000, keyX, this.y - 10);
+        g.toast('Sand Wyrm defeated! 🗝');
+
+        const droppedKey = new Key(keyX, keyY);
+        droppedKey.homeX = keyX; droppedKey.homeY = keyY; droppedKey.state = 'rest';
+        g.key = droppedKey;
+      }
       return true;
     }
-    g.sfx('knifeHit');
+    if (g) g.sfx('knifeHit');
     return false;
   }
 }

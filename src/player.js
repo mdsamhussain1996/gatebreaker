@@ -135,8 +135,8 @@ export class Player {
       } else {
         this.vx = approach(this.vx, 0, PHYS.decel * dt);
       }
-      if (this.powerup?.type === 'speed_boots' && Math.abs(this.vx) > 60 && this.grounded && Math.random() < 0.35) {
-        if (g.spawnDust) g.spawnDust(this.cx, this.y + this.h);
+      if (((this.powerup?.type === 'speed_boots' && Math.abs(this.vx) > 60) || (Math.abs(this.vx) > 120)) && this.grounded && Math.random() < 0.28) {
+        if (g.spawnDust) g.spawnDust(this.cx - this.face * 6, this.y + this.h);
       }
     }
 
@@ -229,6 +229,10 @@ export class Player {
         } else if (!this.grounded && impactVy > 220) {
           this.sx = 1.28; this.sy = 0.76;
           g.sfx('land');
+          if (g.spawnDust) {
+            g.spawnDust(this.cx - 8, this.y + this.h);
+            g.spawnDust(this.cx + 8, this.y + this.h);
+          }
         }
         this.vy = 0;
         this.grounded = true;

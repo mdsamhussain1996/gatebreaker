@@ -110,6 +110,12 @@ export class Game {
     this.state = 'playing';
     this.shake = 0;
     this.bossArenaEntered = false;
+    this.arenaLocked = false;
+    this.arenaLeft = null;
+    this.bossIntro = null;
+    this.hitStop = 0;
+    this.slowMo = 0;
+    this.keyBeam = null;
   }
 
   restart() { this.load(this.def); }
@@ -130,6 +136,71 @@ export class Game {
     return (this.abilities && this.abilities.includes(name)) || hasAbility(name);
   }
 
+  startBossIntro(boss) {
+    this.bossIntro = {
+      boss,
+      timer: 2.0,
+      maxTimer: 2.0,
+      title: boss.name.toUpperCase(),
+      subtitle: '★ ARENA BOSS ★'
+    };
+    this.sfx('bossRoar');
+    this.shakeScreen(0.5);
+  }
+
+  skipBossIntro() {
+    if (!this.bossIntro) return;
+    this.bossIntro = null;
+    this.cam.fx = this.player.cx;
+    this.cam.fy = this.player.cy;
+    this.applyCamera();
+  }
+
+  spawnArenaSpores(cx, cy) {
+    for (let i = 0; i < 28; i++) {
+      this.particles.push({
+        x: cx + (Math.random() - 0.5) * 360,
+        y: cy - 100 + Math.random() * 200,
+        vx: (Math.random() - 0.5) * 90,
+        vy: -20 - Math.random() * 50,
+        life: 1.5 + Math.random() * 1.0,
+        size: 4 + Math.random() * 4,
+        color: Math.random() > 0.5 ? '#a855f7' : '#ec4899',
+        g: -10
+      });
+    }
+  }
+
+  spawnArenaLeaves(cx, cy) {
+    for (let i = 0; i < 32; i++) {
+      this.particles.push({
+        x: cx + (Math.random() - 0.5) * 400,
+        y: cy - 160 + Math.random() * 260,
+        vx: (Math.random() - 0.5) * 160,
+        vy: 20 + Math.random() * 60,
+        life: 1.8 + Math.random() * 1.2,
+        size: 5 + Math.random() * 4,
+        color: ['#ea580c', '#f59e0b', '#d97706', '#ca8a04'][Math.floor(Math.random() * 4)],
+        g: 20
+      });
+    }
+  }
+
+  spawnArenaSandTremor(cx, cy) {
+    for (let i = 0; i < 35; i++) {
+      this.particles.push({
+        x: cx + (Math.random() - 0.5) * 380,
+        y: cy + 10,
+        vx: (Math.random() - 0.5) * 140,
+        vy: -180 - Math.random() * 180,
+        life: 1.2 + Math.random() * 0.8,
+        size: 3 + Math.random() * 4,
+        color: Math.random() > 0.4 ? '#f59e0b' : '#fef08a',
+        g: 500
+      });
+    }
+  }
+
   // ---------------------------------------------------------------- update
   update(input, dt) {
     if (this.state !== 'playing') {
@@ -137,17 +208,52 @@ export class Game {
       return;
     }
 
-    // 50ms hit-stop on kills
+    // Boss intro cinematic (2s, skippable)
+    if (this.bossIntro) {
+      if (input.jumpPressed || input.knifePressed || input.interactPressed || input.dashPressed || input.superPressed || input.left || input.right || input.up || input.down) {
+        this.skipBossIntro();
+      } else {
+        this.bossIntro.timer -= dt;
+        if (this.bossIntro.timer <= 0) {
+          this.bossIntro = null;
+        } else {
+          this.player.vx = 0;
+          const targetCamFx = this.bossIntro.boss.cx;
+          const targetCamFy = this.bossIntro.boss.cy - 20;
+          this.cam.fx += (targetCamFx - this.cam.fx) * (dt * 4);
+          this.cam.fy += (targetCamFy - this.cam.fy) * (dt * 4);
+          this.applyCamera();
+          this.updateEffects(dt);
+          return;
+        }
+      }
+    }
+
+    // Hit-stop on kills / boss phase transitions
     if (this.hitStop > 0) {
       this.hitStop -= dt;
       this.updateEffects(dt);
       return;
     }
 
+    // Slow-motion on boss defeat (0.6s)
+    if (this.slowMo > 0) {
+      this.slowMo -= dt;
+      dt *= 0.35;
+    }
+
     this.time += dt;
     const p = this.player;
 
     p.update(this, input, dt);
+
+    // Enforce arena lock boundary on player
+    if (this.arenaLocked && this.arenaLeft !== null) {
+      if (p.x < this.arenaLeft) {
+        p.x = this.arenaLeft;
+        if (p.vx < 0) p.vx = 0;
+      }
+    }
     this.updateBridges(dt);
 
     // Update enemies with off-screen sleep (> 1.5 screens) & max 6 active moving enemies on screen rule
@@ -284,11 +390,23 @@ export class Game {
       this.updateGate();
     }
 
-    // Boss arena entry detection
+    // Boss arena entry detection & lock
     if (this.boss && !this.boss.dead && !this.bossArenaEntered) {
       const dist = Math.hypot(p.cx - this.boss.cx, p.cy - this.boss.cy);
       if (dist < 340 || p.cx >= this.boss.x - 220) {
         this.bossArenaEntered = true;
+        this.arenaLocked = true;
+        this.arenaLeft = Math.max(0, Math.floor(p.x - 48));
+        this.sfx('arenaLock');
+        this.shakeScreen(0.4);
+        for (let i = 0; i < 16; i++) {
+          this.particles.push({
+            x: this.arenaLeft, y: p.y - 40 + Math.random() * 80,
+            vx: (Math.random() - 0.5) * 80, vy: -60 - Math.random() * 80,
+            life: 0.5, size: 4, color: '#94a3b8', g: 400
+          });
+        }
+        this.startBossIntro(this.boss);
       }
     }
 
@@ -297,6 +415,10 @@ export class Game {
   }
 
   updateEffects(dt) {
+    if (this.keyBeam) {
+      this.keyBeam.timer -= dt;
+      if (this.keyBeam.timer <= 0) this.keyBeam = null;
+    }
     if (this.particles.length > 100) {
       this.particles.splice(0, this.particles.length - 100);
     }
@@ -635,7 +757,12 @@ export class Game {
     const cy = (cam.fy + touchOffsetY) - VIEW_H / 2;
     const maxX = Math.max(0, this.world.w - VIEW_W);
     const maxY = Math.max(0, this.world.h - VIEW_H);
-    cam.x = Math.max(0, Math.min(maxX, cx));
+    let finalX = Math.max(0, Math.min(maxX, cx));
+    if (this.arenaLocked && this.arenaLeft !== null) {
+      const minArenaCamX = Math.max(0, this.arenaLeft - 180);
+      finalX = Math.max(finalX, minArenaCamX);
+    }
+    cam.x = Math.min(maxX, finalX);
     cam.y = Math.max(0, Math.min(maxY, cy));
   }
 

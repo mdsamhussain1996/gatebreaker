@@ -111,6 +111,17 @@ export const THEME_GREEN_HILLS = {
         ctx.closePath();
         ctx.fill();
       });
+    },
+    foliage(ctx, w, h) {
+      // Near foliage silhouettes, overhanging branches with soft leaves
+      ctx.fillStyle = '#1c2842';
+      for (let x = 40; x < w; x += 180) {
+        ctx.beginPath();
+        ctx.arc(x, h - 200, 48, 0, Math.PI * 2);
+        ctx.arc(x + 28, h - 220, 36, 0, Math.PI * 2);
+        ctx.arc(x - 24, h - 210, 32, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
   },
   clouds(ctx, t, camX, camY) {
@@ -303,6 +314,17 @@ export const THEME_AUTUMN_FOREST = {
       for (let x = 80; x < w; x += 220) {
         ctx.fillRect(x, h - 300, 26, 300); // tree trunks
       }
+    },
+    foliage(ctx, w, h) {
+      // Near redwood trunks & layered canopy silhouettes
+      ctx.fillStyle = '#3a1f22';
+      for (let x = 50; x < w; x += 190) {
+        ctx.fillRect(x, h - 340, 28, 340);
+        ctx.fillRect(x - 30, h - 280, 50, 10);
+        ctx.beginPath();
+        ctx.arc(x + 12, h - 300, 42, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
   },
   clouds(ctx, t, camX, camY) {
@@ -426,6 +448,17 @@ export const THEME_DESERT_RUINS = {
       ctx.quadraticCurveTo(w * 0.4, h - 150, w, h - 100);
       ctx.lineTo(w, h);
       ctx.fill();
+    },
+    foliage(ctx, w, h) {
+      // Ruined sandstone pillars & distant archways
+      ctx.fillStyle = '#8c3e2e';
+      for (let x = 80; x < w; x += 240) {
+        ctx.fillRect(x, h - 230, 20, 230);
+        ctx.fillRect(x - 8, h - 240, 36, 10);
+        ctx.beginPath();
+        ctx.arc(x + 45, h - 190, 30, Math.PI, 0);
+        ctx.fill();
+      }
     }
   },
   clouds(ctx, t, camX, camY) {},

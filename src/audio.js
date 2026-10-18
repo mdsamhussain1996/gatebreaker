@@ -215,6 +215,17 @@ export function playSound(type) {
       tone('triangle', 523.25, 659.25, 0.10, 0.24);
       tone('triangle', 659.25, 783.99, 0.10, 0.24, 0.08);
       tone('triangle', 783.99, 1046.5, 0.18, 0.28, 0.16);
+    } else if (type === 'bossRoar') {
+      tone('sawtooth', 95, 45, 0.55, 0.45);
+      tone('square', 60, 30, 0.45, 0.35, 0.1);
+    } else if (type === 'arenaLock') {
+      tone('sawtooth', 140, 45, 0.25, 0.40);
+      tone('triangle', 220, 80, 0.15, 0.30, 0.05);
+    } else if (type === 'bossPhase') {
+      tone('sawtooth', 160, 440, 0.30, 0.35);
+      tone('triangle', 220, 580, 0.35, 0.40, 0.08);
+    } else if (type === 'bossVictory') {
+      [523.25, 659.25, 783.99, 1046.5, 1318.5, 1567.98].forEach((f, i) => tone('triangle', f, f, 0.25, 0.32, i * 0.1));
     }
   } catch (err) {
     // Audio synthesis failure should never crash the game
