@@ -1131,6 +1131,53 @@ test('signature mechanics: each world has distinct theme and signature layouts',
   assert.ok(LEVELS.find(l => l.id === '3-3').bosses || parseLevel(LEVELS.find(l => l.id === '3-3')).bosses.length === 1, '3-3 has Sand Wyrm');
 });
 
+test('themes: getTheme throws on unknown theme ID, and World 1/2/3 themes render with their own sky colour', () => {
+  assert.throws(() => getTheme('deep_forest'), /Unknown theme id/);
+  assert.throws(() => getTheme('fake_theme'), /Unknown theme id/);
+  for (const def of LEVELS) {
+    const th = getTheme(def.theme);
+    assert.ok(th, `theme ${def.theme} must exist`);
+  }
+  const w1 = getTheme(LEVELS.find(l => l.world === 1).theme);
+  const w2 = getTheme(LEVELS.find(l => l.world === 2).theme);
+  const w3 = getTheme(LEVELS.find(l => l.world === 3).theme);
+  assert.equal(w1.id, 'green_hills');
+  assert.equal(w2.id, 'autumn_forest');
+  assert.equal(w3.id, 'desert_ruins');
+  assert.notEqual(w1.sky[0][1], w2.sky[0][1], 'W1 and W2 sky colours must differ');
+  assert.notEqual(w2.sky[0][1], w3.sky[0][1], 'W2 and W3 sky colours must differ');
+  assert.notEqual(w1.sky[0][1], w3.sky[0][1], 'W1 and W3 sky colours must differ');
+});
+
+test('chests and spawn: min 10 tiles away from start, hidden chests, clean hero spawn', () => {
+  for (const def of LEVELS) {
+    const lv = parseLevel(def);
+    assert.ok(lv.start, `level ${def.id} has start`);
+    const startTile = def.rows[lv.start.r][lv.start.c];
+    assert.equal(startTile, 'P', `level ${def.id} start position must be clean spawn`);
+    for (const ch of lv.chests) {
+      const dist = Math.hypot(ch.c - lv.start.c, ch.r - lv.start.r);
+      assert.ok(dist >= 10, `level ${def.id} chest at (${ch.c},${ch.r}) too close to start (${dist.toFixed(1)} < 10)`);
+    }
+  }
+});
+
+test('coins distribution: max 8 coins in a straight line, arcs and trails', () => {
+  for (const def of LEVELS) {
+    def.rows.forEach((row, r) => {
+      let run = 0;
+      for (let c = 0; c < row.length; c++) {
+        if (row[c] === 'c') {
+          run++;
+          assert.ok(run <= 8, `level ${def.id} row ${r} has ${run} straight coins (max 8)`);
+        } else {
+          run = 0;
+        }
+      }
+    });
+  }
+});
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);
 

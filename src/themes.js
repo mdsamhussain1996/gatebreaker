@@ -825,5 +825,8 @@ export const THEMES = {
 };
 
 export function getTheme(themeId) {
-  return THEMES[themeId] || THEME_GREEN_HILLS;
+  if (!THEMES[themeId]) {
+    throw new Error(`Unknown theme id "${themeId}". Valid themes: ${Object.keys(THEMES).join(', ')}`);
+  }
+  return THEMES[themeId];
 }
