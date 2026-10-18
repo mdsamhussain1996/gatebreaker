@@ -20,32 +20,38 @@
       <!-- HUD -->
       <header id="hud" aria-label="Heads-up display" hidden>
         <div class="hud-left">
-          <div class="panel" id="hudStatus">
-            <span class="hud-lives" title="Lives">Rook ×<b id="hudLives">3</b></span>
-            <span class="hud-hearts" id="hudHearts" title="Hearts" aria-label="Hearts">♥♥♥</span>
-          </div>
-          <div class="panel" id="hudCoinsPanel">
-            <span class="coin-dot" aria-hidden="true"></span><b id="hudCoins">0</b>
-            <span class="key-slot" id="hudKey" title="Gate key">🗝</span>
-          </div>
-          <div class="panel" id="hudSuperPanel" title="Super Meter (Press Q or ⚡ when full)">
-            <span class="hud-tag">SUPER</span>
-            <div class="super-bar-bg"><div class="super-bar-fill" id="hudSuperFill" style="width: 0%"></div></div>
-            <span class="super-icon" id="hudSuperIcon">⚡</span>
-            <span class="super-ready-label" id="hudSuperReady"></span>
-          </div>
-          <div class="panel" id="hudPowerupPanel" title="Active Power-up">
-            <span class="hud-tag">POWER</span>
-            <div class="powerup-ring" id="hudPowerupRing">
-              <span id="hudPowerupIcon">—</span>
+          <div class="hud-bar" id="hudBar">
+            <div class="hud-row-top">
+              <div class="hud-group" id="hudStatus" title="Lives & Hearts">
+                <span class="hud-lives">Rook ×<b id="hudLives">3</b></span>
+                <span class="hud-hearts" id="hudHearts" title="Hearts" aria-label="Hearts">♥♥♥</span>
+              </div>
+              <span class="hud-sep">|</span>
+              <div class="hud-group" id="hudCoinsPanel" title="Coins & Key">
+                <span class="coin-dot" aria-hidden="true"></span><b id="hudCoins">0</b>
+                <span class="key-slot" id="hudKey" title="Gate key">🗝</span>
+              </div>
+              <div class="hud-power-slot" id="hudPowerupPanel" title="Active Power-up" style="display: none;">
+                <span class="hud-sep">|</span>
+                <div class="powerup-ring" id="hudPowerupRing">
+                  <span id="hudPowerupIcon">⭐</span>
+                </div>
+                <span id="hudPowerupAmmo" class="powerup-ammo"></span>
+              </div>
             </div>
-            <span id="hudPowerupAmmo" class="powerup-ammo"></span>
-          </div>
-          <div class="panel hud-abilities" id="hudAbilitiesPanel" title="Unlocked Abilities">
-            <span class="hud-tag">POWERS</span>
-            <span class="ability-slot" id="hudAbilJump" title="Double Jump (Mid-air Space)">✨</span>
-            <span class="ability-slot" id="hudAbilDash" title="Dash (Shift / DASH button)">⚡</span>
-            <span class="ability-slot" id="hudAbilPound" title="Ground Pound (Down + Jump in air)">💥</span>
+            <div class="hud-row-bottom">
+              <div class="super-box" id="hudSuperPanel" title="Super Meter (Press Q or ⚡ when full)">
+                <span class="hud-tag-mini">SUPER</span>
+                <div class="super-bar-bg"><div class="super-bar-fill" id="hudSuperFill" style="width: 0%"></div></div>
+                <span class="super-icon" id="hudSuperIcon">⚡</span>
+                <span class="super-ready-label" id="hudSuperReady"></span>
+              </div>
+              <div class="hud-mini-abilities" id="hudAbilitiesPanel" title="Abilities">
+                <span class="ability-slot" id="hudAbilJump" title="Double Jump (Mid-air Space)">✨</span>
+                <span class="ability-slot" id="hudAbilDash" title="Dash (Shift / DASH button)">⚡</span>
+                <span class="ability-slot" id="hudAbilPound" title="Ground Pound (Down + Jump in air)">💥</span>
+              </div>
+            </div>
           </div>
         </div>
         <div class="hud-right">

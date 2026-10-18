@@ -104,6 +104,7 @@ export class Game {
     if (!this.infiniteLives && this.player.lives <= 0) this.player.lives = 3;
     this.player.hasKey = false;
     this.player.place(lv.start.x, lv.start.feetY);
+    this.player.invuln = 1.5;
     this.cam = { x: 0, y: 0, fx: lv.start.x, fy: lv.start.feetY - 60 };
     this.snapCamera();
     this.state = 'playing';
@@ -296,6 +297,9 @@ export class Game {
   }
 
   updateEffects(dt) {
+    if (this.particles.length > 100) {
+      this.particles.splice(0, this.particles.length - 100);
+    }
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const q = this.particles[i];
       q.life -= dt;
@@ -576,7 +580,7 @@ export class Game {
     const hearts = p.hearts, lives = p.lives, hasKey = p.hasKey;
     p.place(this.checkpoint.x, this.checkpoint.feetY);
     p.hearts = hearts; p.lives = lives; p.hasKey = hasKey;
-    p.invuln = 1.6;
+    p.invuln = 1.5;
     this.snapCamera();
   }
 

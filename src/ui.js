@@ -110,6 +110,7 @@ export function updateHud(game) {
     const ring = $('hudPowerupRing');
     const ammoEl = $('hudPowerupAmmo');
     if (p.powerup) {
+      puPanel.style.display = 'inline-flex';
       if (icon) icon.textContent = p.powerup.icon || '⭐';
       if (ring) {
         ring.classList.add('active');
@@ -124,7 +125,7 @@ export function updateHud(game) {
         }
       }
     } else {
-      if (icon) icon.textContent = '—';
+      puPanel.style.display = 'none';
       if (ring) ring.classList.remove('active', 'powerup-flash');
       if (ammoEl) ammoEl.style.display = 'none';
     }

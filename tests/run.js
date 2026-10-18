@@ -2,6 +2,9 @@
  * Gatebreaker test suite (plain Node, no dependencies).   Run: node tests/run.js
  */
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { TS, HERO, PHYS, JUMP, DT, ABILITIES } from '../src/constants.js';
 import { World, overlapsSolid, moveX, moveY, probeGround } from '../src/physics.js';
 import { Player } from '../src/player.js';
@@ -946,6 +949,7 @@ test('ice knife: slashing defeated enemy spawns standable IceBlock', () => {
 
 test('bubble shield: absorbs one hit without heart loss and pops', () => {
   const g = newGame(LEVELS[0]);
+  g.player.invuln = 0;
   g.player.powerup = { type: 'bubble_shield', duration: 20 };
   const startHearts = g.player.hearts;
   const hurtResult = g.player.hurt(g, g.player.cx - 20);
@@ -1043,6 +1047,55 @@ test('hint bubbles: clamped inside viewport with >= 16 px margin on all sides (3
   const clampedX = Math.max(margin + halfW, Math.min(VIEW_W - margin - halfW, rawScreenX));
   assert.ok(clampedX - halfW >= margin, 'left edge must respect 16px margin');
   assert.ok(clampedX + halfW <= VIEW_W - margin, 'right edge must respect 16px margin');
+});
+
+test('spawn safety: no enemy within 6 tiles of start or checkpoints in every level, and 1.5s invincibility', () => {
+  const TS = 32;
+  const SAFE_DIST = 6 * TS; // 192 px
+  for (const def of LEVELS) {
+    const lv = parseLevel(def);
+    const checks = [{ name: 'start', x: lv.start.x, y: lv.start.feetY }];
+    if (lv.checkpoints) {
+      lv.checkpoints.forEach((cp, idx) => checks.push({ name: `checkpoint ${idx}`, x: (cp.c + 0.5) * TS, y: (cp.r + 1) * TS }));
+    }
+    const enemies = [
+      ...(lv.walkers||[]), ...(lv.hedgehogs||[]), ...(lv.squirrels||[]),
+      ...(lv.snapvines||[]), ...(lv.scorpions||[]), ...(lv.sandWorms||[]),
+      ...(lv.buzzBees||[]), ...(lv.nightBats||[]), ...(lv.hopperFrogs||[]),
+      ...(lv.wildBoars||[]), ...(lv.leafGliders||[]), ...(lv.armadillos||[]),
+      ...(lv.desertHawks||[]), ...(lv.spinningSaws||[]), ...(lv.bosses||[])
+    ];
+    for (const cp of checks) {
+      for (const e of enemies) {
+        const ex = e.x ?? (e.c0 !== undefined ? e.c0 * TS : 0);
+        const ey = e.feetY ?? e.y ?? e.ceilingY ?? (e.r0 !== undefined ? e.r0 * TS : 0);
+        const dist = Math.hypot(ex - cp.x, ey - cp.y);
+        assert.ok(dist >= SAFE_DIST, `${def.id}: enemy at (${ex}, ${ey}) is too close to ${cp.name} (dist=${dist.toFixed(1)} < ${SAFE_DIST})`);
+      }
+    }
+
+    // Verify 1.5s invincibility on spawn and respawn
+    const g = newGame(def);
+    assert.ok(g.player.invuln >= 1.5, `${def.id}: player must have >= 1.5s invincibility at level spawn`);
+    g.player.invuln = 0;
+    g.respawn();
+    assert.ok(g.player.invuln >= 1.5, `${def.id}: player must have >= 1.5s invincibility at respawn`);
+  }
+});
+
+test('compact HUD: combined top-left bar, max-height constraints, active-only power-up', () => {
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '../style.css'), 'utf8');
+
+  // Verify single unified hud-bar
+  assert.ok(html.includes('id="hudBar"'), 'HUD must have single compact #hudBar');
+  assert.ok(html.includes('class="hud-row-top"'), 'HUD must have hud-row-top');
+  assert.ok(html.includes('class="hud-row-bottom"'), 'HUD must have hud-row-bottom');
+
+  // Verify max-height constraints
+  assert.ok(css.includes('max-height: 70px'), 'laptop HUD max-height must be <= 70px');
+  assert.ok(css.includes('max-height: 56px'), 'mobile HUD max-height must be <= 56px');
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

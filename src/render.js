@@ -10,6 +10,29 @@ import { POWERUP_DEFS, BlasterBolt, FlameWave } from './items.js';
 
 const hash = (c, r) => (((c * 73856093) ^ (r * 19349663)) >>> 0);
 
+// Cached radial glow canvases for fast zero-allocation glow rendering
+const glowCanvases = new Map();
+function getCachedGlow(color, radius) {
+  const key = `${color}_${radius}`;
+  let cv = glowCanvases.get(key);
+  if (!cv && typeof document !== 'undefined') {
+    cv = document.createElement('canvas');
+    const d = radius * 2;
+    cv.width = d;
+    cv.height = d;
+    const gctx = cv.getContext('2d');
+    const grad = gctx.createRadialGradient(radius, radius, 1, radius, radius, radius);
+    grad.addColorStop(0, color);
+    grad.addColorStop(1, 'transparent');
+    gctx.fillStyle = grad;
+    gctx.beginPath();
+    gctx.arc(radius, radius, radius, 0, Math.PI * 2);
+    gctx.fill();
+    glowCanvases.set(key, cv);
+  }
+  return cv;
+}
+
 /**
  * Bake the static world tiles into an offscreen canvas.
  * Uses the theme's procedural tile painters with ZERO hardcoded theme checks.
@@ -137,15 +160,20 @@ export class Renderer {
     for (const cl of (g.lifts || [])) this.drawCraneLift(ctx, cl);
     for (const pr of (g.projectiles || [])) this.drawProjectile(ctx, pr);
 
-    // 4. Collectibles
-    for (const c of g.coins) if (!c.collected) this.drawCoin(ctx, c);
-    for (const gm of g.gems) if (!gm.collected) this.drawGem(ctx, gm);
-    for (const st of g.stars) if (!st.collected) this.drawStar(ctx, st);
-    for (const ht of g.hearts) if (!ht.collected) this.drawHeart(ctx, ht);
+    // 4. Collectibles (culled to visible viewport + 32px padding)
+    const minX = camX - 48, maxX = camX + VIEW_W + 48;
+    const minY = camY - 48, maxY = camY + VIEW_H + 48;
+    for (const c of g.coins) if (!c.collected && c.x >= minX && c.x <= maxX && c.y >= minY && c.y <= maxY) this.drawCoin(ctx, c);
+    for (const gm of g.gems) if (!gm.collected && gm.x >= minX && gm.x <= maxX && gm.y >= minY && gm.y <= maxY) this.drawGem(ctx, gm);
+    for (const st of g.stars) if (!st.collected && st.x >= minX && st.x <= maxX && st.y >= minY && st.y <= maxY) this.drawStar(ctx, st);
+    for (const ht of g.hearts) if (!ht.collected && ht.x >= minX && ht.x <= maxX && ht.y >= minY && ht.y <= maxY) this.drawHeart(ctx, ht);
 
-    // 5. Enemies & Bosses
+    // 5. Enemies & Bosses (culled to visible viewport)
     for (const e of g.enemies) {
       if (e.dead) continue;
+      const ew = e.w || 32, eh = e.h || 32;
+      if (e.x + ew < minX || e.x > maxX || e.y + eh < minY || e.y > maxY) continue;
+
       if (e.type === 'mushroom') this.drawMushroom(ctx, e);
       else if (e.type === 'hedgehog') this.drawHedgehog(ctx, e);
       else if (e.type === 'squirrel') this.drawSquirrel(ctx, e);
@@ -248,9 +276,7 @@ export class Renderer {
       const alpha = 0.4 + Math.sin(p.phase) * 0.3;
       ctx.globalAlpha = Math.max(0.1, Math.min(0.9, alpha));
       ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
     }
     ctx.restore();
   }
@@ -424,11 +450,8 @@ export class Renderer {
     const cx = s.x + s.w / 2, cy = s.y + s.h / 2 + bob;
     ctx.save();
     ctx.translate(cx, cy);
-    const glow = ctx.createRadialGradient(0, 0, 2, 0, 0, 18);
-    glow.addColorStop(0, 'rgba(251, 191, 36, 0.6)');
-    glow.addColorStop(1, 'rgba(251, 191, 36, 0)');
-    ctx.fillStyle = glow;
-    ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI * 2); ctx.fill();
+    const glowCv = getCachedGlow('rgba(251, 191, 36, 0.65)', 18);
+    if (glowCv) ctx.drawImage(glowCv, -18, -18);
 
     // 5-point star
     ctx.fillStyle = '#fbbf24';
@@ -464,11 +487,8 @@ export class Renderer {
 
   drawKey(ctx, k) {
     const cx = k.x + k.w / 2, cy = k.y + k.h / 2;
-    const glow = ctx.createRadialGradient(cx, cy, 2, cx, cy, 26);
-    glow.addColorStop(0, 'rgba(255,224,102,0.55)');
-    glow.addColorStop(1, 'rgba(255,224,102,0)');
-    ctx.fillStyle = glow;
-    ctx.beginPath(); ctx.arc(cx, cy, 26, 0, Math.PI * 2); ctx.fill();
+    const glowCv = getCachedGlow('rgba(255, 224, 102, 0.6)', 26);
+    if (glowCv) ctx.drawImage(glowCv, cx - 26, cy - 26);
     ctx.fillStyle = '#ffd84a';
     ctx.strokeStyle = '#8a5a00';
     ctx.lineWidth = 1.5;
@@ -1016,7 +1036,7 @@ export class Renderer {
   }
 
   drawHero(ctx, p) {
-    if (p.invuln > 0 && Math.floor(this.t * 16) % 2 === 0 && p.hurtT <= 0 && p.invuln < 1.35) return;
+    if (p.invuln > 0 && Math.floor(this.t * 16) % 2 === 0 && p.hurtT <= 0) return;
     const cx = p.cx, feet = p.y + p.h + p.visDy;
     ctx.save();
     ctx.translate(cx, feet);
@@ -1150,7 +1170,12 @@ export class Renderer {
   }
 
   drawParticles(ctx, g) {
+    const minX = g.cam ? g.cam.x - 30 : -30;
+    const maxX = g.cam ? g.cam.x + VIEW_W + 30 : VIEW_W + 30;
+    const minY = g.cam ? g.cam.y - 30 : -30;
+    const maxY = g.cam ? g.cam.y + VIEW_H + 30 : VIEW_H + 30;
     for (const q of g.particles) {
+      if (q.x < minX || q.x > maxX || q.y < minY || q.y > maxY) continue;
       ctx.globalAlpha = Math.max(0, Math.min(1, q.life * 2));
       ctx.fillStyle = q.color;
       ctx.fillRect(q.x - q.size / 2, q.y - q.size / 2, q.size, q.size);
@@ -1263,14 +1288,8 @@ export class Renderer {
       const cx = po.x + po.w / 2;
       const def = POWERUP_DEFS[po.type] || POWERUP_DEFS.blaster;
       ctx.save();
-      const grad = ctx.createRadialGradient(cx, cy, 4, cx, cy, 22);
-      grad.addColorStop(0, def.color);
-      grad.addColorStop(0.5, def.color + '66');
-      grad.addColorStop(1, 'transparent');
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(cx, cy, 22, 0, Math.PI * 2);
-      ctx.fill();
+      const glowCv = getCachedGlow(def.color, 22);
+      if (glowCv) ctx.drawImage(glowCv, cx - 22, cy - 22);
 
       ctx.fillStyle = def.color;
       ctx.strokeStyle = '#fff';
