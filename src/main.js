@@ -7,7 +7,7 @@ import { Game } from './game.js';
 import { Renderer } from './render.js';
 import { InputManager } from './input.js';
 import { playSound, initAudio } from './audio.js';
-import { recordResult, loadSave } from './save.js';
+import { recordResult, loadSave, getUnlockedAbilities } from './save.js';
 import * as ui from './ui.js';
 
 const canvas = document.getElementById('gameCanvas');
@@ -27,8 +27,17 @@ const game = new Game({
   toast: ui.toast,
   onComplete: stats => {
     mode = 'complete';
+    const unlockedBefore = getUnlockedAbilities();
     recordResult(stats.levelId, stats.time, stats.coins, stats.stars);
-    ui.showComplete(stats);
+    const unlockedAfter = getUnlockedAbilities();
+    const newlyUnlocked = unlockedAfter.find(a => !unlockedBefore.includes(a));
+    if (newlyUnlocked) {
+      ui.showPowerUnlocked(newlyUnlocked, () => {
+        ui.showComplete(stats);
+      });
+    } else {
+      ui.showComplete(stats);
+    }
   },
   onGameOver: () => {
     mode = 'gameover';
@@ -63,11 +72,42 @@ function showWorldMap(w = currentWorld) {
   ui.showScreen('map');
 }
 
+// Test / debug hook
+window.__gb = {
+  game,
+  input,
+  renderer,
+  ui,
+  LEVELS,
+  loadLevel,
+  startPlay,
+  startLevel: (idOrIndex) => {
+    const def = typeof idOrIndex === 'string' ? (LEVELS.find(l => l.id === idOrIndex) || LEVELS[0]) : LEVELS[idOrIndex || 0];
+    startPlay(def);
+  },
+  showWorldMap,
+  getMode: () => mode,
+  getFps: () => fps
+};
+
 function togglePause() {
-  if (mode === 'playing') { mode = 'paused'; ui.showScreen('pause'); }
-  else if (mode === 'paused') { mode = 'playing'; ui.hideScreens(); }
+  if (mode === 'playing') {
+    mode = 'paused';
+    ui.updatePausePowers();
+    ui.showScreen('pause');
+  } else if (mode === 'paused') {
+    mode = 'playing';
+    ui.hideScreens();
+  }
 }
 input.onPause = togglePause;
+
+const chkShake = document.getElementById('chkShake');
+if (chkShake) {
+  chkShake.addEventListener('change', () => {
+    game.shakeEnabled = chkShake.checked;
+  });
+}
 
 // Button bindings
 const click = (id, fn) => {
@@ -143,13 +183,3 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 
-// Test / debug hook
-window.__gb = {
-  game,
-  input,
-  renderer,
-  startPlay,
-  showWorldMap,
-  getMode: () => mode,
-  getFps: () => fps
-};

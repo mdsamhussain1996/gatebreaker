@@ -38,3 +38,12 @@ export const JUMP = {
   heightPx: (PHYS.jumpV * PHYS.jumpV) / (2 * PHYS.gravity),                       // ≈ 96 px
   heightTiles: (PHYS.jumpV * PHYS.jumpV) / (2 * PHYS.gravity) / TS                // ≈ 3.0 tiles
 };
+
+export const ABILITIES = {
+  dashSpeed: 520,      // 520 px/s
+  dashDuration: 0.18,  // 0.18 s burst
+  dashCooldown: 0.60,  // 0.6 s cooldown
+  poundSpeed: 720,     // 720 px/s slam
+  poundStunRadius: 64  // 2 tiles (64 px)
+};
+

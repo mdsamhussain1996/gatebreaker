@@ -2,7 +2,7 @@
  * Gatebreaker test suite (plain Node, no dependencies).   Run: node tests/run.js
  */
 import assert from 'node:assert/strict';
-import { TS, HERO, PHYS, JUMP, DT } from '../src/constants.js';
+import { TS, HERO, PHYS, JUMP, DT, ABILITIES } from '../src/constants.js';
 import { World, overlapsSolid, moveX, moveY, probeGround } from '../src/physics.js';
 import { Player } from '../src/player.js';
 import { InputManager } from '../src/input.js';
@@ -13,8 +13,9 @@ import {
   MushroomWalker, BuzzBee, NightBat, HopperFrog, WildBoar,
   LeafGlider, RollingArmadillo, DesertHawk, SpinningSaw
 } from '../src/enemies.js';
-
+import { PowerOrb, BlasterBolt, FlameWave, IceBlock, Coin, Gem } from '../src/items.js';
 import { THEMES, getTheme } from '../src/themes.js';
+import { getUnlockedAbilities, recordResult } from '../src/save.js';
 
 let passed = 0, failed = 0;
 const section = name => console.log(`\n${name}`);
@@ -25,8 +26,45 @@ function test(name, fn) {
 const I = InputManager.synthetic;
 
 /** Minimal stand-in for Game, enough for Player in isolated worlds. */
-function stubGame(world) {
-  return { world, sfx() {}, poof() {}, resolveSlash() {}, playerFell() { this.fell = true; }, onHeroHurt() {} };
+function stubGame(world, abilities = []) {
+  return {
+    world,
+    abilities,
+    hasAbility(name) { return this.abilities.includes(name); },
+    sfx() {}, poof() {}, resolveSlash() {}, playerFell() { this.fell = true; }, onHeroHurt() {},
+    addAfterimage() {}, spawnPuffRing() {}, spawnDust() {}, shakeScreen() {},
+    groundPoundImpact(x, y, radius) {
+      if (this.onGroundPound) this.onGroundPound(x, y, radius);
+      if (this.world) {
+        const c0 = Math.floor((x - radius) / TS), c1 = Math.floor((x + radius) / TS);
+        const r0 = Math.floor((y - 4) / TS), r1 = Math.floor((y + TS) / TS);
+        for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+          if (this.world.get(c, r) === 'X') this.world.set(c, r, '.');
+        }
+      }
+    },
+    checkDashSmash(p) {
+      if (this.onDashSmash) this.onDashSmash(p);
+      if (this.world) {
+        const checkX = p.dashDir > 0 ? p.x + p.w : p.x - 8;
+        const c = Math.floor(checkX / TS), r = Math.floor((p.y + p.h / 2) / TS);
+        if (this.world.get(c, r) === 'X') this.world.set(c, r, '.');
+      }
+    },
+    checkGiantSmash(p) {
+      if (this.onGiantSmash) this.onGiantSmash(p);
+      if (this.world) {
+        const c0 = Math.floor(p.x / TS), c1 = Math.floor((p.x + p.w - 0.001) / TS);
+        const r0 = Math.floor(p.y / TS), r1 = Math.floor((p.y + p.h - 0.001) / TS);
+        for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+          if (this.world.get(c, r) === 'X') this.world.set(c, r, '.');
+        }
+      }
+    },
+    breakCrate(c, r) {
+      if (this.world) this.world.set(c, r, '.');
+    }
+  };
 }
 function makeWorld(rows) { return new World(rows); }
 function spawn(world, c, r) {          // hero standing with feet at the bottom of cell (c, r)
@@ -744,6 +782,230 @@ test('boss summon: Mushroom King summons Buzz Bees at HP 2', () => {
   assert.equal(king.hp, 2);
   assert.ok(g.enemies.length > initialEnemies, 'king did not summon minions');
   assert.ok(g.enemies.some(e => e.type === 'buzz_bee'));
+});
+
+// ------------------------------------------------------------------ 8. Permanent abilities (v2.2 Phase 2)
+section('8. Permanent abilities (v2.2 Phase 2)');
+
+test('double jump: cannot double jump without ability', () => {
+  const w = makeWorld(['.....', '.....', '.....', '#####']);
+  const { p, g } = spawn(w, 2, 2);
+  p.update(g, I({ jumpPressed: true, jumpHeld: true }), DT);
+  assert.ok(p.vy <= -540, 'initial jump velocity not set');
+  // advance to mid-air
+  for (let i = 0; i < 10; i++) p.update(g, I({ jumpHeld: true }), DT);
+  assert.ok(!p.grounded);
+  p.update(g, I({ jumpPressed: true }), DT);
+  assert.equal(p.hasDoubleJumped, false);
+});
+
+test('double jump: mid-air jump triggers second jump and reaches higher apex', () => {
+  const w = makeWorld(['.....', '.....', '.....', '.....', '.....', '.....', '.....', '#####']);
+  const { p, g } = spawn(w, 2, 6);
+  g.abilities = ['double_jump'];
+  p.update(g, I({ jumpPressed: true, jumpHeld: true }), DT);
+  // advance to near apex
+  for (let i = 0; i < 14; i++) p.update(g, I({ jumpHeld: true }), DT);
+  const midY = p.y;
+  // Trigger double jump
+  p.update(g, I({ jumpPressed: true, jumpHeld: true }), DT);
+  assert.equal(p.hasDoubleJumped, true);
+  assert.ok(p.vy <= -540, 'double jump velocity not set');
+  // Advance up
+  for (let i = 0; i < 14; i++) p.update(g, I({ jumpHeld: true }), DT);
+  assert.ok(p.y < midY, 'double jump failed to gain height');
+});
+
+test('double jump: resets upon landing on ground', () => {
+  const w = makeWorld(['.....', '.....', '#####']);
+  const { p, g } = spawn(w, 2, 1);
+  g.abilities = ['double_jump'];
+  p.hasDoubleJumped = true;
+  p.grounded = false;
+  p.vy = 200;
+  p.update(g, I(), DT);
+  assert.ok(p.grounded);
+  assert.equal(p.hasDoubleJumped, false);
+});
+
+test('dash: 0.18 s burst of 520 px/s with invulnerability frames', () => {
+  const w = makeWorld(['....................', '####################']);
+  const { p, g } = spawn(w, 2, 0);
+  g.abilities = ['dash'];
+  p.face = 1;
+  p.update(g, I({ dashPressed: true }), DT);
+  assert.ok(p.dashT > 0);
+  assert.equal(p.vx, ABILITIES.dashSpeed);
+  assert.ok(p.invuln >= ABILITIES.dashDuration);
+  // Advance 10 frames
+  run(p, g, 10, I());
+  assert.ok(p.x > (2.5 * TS + 60), 'dash did not cover expected horizontal distance');
+});
+
+test('dash: breaks cracked blocks (crates) in dash path', () => {
+  const w = makeWorld(['..X.................', '####################']);
+  const { p, g } = spawn(w, 0, 0);
+  g.abilities = ['dash'];
+  assert.equal(w.get(2, 0), 'X');
+  p.update(g, I({ right: true, dashPressed: true }), DT);
+  for (let i = 0; i < 8; i++) p.update(g, I({ right: true }), DT);
+  assert.equal(w.get(2, 0), '.', 'crate was not smashed by dash');
+});
+
+test('ground pound: Down + Jump in air slams down at 720 px/s', () => {
+  const w = makeWorld(['.....', '.....', '.....', '.....', '#####']);
+  const { p, g } = spawn(w, 2, 1);
+  g.abilities = ['ground_pound'];
+  p.grounded = false;
+  p.vy = 0;
+  p.update(g, I({ down: true, jumpPressed: true }), DT);
+  assert.ok(p.isGroundPounding);
+  assert.equal(p.vy, ABILITIES.poundSpeed);
+  assert.equal(p.vx, 0);
+});
+
+test('ground pound: landing breaks crates below and stuns enemies in radius', () => {
+  const w = makeWorld(['.....', '.....', '..X..', '#####']);
+  const { p, g } = spawn(w, 2, 0);
+  g.abilities = ['ground_pound'];
+  let stunned = false;
+  g.onGroundPound = (x, y, radius) => {
+    assert.equal(radius, ABILITIES.poundStunRadius);
+    stunned = true;
+  };
+  p.grounded = false;
+  p.isGroundPounding = true;
+  p.vy = ABILITIES.poundSpeed;
+  for (let i = 0; i < 20; i++) p.update(g, I({ down: true }), DT);
+  assert.ok(p.grounded);
+  assert.ok(stunned, 'ground pound did not trigger stun');
+  assert.equal(w.get(2, 2), '.', 'crate below was not smashed by ground pound');
+});
+
+test('progression: boss completion unlocks abilities in save', () => {
+  const abilities = getUnlockedAbilities();
+  assert.ok(Array.isArray(abilities));
+});
+
+// ------------------------------------------------------------------ 9. Temporary power-ups & Super Meter (v2.2 Phase 3)
+section('9. Temporary power-ups & Super Meter (v2.2 Phase 3)');
+
+test('power-up: picking up power orb equips power-up and sets duration/ammo', () => {
+  const g = newGame(LEVELS[0]);
+  const orb = new PowerOrb(g.player.cx, g.player.cy, 'blaster');
+  g.collectPowerOrb(orb);
+  assert.ok(orb.collected);
+  assert.equal(g.player.powerup?.type, 'blaster');
+  assert.equal(g.player.powerup?.ammo, 10);
+});
+
+test('power-up: only one active at a time, replacing previous cleanly', () => {
+  const g = newGame(LEVELS[0]);
+  g.collectPowerOrb(new PowerOrb(g.player.cx, g.player.cy, 'blaster'));
+  assert.equal(g.player.powerup?.type, 'blaster');
+  g.collectPowerOrb(new PowerOrb(g.player.cx, g.player.cy, 'speed_boots'));
+  assert.equal(g.player.powerup?.type, 'speed_boots');
+  assert.equal(g.player.powerup?.duration, 12);
+});
+
+test('blaster: fires 10 energy bolts at 600 px/s, damages enemies and breaks crates', () => {
+  const g = newGame(LEVELS[0]);
+  g.player.powerup = { type: 'blaster', ammo: 10, duration: null };
+  const walker = new MushroomWalker(g.player.x + 80, g.player.y + g.player.h);
+  g.enemies.push(walker);
+  g.player.update(g, I({ blasterPressed: true }), DT);
+  assert.equal(g.player.powerup.ammo, 9);
+  assert.equal(g.projectiles.length, 1);
+  const bolt = g.projectiles[0];
+  assert.equal(bolt.speed, 600);
+  for (let i = 0; i < 15; i++) bolt.update(g, DT);
+  assert.ok(walker.dead, 'blaster bolt did not kill walker');
+});
+
+test('fire knife: slash fires flame wave that damages enemies', () => {
+  const g = newGame(LEVELS[0]);
+  g.player.powerup = { type: 'fire_knife', duration: 15 };
+  const walker = new MushroomWalker(g.player.x + 60, g.player.y + g.player.h);
+  g.enemies.push(walker);
+  g.player.update(g, I({ knifePressed: true }), DT);
+  assert.equal(g.projectiles.length, 1);
+  const wave = g.projectiles[0];
+  for (let i = 0; i < 15; i++) wave.update(g, DT);
+  assert.ok(walker.dead, 'flame wave did not hit walker');
+});
+
+test('ice knife: slashing defeated enemy spawns standable IceBlock', () => {
+  const g = newGame(LEVELS[0]);
+  g.player.powerup = { type: 'ice_knife', duration: 15 };
+  const walker = new MushroomWalker(g.player.x + 20, g.player.y + g.player.h);
+  g.enemies.push(walker);
+  g.player.update(g, I({ knifePressed: true }), DT);
+  assert.ok(g.iceBlocks.length > 0, 'ice block was not spawned');
+  assert.ok(g.iceBlocks[0].isOneWay);
+});
+
+test('bubble shield: absorbs one hit without heart loss and pops', () => {
+  const g = newGame(LEVELS[0]);
+  g.player.powerup = { type: 'bubble_shield', duration: 20 };
+  const startHearts = g.player.hearts;
+  const hurtResult = g.player.hurt(g, g.player.cx - 20);
+  assert.equal(hurtResult, false);
+  assert.equal(g.player.hearts, startHearts);
+  assert.equal(g.player.powerup, null);
+});
+
+test('coin magnet: pulls coins within 160 px (5 tiles)', () => {
+  const g = newGame(LEVELS[0]);
+  const coin = new Coin(g.player.cx + 90, g.player.cy);
+  g.coins.push(coin);
+  const initX = coin.x;
+  g.pullCoins(g.player.cx, g.player.cy, 160, DT);
+  assert.ok(coin.x < initX, 'coin was not pulled towards player');
+});
+
+test('speed boots: increases run speed to 1.4x (294 px/s)', () => {
+  const w = makeWorld(['....................', '####################']);
+  const { p, g } = spawn(w, 2, 0);
+  p.powerup = { type: 'speed_boots', duration: 12 };
+  run(p, g, 40, I({ right: true }));
+  assert.ok(p.vx > 250, `expected speed > 250 px/s, got ${p.vx}`);
+  assert.ok(Math.abs(p.vx - PHYS.runMax * 1.4) < 2);
+});
+
+test('giant rook: crushes crates on touch and defeats small enemies on contact', () => {
+  const g = newGame(LEVELS[0]);
+  g.player.powerup = { type: 'giant_rook', duration: 8 };
+  g.player.giantScale = 1.6;
+  const walker = new MushroomWalker(g.player.x + 10, g.player.y + g.player.h);
+  g.enemies.push(walker);
+  g.resolveEnemyContacts();
+  assert.ok(walker.dead, 'giant rook did not defeat walker on contact');
+});
+
+test('star power: kills enemies on contact with invulnerability', () => {
+  const g = newGame(LEVELS[0]);
+  g.player.powerup = { type: 'star_power', duration: 8 };
+  const walker = new MushroomWalker(g.player.x + 10, g.player.y + g.player.h);
+  g.enemies.push(walker);
+  g.resolveEnemyContacts();
+  assert.ok(walker.dead, 'star power did not kill enemy on contact');
+});
+
+test('super meter: fills on coin/gem/kill, Q / Shockwave Burst damages all screen enemies and resets meter', () => {
+  const g = newGame(LEVELS[0]);
+  assert.equal(g.superMeter, 0);
+  g.collectCoin(new Coin(0, 0));
+  assert.equal(g.superMeter, 2);
+  g.collectGem(new Gem(0, 0));
+  assert.equal(g.superMeter, 22);
+  g.addSuper(80);
+  assert.equal(g.superMeter, 100);
+
+  const walker = new MushroomWalker(g.cam.x + 100, g.cam.y + 100);
+  g.enemies.push(walker);
+  g.triggerShockwave(g.player);
+  assert.ok(walker.dead, 'shockwave burst did not hit on-screen enemy');
+  assert.equal(g.superMeter, 0, 'super meter did not reset');
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

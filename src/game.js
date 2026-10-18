@@ -13,10 +13,12 @@ import {
 } from './enemies.js';
 import {
   Coin, Gem, Star, HeartPickup, Chest, Checkpoint, Spikes, Key, Gate,
-  Spring, MovingPlank, CraneLift, CrumblingPlank
+  Spring, MovingPlank, CraneLift, CrumblingPlank,
+  POWERUP_DEFS, PowerOrb, BlasterBolt, FlameWave, IceBlock
 } from './items.js';
 import { parseLevel } from './level.js';
 import { getTheme } from './themes.js';
+import { hasAbility } from './save.js';
 
 export class Game {
   /**
@@ -27,10 +29,17 @@ export class Game {
     this.toast = opts.toast || (() => {});
     this.onComplete = opts.onComplete || (() => {});
     this.onGameOver = opts.onGameOver || (() => {});
+    this.abilities = opts.abilities || null;
     this.player = new Player();
     this.infiniteLives = false;
     this.state = 'idle';
     this.hitStop = 0;
+    this.superMeter = 0;
+    this.shockwave = null;
+    this.afterimages = [];
+    this.powerOrbs = [];
+    this.iceBlocks = [];
+    this.shakeEnabled = true;
   }
 
   load(levelDef) {
@@ -52,7 +61,12 @@ export class Game {
     this.movingPlanks = lv.movingPlanks.map(m => new MovingPlank(m.c, m.r, m));
     this.lifts = lv.lifts.map(l => new CraneLift(l.c, l.r, l));
     this.crumblingPlanks = lv.crumblingPlanks.map(b => new CrumblingPlank(b.c, b.r));
+    this.powerOrbs = (lv.powerOrbs || []).map(q => new PowerOrb(q.x, q.y, q.powerType || (q.type !== 'powerOrb' ? q.type : 'blaster')));
     this.projectiles = [];
+    this.iceBlocks = [];
+    this.afterimages = [];
+    this.superMeter = 0;
+    this.shockwave = null;
 
     // Enemies & Bosses
     this.enemies = [
@@ -108,6 +122,10 @@ export class Game {
 
   get hedgehogs() {
     return this.enemies.filter(e => e instanceof SpikyHedgehog);
+  }
+
+  hasAbility(name) {
+    return (this.abilities && this.abilities.includes(name)) || hasAbility(name);
   }
 
   // ---------------------------------------------------------------- update
@@ -223,6 +241,38 @@ export class Game {
       if (pr.dead) this.projectiles.splice(i, 1);
     }
 
+    // Power Orbs
+    for (const po of this.powerOrbs) {
+      po.update(this, dt);
+      if (po.pickable && aabb(p, po)) this.collectPowerOrb(po);
+    }
+
+    // Ice Blocks
+    for (let i = this.iceBlocks.length - 1; i >= 0; i--) {
+      const ib = this.iceBlocks[i];
+      ib.update(this, dt);
+      if (ib.dead) this.iceBlocks.splice(i, 1);
+      else if (p.vy >= 0 && (p.y + p.h) >= ib.y && (p.y + p.h) <= ib.y + 14 && p.x + p.w > ib.x && p.x < ib.x + ib.w) {
+        p.grounded = true;
+        p.vy = 0;
+        p.y = ib.y - p.h;
+      }
+    }
+
+    // Afterimages
+    for (let i = this.afterimages.length - 1; i >= 0; i--) {
+      const a = this.afterimages[i];
+      a.life -= dt;
+      if (a.life <= 0) this.afterimages.splice(i, 1);
+    }
+
+    // Shockwave burst
+    if (this.shockwave) {
+      this.shockwave.life -= dt;
+      this.shockwave.r += (this.shockwave.maxR - this.shockwave.r) * dt * 8;
+      if (this.shockwave.life <= 0) this.shockwave = null;
+    }
+
     if (this.key) {
       this.key.update(this, dt);
       this.updateKey();
@@ -259,7 +309,12 @@ export class Game {
       if (e.dead || p.slashHit.has(e) || !aabb(box, e)) continue;
       p.slashHit.add(e);
       this.sfx('knifeHit');
+      const prevHp = e.hp;
       e.hit(this, 1, p.face);
+      if (p.powerup?.type === 'ice_knife' && (e.dead || prevHp <= 1)) {
+        this.iceBlocks.push(new IceBlock(e.x, e.y, e.w, e.h, 5));
+        this.sfx('freezeCrack');
+      }
       if (p.slashDown) p.bounce(COMBAT.pogoV);
     }
     // Deflect / destroy projectiles
@@ -314,6 +369,20 @@ export class Game {
     for (const e of this.enemies) {
       if (e.dead || !aabb(p, e)) continue;
 
+      // Star Power: kills enemies on touch
+      if (p.powerup?.type === 'star_power') {
+        e.hit(this, 99, p.face);
+        this.sfx('knifeHit');
+        continue;
+      }
+
+      // Giant Rook: walks through / smashes small enemies on touch
+      if (p.powerup?.type === 'giant_rook' && !e.isBoss) {
+        e.hit(this, 3, p.face);
+        this.sfx('stomp');
+        continue;
+      }
+
       // Special contact: Leaf Glider is harmless from above (hero bounces on it)
       if (e.type === 'leaf_glider') {
         if (p.vy >= 0 && p.prevBottom <= e.y + 14) {
@@ -361,6 +430,7 @@ export class Game {
   collectCoin(c) {
     c.collected = true;
     this.coinCount++;
+    this.addSuper(2);
     this.sfx('coin');
     this.addScore(10, c.x + c.w / 2, c.y - 4, true);
     if (this.coinCount % 100 === 0) {
@@ -372,6 +442,7 @@ export class Game {
   collectGem(g) {
     g.collected = true;
     this.coinCount += 5;
+    this.addSuper(20);
     this.sfx('gem');
     this.addScore(50, g.x + g.w / 2, g.y - 4, true);
     this.poof(g.x + g.w / 2, g.y + g.h / 2, '#c084fc');
@@ -542,8 +613,13 @@ export class Game {
 
   applyCamera() {
     const p = this.player, cam = this.cam;
-    const cx = cam.fx - VIEW_W / 2;
-    const cy = cam.fy - VIEW_H / 2;
+    // On touch devices, shift camera view so hero is centered further up and right, clear of touch controls
+    const isTouch = typeof document !== 'undefined' && document.body && document.body.classList.contains('touch-device');
+    const touchOffsetX = isTouch ? -45 : 0;
+    const touchOffsetY = isTouch ? 45 : 0;
+
+    const cx = (cam.fx + touchOffsetX) - VIEW_W / 2;
+    const cy = (cam.fy + touchOffsetY) - VIEW_H / 2;
     const maxX = Math.max(0, this.world.w - VIEW_W);
     const maxY = Math.max(0, this.world.h - VIEW_H);
     cam.x = Math.max(0, Math.min(maxX, cx));
@@ -552,7 +628,181 @@ export class Game {
 
   addScore(pts, x, y, floater = false) {
     this.score += pts;
+    if (pts >= 100) this.addSuper(15);
     if (floater) this.texts.push({ text: `+${pts}`, x, y, life: 0.65 });
+  }
+
+  addSuper(pts) {
+    this.superMeter = Math.min(100, (this.superMeter || 0) + pts);
+  }
+
+  collectPowerOrb(po) {
+    po.collected = true;
+    const def = POWERUP_DEFS[po.type] || POWERUP_DEFS.blaster;
+    this.player.powerup = {
+      type: po.type,
+      duration: def.duration,
+      maxDuration: def.duration,
+      ammo: def.ammo,
+      maxAmmo: def.ammo,
+      icon: def.icon,
+      name: def.name,
+      color: def.color
+    };
+    if (po.type === 'giant_rook') this.player.giantScale = 1.6;
+    this.sfx('powerup');
+    this.poof(po.x + po.w / 2, po.y + po.h / 2, def.color);
+    this.toast(`Power-up: ${def.name}! ${def.icon}`);
+  }
+
+  fireBlaster(p) {
+    const bx = p.face > 0 ? p.x + p.w + 4 : p.x - 4;
+    this.projectiles.push(new BlasterBolt(bx, p.cy, p.face));
+    this.sfx('blasterLaser');
+    for (let i = 0; i < 4; i++) {
+      this.particles.push({
+        x: bx, y: p.cy,
+        vx: p.face * (100 + Math.random() * 80),
+        vy: (Math.random() - 0.5) * 60,
+        life: 0.15, size: 3, color: '#38bdf8', g: 0
+      });
+    }
+  }
+
+  fireFlameWave(p) {
+    const bx = p.face > 0 ? p.x + p.w + 4 : p.x - 4;
+    this.projectiles.push(new FlameWave(bx, p.cy, p.face));
+    this.sfx('flameWave');
+  }
+
+  triggerShockwave(p) {
+    this.sfx('superBlast');
+    this.shakeScreen(0.4);
+    this.shockwave = { x: p.cx, y: p.cy, r: 20, maxR: VIEW_W * 0.9, life: 0.6, maxLife: 0.6 };
+    const camX = this.cam.x, camY = this.cam.y;
+    for (const e of this.enemies) {
+      if (e.dead) continue;
+      if (e.x + e.w >= camX && e.x <= camX + VIEW_W && e.y + e.h >= camY && e.y <= camY + VIEW_H) {
+        if (e.isBoss) {
+          e.hit(this, 2, 0);
+        } else {
+          e.hit(this, 3, 0);
+        }
+        this.poof(e.cx, e.cy, '#eab308');
+      }
+    }
+    this.superMeter = 0;
+    this.toast('⚡ Shockwave Burst! ⚡');
+  }
+
+  groundPoundImpact(x, y, radius = 64) {
+    const c0 = Math.floor((x - radius) / TS), c1 = Math.floor((x + radius) / TS);
+    const r0 = Math.floor((y - 4) / TS), r1 = Math.floor((y + TS) / TS);
+    for (let r = r0; r <= r1; r++) {
+      for (let c = c0; c <= c1; c++) {
+        if (this.world.get(c, r) === 'X') {
+          this.breakCrate(c, r);
+        }
+      }
+    }
+    for (const e of this.enemies) {
+      if (!e.dead && Math.hypot(e.cx - x, e.cy - y) <= radius) {
+        if (typeof e.stun === 'function') e.stun(1.5);
+        else if (e.state) { e.state = 'stunned'; e.stateTimer = 1.5; }
+        this.poof(e.cx, e.cy - 10, '#fef08a');
+      }
+    }
+    for (let dir of [-1, 1]) {
+      for (let i = 0; i < 7; i++) {
+        this.particles.push({
+          x: x + dir * (8 + i * 4), y: y - 2,
+          vx: dir * (120 + Math.random() * 160),
+          vy: -40 - Math.random() * 80,
+          life: 0.4 + Math.random() * 0.2,
+          size: 3 + Math.random() * 3,
+          color: '#e2e8f0', g: 300
+        });
+      }
+    }
+  }
+
+  checkDashSmash(p) {
+    const checkX = p.dashDir > 0 ? p.x + p.w : p.x - 8;
+    const c0 = Math.floor(checkX / TS), c1 = Math.floor((checkX + 8 - 0.001) / TS);
+    const r0 = Math.floor(p.y / TS), r1 = Math.floor((p.y + p.h - 0.001) / TS);
+    for (let r = r0; r <= r1; r++) {
+      for (let c = c0; c <= c1; c++) {
+        if (this.world.get(c, r) === 'X') {
+          this.breakCrate(c, r);
+        }
+      }
+    }
+  }
+
+  checkGiantSmash(p) {
+    const c0 = Math.floor(p.x / TS), c1 = Math.floor((p.x + p.w - 0.001) / TS);
+    const r0 = Math.floor(p.y / TS), r1 = Math.floor((p.y + p.h - 0.001) / TS);
+    for (let r = r0; r <= r1; r++) {
+      for (let c = c0; c <= c1; c++) {
+        if (this.world.get(c, r) === 'X') {
+          this.breakCrate(c, r);
+        }
+      }
+    }
+  }
+
+  pullCoins(x, y, radius = 160, dt) {
+    for (const c of this.coins) {
+      if (c.collected) continue;
+      const d = Math.hypot(x - (c.x + c.w / 2), y - (c.y + c.h / 2));
+      if (d <= radius && d > 2) {
+        c.x += (x - (c.x + c.w / 2)) * dt * 5;
+        c.y += (y - (c.y + c.h / 2)) * dt * 5;
+      }
+    }
+    for (const g of this.gems) {
+      if (g.collected) continue;
+      const d = Math.hypot(x - (g.x + g.w / 2), y - (g.y + g.h / 2));
+      if (d <= radius && d > 2) {
+        g.x += (x - (g.x + g.w / 2)) * dt * 5;
+        g.y += (y - (g.y + g.h / 2)) * dt * 5;
+      }
+    }
+  }
+
+  addAfterimage(p) {
+    this.afterimages.push({
+      x: p.x, y: p.y, w: p.w, h: p.h, face: p.face,
+      sx: p.sx, sy: p.sy, giantScale: p.giantScale || 1,
+      life: 0.22, maxLife: 0.22
+    });
+  }
+
+  spawnPuffRing(x, y) {
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      this.particles.push({
+        x: x + Math.cos(a) * 6, y: y + Math.sin(a) * 3,
+        vx: Math.cos(a) * 90, vy: Math.sin(a) * 40 + 10,
+        life: 0.32, size: 4, color: '#f8fafc', g: 0
+      });
+    }
+  }
+
+  spawnDust(x, y) {
+    for (let i = 0; i < 2; i++) {
+      this.particles.push({
+        x: x + (Math.random() - 0.5) * 8, y,
+        vx: (Math.random() - 0.5) * 40, vy: -15 - Math.random() * 30,
+        life: 0.25, size: 3, color: '#fef08a', g: 40
+      });
+    }
+  }
+
+  shakeScreen(intensity) {
+    if (this.shakeEnabled) {
+      this.shake = Math.max(this.shake, intensity * 24);
+    }
   }
 
   poof(x, y, color = '#fcd34d') {

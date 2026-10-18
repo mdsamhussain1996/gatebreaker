@@ -192,6 +192,29 @@ export function playSound(type) {
       tone('triangle', 1100, 650, 0.28, 0.25);
     } else if (type === 'sawWhirr') {
       tone('sawtooth', 280, 320, 0.10, 0.15);
+    } else if (type === 'dash') {
+      tone('sawtooth', 340, 180, 0.16, 0.28);
+    } else if (type === 'doubleJump') {
+      tone('triangle', 380, 720, 0.12, 0.22);
+    } else if (type === 'groundPound') {
+      tone('sine', 160, 42, 0.22, 0.38);
+    } else if (type === 'freezeCrack') {
+      tone('triangle', 880, 1320, 0.14, 0.25);
+    } else if (type === 'shieldPop') {
+      tone('sine', 480, 240, 0.12, 0.26);
+    } else if (type === 'giantStomp') {
+      tone('triangle', 110, 38, 0.25, 0.40);
+    } else if (type === 'superBlast') {
+      tone('sawtooth', 220, 680, 0.25, 0.40);
+      tone('triangle', 120, 45, 0.35, 0.35, 0.08);
+    } else if (type === 'blasterLaser') {
+      tone('square', 880, 220, 0.09, 0.22);
+    } else if (type === 'flameWave') {
+      tone('sawtooth', 280, 140, 0.18, 0.25);
+    } else if (type === 'powerup') {
+      tone('triangle', 523.25, 659.25, 0.10, 0.24);
+      tone('triangle', 659.25, 783.99, 0.10, 0.24, 0.08);
+      tone('triangle', 783.99, 1046.5, 0.18, 0.28, 0.16);
     }
   } catch (err) {
     // Audio synthesis failure should never crash the game

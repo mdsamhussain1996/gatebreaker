@@ -8,7 +8,7 @@ import { World } from './physics.js';
 const ENTITY_CHARS = new Set([
   'P', 'K', 'G', 'c', 'g', 's', 'h', 'C', '*', '^',
   'm', 'S', 'B', 'T', 'M', 'L', 'b', 'q', 'v', 'O', 'y', 'w', 'Y',
-  'z', 'N', 'F', 'W', 'l', 'a', 'k', 'I'
+  'z', 'N', 'F', 'W', 'l', 'a', 'k', 'I', 'Q'
 ]);
 
 export function parseLevel(def) {
@@ -30,6 +30,7 @@ export function parseLevel(def) {
     stars: [],
     hearts: [],
     chests: [],
+    powerOrbs: [],
     checkpoints: [],
     spikes: [],
     springs: [],
@@ -74,6 +75,7 @@ export function parseLevel(def) {
         else if (ch === 's') out.stars.push({ x: cx, y: cy, index: starIndex++ });
         else if (ch === 'h') out.hearts.push({ x: cx, y: cy });
         else if (ch === 'C') out.chests.push({ c, r });
+        else if (ch === 'Q') out.powerOrbs.push({ x: cx, y: cy, c, r, type: 'blaster' });
         else if (ch === '*') out.checkpoints.push({ c, r });
         else if (ch === '^') out.spikes.push({ c, r });
         else if (ch === 'T') out.springs.push({ c, r });
@@ -110,6 +112,7 @@ export function parseLevel(def) {
     def.entities.forEach(ent => {
       if (ent.type === 'movingPlank') out.movingPlanks.push(ent);
       else if (ent.type === 'lift') out.lifts.push(ent);
+      else if (ent.type === 'powerOrb') out.powerOrbs.push(ent);
       else if (ent.type === 'buzzBee') out.buzzBees.push(ent);
       else if (ent.type === 'nightBat') out.nightBats.push(ent);
       else if (ent.type === 'hopperFrog') out.hopperFrogs.push(ent);

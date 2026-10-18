@@ -5,6 +5,7 @@ const KEY = 'gatebreaker.v2.save';
 
 const defaults = () => ({
   unlocked: ['1-1'],
+  abilities: [],
   best: {}, // { '1-1': { time: 42.5, coins: 85, stars: 3 } }
   settings: { sfx: 0.8, music: 0.5, shake: true }
 });
@@ -17,6 +18,7 @@ export function loadSave() {
     const def = defaults();
     return {
       unlocked: Array.isArray(parsed.unlocked) && parsed.unlocked.length ? parsed.unlocked : def.unlocked,
+      abilities: Array.isArray(parsed.abilities) ? parsed.abilities : [],
       best: parsed.best || {},
       settings: Object.assign(def.settings, parsed.settings || {})
     };
@@ -74,3 +76,19 @@ export function recordResult(levelId, time, coins, stars = 0) {
   writeSave(data);
   return { previous: prev, isUnlockedNext: nextId };
 }
+
+export function getUnlockedAbilities() {
+  const save = loadSave();
+  const abilities = Array.isArray(save.abilities) ? [...save.abilities] : [];
+  if (save.best['1-3'] && !abilities.includes('double_jump')) abilities.push('double_jump');
+  if (save.best['2-3'] && !abilities.includes('dash')) abilities.push('dash');
+  if (save.best['3-3'] && !abilities.includes('ground_pound')) abilities.push('ground_pound');
+  if (save.best['4-3'] && !abilities.includes('wall_jump')) abilities.push('wall_jump');
+  if (save.best['5-3'] && !abilities.includes('glide')) abilities.push('glide');
+  return abilities;
+}
+
+export function hasAbility(name) {
+  return getUnlockedAbilities().includes(name);
+}
+

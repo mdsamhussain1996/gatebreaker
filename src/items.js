@@ -329,3 +329,144 @@ export class CrumblingPlank {
   }
 }
 
+export const POWERUP_DEFS = {
+  blaster: { name: 'Blaster', duration: null, ammo: 10, icon: '🔫', color: '#38bdf8' },
+  fire_knife: { name: 'Fire Knife', duration: 15, ammo: null, icon: '🔥', color: '#f97316' },
+  ice_knife: { name: 'Ice Knife', duration: 15, ammo: null, icon: '❄️', color: '#38bdf8' },
+  bubble_shield: { name: 'Bubble Shield', duration: 20, ammo: null, icon: '🫧', color: '#60a5fa' },
+  coin_magnet: { name: 'Coin Magnet', duration: 20, ammo: null, icon: '🧲', color: '#eab308' },
+  speed_boots: { name: 'Speed Boots', duration: 12, ammo: null, icon: '👟', color: '#10b981' },
+  giant_rook: { name: 'Giant Rook', duration: 8, ammo: null, icon: '👑', color: '#a855f7' },
+  star_power: { name: 'Star Power', duration: 8, ammo: null, icon: '⭐', color: '#fbbf24' }
+};
+
+export class PowerOrb {
+  constructor(cx, cy, type = 'blaster') {
+    this.w = 22; this.h = 22;
+    this.x = cx - this.w / 2;
+    this.y = cy - this.h / 2;
+    this.baseY = this.y;
+    this.type = type;
+    this.collected = false;
+    this.phase = Math.random() * 6;
+  }
+  update(g, dt) {
+    this.phase += dt * 4;
+  }
+  get pickable() { return !this.collected; }
+}
+
+export class BlasterBolt {
+  constructor(x, y, dir = 1) {
+    this.w = 16; this.h = 8;
+    this.x = dir > 0 ? x : x - this.w;
+    this.y = y - this.h / 2;
+    this.dir = dir;
+    this.speed = 600;
+    this.life = 1.4;
+    this.dead = false;
+  }
+  update(g, dt) {
+    if (this.dead) return;
+    this.life -= dt;
+    if (this.life <= 0) { this.dead = true; return; }
+    const dx = this.dir * this.speed * dt;
+    this.x += dx;
+    const col = Math.floor((this.dir > 0 ? this.x + this.w : this.x) / TS);
+    const row = Math.floor((this.y + this.h / 2) / TS);
+    if (g.world && g.world.isSolid(col, row)) {
+      if (g.world.get(col, row) === 'X') {
+        g.breakCrate(col, row);
+      }
+      this.dead = true;
+      if (g.poof) g.poof(this.x + this.w / 2, this.y + this.h / 2, '#38bdf8');
+      return;
+    }
+    for (const e of (g.enemies || [])) {
+      if (e.dead || e.isInvulnerable) continue;
+      if (this.x < e.x + e.w && this.x + this.w > e.x && this.y < e.y + e.h && this.y + this.h > e.y) {
+        this.dead = true;
+        e.hit(g, 1, this.dir);
+        if (g.poof) g.poof(this.x + this.w / 2, this.y + this.h / 2, '#38bdf8');
+        return;
+      }
+    }
+    for (const b of (g.bosses || [])) {
+      if (b.dead) continue;
+      if (this.x < b.x + b.w && this.x + this.w > b.x && this.y < b.y + b.h && this.y + this.h > b.y) {
+        this.dead = true;
+        b.hit(g, 1, this.dir);
+        if (g.poof) g.poof(this.x + this.w / 2, this.y + this.h / 2, '#38bdf8');
+        return;
+      }
+    }
+  }
+}
+
+export class FlameWave {
+  constructor(x, y, dir = 1) {
+    this.w = 26; this.h = 24;
+    this.startX = x;
+    this.x = dir > 0 ? x : x - this.w;
+    this.y = y - this.h / 2;
+    this.dir = dir;
+    this.speed = 360;
+    this.maxDist = 96; // 3 tiles
+    this.dead = false;
+    this.hitEntities = new Set();
+  }
+  update(g, dt) {
+    if (this.dead) return;
+    const dx = this.dir * this.speed * dt;
+    this.x += dx;
+    if (Math.abs(this.x - this.startX) >= this.maxDist) {
+      this.dead = true;
+      return;
+    }
+    const col = Math.floor((this.dir > 0 ? this.x + this.w : this.x) / TS);
+    const row = Math.floor((this.y + this.h / 2) / TS);
+    if (g.world && g.world.get(col, row) === 'X') {
+      g.breakCrate(col, row);
+    }
+    for (const e of (g.enemies || [])) {
+      if (e.dead || this.hitEntities.has(e)) continue;
+      if (this.x < e.x + e.w && this.x + this.w > e.x && this.y < e.y + e.h && this.y + this.h > e.y) {
+        this.hitEntities.add(e);
+        e.hit(g, 1, this.dir);
+        if (g.poof) g.poof(e.cx, e.cy, '#f97316');
+      }
+    }
+    for (const b of (g.bosses || [])) {
+      if (b.dead || this.hitEntities.has(b)) continue;
+      if (this.x < b.x + b.w && this.x + this.w > b.x && this.y < b.y + b.h && this.y + this.h > b.y) {
+        this.hitEntities.add(b);
+        b.hit(g, 1, this.dir);
+        if (g.poof) g.poof(b.cx, b.cy, '#f97316');
+      }
+    }
+  }
+}
+
+export class IceBlock {
+  constructor(x, y, w = 32, h = 32, duration = 5) {
+    this.x = x;
+    this.y = y;
+    this.w = Math.max(w, 24);
+    this.h = Math.max(h, 24);
+    this.timer = duration;
+    this.maxTimer = duration;
+    this.dead = false;
+    this.isOneWay = true;
+    this.dx = 0;
+    this.dy = 0;
+  }
+  update(g, dt) {
+    this.timer -= dt;
+    if (this.timer <= 0) {
+      this.dead = true;
+      if (g.sfx) g.sfx('freezeCrack');
+      if (g.poof) g.poof(this.x + this.w / 2, this.y + this.h / 2, '#93c5fd');
+    }
+  }
+}
+

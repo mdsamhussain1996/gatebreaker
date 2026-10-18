@@ -28,6 +28,21 @@
             <span class="coin-dot" aria-hidden="true"></span><b id="hudCoins">0</b>
             <span class="key-slot" id="hudKey" title="Gate key">🗝</span>
           </div>
+          <div class="panel" id="hudSuperPanel" title="Super Meter (Press Q or ⚡ when full)">
+            <div class="super-bar-bg"><div class="super-bar-fill" id="hudSuperFill" style="width: 0%"></div></div>
+            <span class="super-icon" id="hudSuperIcon">⚡</span>
+          </div>
+          <div class="panel" id="hudPowerupPanel" title="Active Power-up" style="display: none;">
+            <div class="powerup-ring" id="hudPowerupRing">
+              <span id="hudPowerupIcon">🔫</span>
+            </div>
+            <span id="hudPowerupAmmo" class="powerup-ammo">10</span>
+          </div>
+          <div class="panel hud-abilities" id="hudAbilitiesPanel">
+            <span class="ability-slot" id="hudAbilJump" title="Double Jump (Mid-air Space)">✨</span>
+            <span class="ability-slot" id="hudAbilDash" title="Dash (Shift / DASH button)">⚡</span>
+            <span class="ability-slot" id="hudAbilPound" title="Ground Pound (Down + Jump in air)">💥</span>
+          </div>
         </div>
         <div class="hud-right">
           <div class="panel" title="Level time">⏱ <b id="hudTime">0:00</b></div>
@@ -42,14 +57,14 @@
       <section id="screen-title" class="screen" aria-labelledby="titleH">
         <div class="card">
           <h1 id="titleH">GATEBREAKER</h1>
-          <p class="sub">Floating-islands platformer · Phase 1 feel prototype</p>
-          <ul class="controls">
+          <p class="sub">Floating-islands platformer</p>
+          <ul class="controls" id="titleControls">
             <li><b>Move</b> ← → / A D</li>
             <li><b>Jump</b> Space / Z / K <i>(hold = higher)</i></li>
             <li><b>Climb</b> ↑ ↓ / W S on ladders &amp; ropes</li>
             <li><b>Drop through</b> ↓ + Jump on planks &amp; bridges</li>
-            <li><b>Knife</b> X / J <i>(↓ + X in the air = pogo)</i></li>
-            <li><b>Goal</b> grab the key, reach the gate</li>
+            <li><b>Knife</b> X / J <i>(↓ + X in air = pogo bounce)</i></li>
+            <li><b>Goal</b> grab the golden key, unlock the exit gate</li>
           </ul>
           <div class="title-btns">
             <button id="btnStart" class="btn primary">▶ Play Game</button>
@@ -81,11 +96,38 @@
 
       <!-- Pause -->
       <section id="screen-pause" class="screen" hidden aria-labelledby="pauseH">
-        <div class="card small">
+        <div class="card">
           <h2 id="pauseH">Paused</h2>
-          <button id="btnResume" class="btn primary">▶ Resume</button>
-          <button id="btnRestart" class="btn">↻ Restart level</button>
-          <button id="btnMapFromPause" class="btn">🗺 World Map</button>
+          <div class="pause-powers" id="pausePowersList">
+            <!-- Populated dynamically with unlocked powers -->
+          </div>
+          <div class="pause-settings" style="margin: 12px 0; font-size: 0.95em;">
+            <label style="cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              <input type="checkbox" id="chkShake" checked> Screen Shake
+            </label>
+          </div>
+          <div class="title-btns">
+            <button id="btnResume" class="btn primary">▶ Resume</button>
+            <button id="btnRestart" class="btn">↻ Restart level</button>
+            <button id="btnMapFromPause" class="btn">🗺 World Map</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- New Power Unlocked -->
+      <section id="screen-power" class="screen" hidden aria-labelledby="powerH">
+        <div class="card power-card">
+          <span class="power-badge">NEW POWER UNLOCKED!</span>
+          <div class="power-showcase">
+            <div class="power-glow-circle" id="powerShowcaseIcon">✨</div>
+            <h2 id="powerShowcaseTitle">Double Jump</h2>
+            <p id="powerShowcaseDesc" class="power-desc">Jump again in mid-air to reach higher platforms!</p>
+            <div class="power-controls-box">
+              <p><b>Keyboard:</b> <span id="powerKeyHint">Space in mid-air</span></p>
+              <p><b>Touch:</b> <span id="powerTouchHint">Tap JUMP button while airborne</span></p>
+            </div>
+          </div>
+          <button id="btnPowerContinue" class="btn primary">Awesome! Continue ▶</button>
         </div>
       </section>
 
@@ -121,6 +163,9 @@
         <button class="tbtn t-down" data-act="down" aria-label="Down">▼</button>
       </div>
       <div id="actions">
+        <button class="tbtn t-super" id="btnTouchSuper" data-act="super" aria-label="Super Shockwave" style="display: none;">⚡</button>
+        <button class="tbtn t-dash" id="btnTouchDash" data-act="dash" aria-label="Dash" style="display: none;">DASH</button>
+        <button class="tbtn t-blaster" id="btnTouchBlaster" data-act="blaster" aria-label="Blaster" style="display: none;">🔫</button>
         <button class="tbtn t-knife" data-act="knife" aria-label="Knife">🗡</button>
         <button class="tbtn t-jump" data-act="jump" aria-label="Jump">JUMP</button>
       </div>

@@ -10,20 +10,32 @@ const KEY_MAP = {
   up: ['arrowup', 'w'],
   down: ['arrowdown', 's'],
   jump: [' ', 'z', 'k'],
-  knife: ['x', 'j']
+  knife: ['x', 'j'],
+  dash: ['shift'],
+  blaster: ['c'],
+  super: ['q']
 };
 
 export class InputManager {
   constructor() {
     this.keys = new Set();
-    this.touch = { left: false, right: false, up: false, down: false, jump: false, knife: false };
+    this.touch = {
+      left: false, right: false, up: false, down: false,
+      jump: false, knife: false, dash: false, blaster: false, super: false
+    };
     this.latchJump = false;
     this.latchKnife = false;
+    this.latchDash = false;
+    this.latchBlaster = false;
+    this.latchSuper = false;
     this.latchPause = false;
     // polled state
     this.left = this.right = this.up = this.down = false;
     this.jumpHeld = this.jumpPressed = false;
     this.knifeHeld = this.knifePressed = false;
+    this.dashHeld = this.dashPressed = false;
+    this.blasterHeld = this.blasterPressed = false;
+    this.superHeld = this.superPressed = false;
     this.pausePressed = false;
     this.onPause = null;
   }
@@ -37,6 +49,9 @@ export class InputManager {
       if (e.repeat) { if (Object.values(KEY_MAP).some(a => a.includes(k))) e.preventDefault(); return; }
       if (KEY_MAP.jump.includes(k)) this.latchJump = true;
       if (KEY_MAP.knife.includes(k)) this.latchKnife = true;
+      if (KEY_MAP.dash.includes(k)) this.latchDash = true;
+      if (KEY_MAP.blaster.includes(k)) this.latchBlaster = true;
+      if (KEY_MAP.super.includes(k)) this.latchSuper = true;
       if (k === 'p' || k === 'escape') { this.latchPause = true; if (this.onPause) this.onPause(); }
       this.keys.add(k);
       if (Object.values(KEY_MAP).some(a => a.includes(k))) e.preventDefault();
@@ -55,6 +70,9 @@ export class InputManager {
         el.classList.add('pressed');
         if (act === 'jump') this.latchJump = true;
         if (act === 'knife') this.latchKnife = true;
+        if (act === 'dash') this.latchDash = true;
+        if (act === 'blaster') this.latchBlaster = true;
+        if (act === 'super') this.latchSuper = true;
       };
       const up = e => {
         e.preventDefault();
@@ -72,7 +90,7 @@ export class InputManager {
   }
 
   held(name) {
-    return this.touch[name] || KEY_MAP[name].some(k => this.keys.has(k));
+    return !!this.touch[name] || (KEY_MAP[name] ? KEY_MAP[name].some(k => this.keys.has(k)) : false);
   }
 
   /** Call once per simulation step. */
@@ -83,17 +101,28 @@ export class InputManager {
     this.down = this.held('down');
     this.jumpPressed = this.latchJump;
     this.knifePressed = this.latchKnife;
+    this.dashPressed = this.latchDash;
+    this.blasterPressed = this.latchBlaster;
+    this.superPressed = this.latchSuper;
     this.jumpHeld = this.held('jump') || this.jumpPressed;
     this.knifeHeld = this.held('knife') || this.knifePressed;
+    this.dashHeld = this.held('dash') || this.dashPressed;
+    this.blasterHeld = this.held('blaster') || this.blasterPressed;
+    this.superHeld = this.held('super') || this.superPressed;
     this.latchJump = false;
     this.latchKnife = false;
+    this.latchDash = false;
+    this.latchBlaster = false;
+    this.latchSuper = false;
   }
 
   /** Test helper: set a synthetic state. */
   static synthetic(state = {}) {
     return Object.assign({
       left: false, right: false, up: false, down: false,
-      jumpHeld: false, jumpPressed: false, knifeHeld: false, knifePressed: false
+      jumpHeld: false, jumpPressed: false, knifeHeld: false, knifePressed: false,
+      dashHeld: false, dashPressed: false, blasterHeld: false, blasterPressed: false,
+      superHeld: false, superPressed: false
     }, state);
   }
 }

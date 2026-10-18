@@ -1,7 +1,7 @@
 /**
  * Gatebreaker — hero "Rook". DOM-free; all side effects go through the `g` (Game) object.
  */
-import { TS, HERO, PHYS, COMBAT } from './constants.js';
+import { TS, HERO, PHYS, COMBAT, ABILITIES } from './constants.js';
 import { moveX, moveY, probeGround } from './physics.js';
 
 const approach = (v, target, delta) =>
@@ -28,6 +28,14 @@ export class Player {
     this.coyote = 0;
     this.jumpBuf = 0;
     this.jumpCuttable = false;
+    this.hasDoubleJumped = false;
+    this.dashT = 0;
+    this.dashCd = 0;
+    this.dashDir = 1;
+    this.isGroundPounding = false;
+    this.powerup = null;
+    this.blasterCd = 0;
+    this.giantScale = 1;
     this.dropT = 0;
     this.grabCd = 0;
     this.climbing = false;
@@ -58,7 +66,35 @@ export class Player {
     this.slashT = Math.max(0, this.slashT - dt);
     this.dropT = Math.max(0, this.dropT - dt);
     this.grabCd = Math.max(0, this.grabCd - dt);
+    this.dashCd = Math.max(0, this.dashCd - dt);
+    this.blasterCd = Math.max(0, this.blasterCd - dt);
     this.prevBottom = this.y + this.h;
+
+    // Powerup durations and behaviors
+    if (this.powerup && typeof this.powerup.duration === 'number') {
+      this.powerup.duration -= dt;
+      if (this.powerup.duration <= 0) {
+        this.powerup = null;
+        this.giantScale = 1;
+      }
+    }
+    if (this.powerup?.type === 'blaster' && input.blasterPressed && this.blasterCd <= 0) {
+      this.blasterCd = 0.20;
+      this.powerup.ammo--;
+      if (g.fireBlaster) g.fireBlaster(this);
+      if (this.powerup.ammo <= 0) this.powerup = null;
+    }
+    if (this.powerup?.type === 'coin_magnet' && g.pullCoins) {
+      g.pullCoins(this.cx, this.cy, 160, dt);
+    }
+    if (this.powerup?.type === 'star_power') {
+      this.invuln = Math.max(this.invuln, 0.1);
+    }
+
+    // Super meter shockwave trigger
+    if (input.superPressed && g.superMeter >= 100) {
+      if (g.triggerShockwave) g.triggerShockwave(this);
+    }
 
     if (this.climbing) this.updateClimb(g, input, dt);
     else this.updateMove(g, input, dt);
@@ -73,22 +109,51 @@ export class Player {
     const w = g.world;
     const dirX = (input.right ? 1 : 0) - (input.left ? 1 : 0);
 
-    // --- horizontal ---
-    if (this.hurtT <= 0) {
+    // --- dash ability trigger ---
+    if (input.dashPressed && this.dashCd <= 0 && this.dashT <= 0 && !this.climbing && (g.hasAbility ? g.hasAbility('dash') : false)) {
+      this.dashT = ABILITIES.dashDuration;
+      this.dashCd = ABILITIES.dashCooldown;
+      this.dashDir = (input.right ? 1 : (input.left ? -1 : this.face));
+      this.face = this.dashDir;
+      this.invuln = Math.max(this.invuln, ABILITIES.dashDuration);
+      if (g.sfx) g.sfx('dash');
+    }
+
+    // --- horizontal movement ---
+    if (this.dashT > 0) {
+      this.dashT -= dt;
+      this.vx = this.dashDir * ABILITIES.dashSpeed;
+      this.vy = 0;
+      if (g.addAfterimage) g.addAfterimage(this);
+      if (g.checkDashSmash) g.checkDashSmash(this);
+    } else if (this.hurtT <= 0) {
+      const maxSpeed = this.powerup?.type === 'speed_boots' ? PHYS.runMax * 1.4 : PHYS.runMax;
       if (dirX !== 0) {
         this.face = dirX;
         const speedingUp = this.vx === 0 || Math.sign(this.vx) === dirX;
-        this.vx = approach(this.vx, dirX * PHYS.runMax, (speedingUp ? PHYS.accel : PHYS.decel) * dt);
+        this.vx = approach(this.vx, dirX * maxSpeed, (speedingUp ? PHYS.accel : PHYS.decel) * dt);
       } else {
         this.vx = approach(this.vx, 0, PHYS.decel * dt);
       }
+      if (this.powerup?.type === 'speed_boots' && Math.abs(this.vx) > 60 && this.grounded && Math.random() < 0.35) {
+        if (g.spawnDust) g.spawnDust(this.cx, this.y + this.h);
+      }
+    }
+
+    if (this.powerup?.type === 'giant_rook' && g.checkGiantSmash) {
+      g.checkGiantSmash(this);
     }
 
     // --- ground state, coyote, buffer ---
     const gt = probeGround(w, this, this.dropT > 0);
     this.grounded = gt !== null && this.vy >= 0;
     this.groundType = this.grounded ? gt : null;
-    if (this.grounded) this.coyote = PHYS.coyote; else this.coyote = Math.max(0, this.coyote - dt);
+    if (this.grounded) {
+      this.coyote = PHYS.coyote;
+      this.hasDoubleJumped = false;
+    } else {
+      this.coyote = Math.max(0, this.coyote - dt);
+    }
     if (input.jumpPressed) this.jumpBuf = PHYS.buffer; else this.jumpBuf = Math.max(0, this.jumpBuf - dt);
 
     // --- drop through one-way platforms: Down + Jump ---
@@ -106,8 +171,28 @@ export class Player {
       return;
     }
 
-    // --- jump ---
-    if (this.jumpBuf > 0 && this.coyote > 0) {
+    // --- ground pound ability trigger: Down + Jump in air ---
+    if (!this.grounded && !this.climbing && !this.isGroundPounding && input.down && input.jumpPressed && (g.hasAbility ? g.hasAbility('ground_pound') : false)) {
+      this.isGroundPounding = true;
+      this.jumpBuf = 0;
+      this.vx = 0;
+      this.vy = ABILITIES.poundSpeed;
+      this.dropT = 0;
+    }
+
+    // --- double jump ability trigger ---
+    if (!this.grounded && !this.climbing && !this.isGroundPounding && this.coyote <= 0 && input.jumpPressed && !this.hasDoubleJumped && (g.hasAbility ? g.hasAbility('double_jump') : false)) {
+      this.vy = PHYS.jumpV;
+      this.hasDoubleJumped = true;
+      this.jumpCuttable = true;
+      this.jumpBuf = 0;
+      this.sx = 0.78; this.sy = 1.24;
+      if (g.sfx) g.sfx('doubleJump');
+      if (g.spawnPuffRing) g.spawnPuffRing(this.cx, this.y + this.h);
+    }
+
+    // --- normal jump ---
+    if (this.jumpBuf > 0 && this.coyote > 0 && !this.isGroundPounding) {
       this.vy = PHYS.jumpV;
       this.jumpBuf = 0;
       this.coyote = 0;
@@ -120,19 +205,50 @@ export class Player {
     if (this.vy >= 0) this.jumpCuttable = false;
 
     // --- gravity (fall gravity x1.5, exact integration for constant acceleration) ---
-    const grav = this.vy > 0 ? PHYS.gravity * PHYS.fallMult : PHYS.gravity;
-    const vyNew = Math.min(this.vy + grav * dt, PHYS.maxFall);
-    const dy = (this.vy + vyNew) / 2 * dt;
-    const impactVy = this.vy;
-    this.vy = vyNew;
+    if (this.dashT > 0) {
+      this.vy = 0;
+    } else if (this.isGroundPounding) {
+      this.vx = 0;
+      this.vy = ABILITIES.poundSpeed;
+    } else {
+      const grav = this.vy > 0 ? PHYS.gravity * PHYS.fallMult : PHYS.gravity;
+      const vyNew = Math.min(this.vy + grav * dt, PHYS.maxFall);
+      const dy = (this.vy + vyNew) / 2 * dt;
+      const impactVy = this.vy;
+      this.vy = vyNew;
 
-    // --- move ---
+      if (moveX(w, this, this.vx * dt)) this.vx = 0;
+      const res = moveY(w, this, dy, { drop: this.dropT > 0, corner: PHYS.corner });
+      if (res.floor) {
+        if (this.isGroundPounding) {
+          this.isGroundPounding = false;
+          if (g.sfx) g.sfx('groundPound');
+          if (g.shakeScreen) g.shakeScreen(0.25);
+          if (g.groundPoundImpact) g.groundPoundImpact(this.cx, this.y + this.h, ABILITIES.poundStunRadius);
+          this.sx = 1.35; this.sy = 0.65;
+        } else if (!this.grounded && impactVy > 220) {
+          this.sx = 1.28; this.sy = 0.76;
+          g.sfx('land');
+        }
+        this.vy = 0;
+        this.grounded = true;
+        this.jumpCuttable = false;
+        this.groundType = probeGround(w, this, false) || 'solid';
+      }
+      if (res.ceil && this.vy < 0) this.vy = 0;
+      return;
+    }
+
+    // Move when dashing or ground pounding
     if (moveX(w, this, this.vx * dt)) this.vx = 0;
-    const res = moveY(w, this, dy, { drop: this.dropT > 0, corner: PHYS.corner });
+    const res = moveY(w, this, this.vy * dt, { drop: this.dropT > 0, corner: PHYS.corner });
     if (res.floor) {
-      if (!this.grounded && impactVy > 220) {
-        this.sx = 1.28; this.sy = 0.76;
-        g.sfx('land');
+      if (this.isGroundPounding) {
+        this.isGroundPounding = false;
+        if (g.sfx) g.sfx('groundPound');
+        if (g.shakeScreen) g.shakeScreen(0.25);
+        if (g.groundPoundImpact) g.groundPoundImpact(this.cx, this.y + this.h, ABILITIES.poundStunRadius);
+        this.sx = 1.35; this.sy = 0.65;
       }
       this.vy = 0;
       this.grounded = true;
@@ -232,6 +348,9 @@ export class Player {
       this.slashDown = !this.grounded && !this.climbing && input.down;
       this.slashHit = new Set();
       g.sfx('knifeSwish');
+      if (this.powerup?.type === 'fire_knife' && g.fireFlameWave) {
+        g.fireFlameWave(this);
+      }
     }
     if (this.slashT > 0) g.resolveSlash(this, this.slashBox());
   }
@@ -250,11 +369,21 @@ export class Player {
     this.grounded = false;
     this.climbing = false;
     this.jumpCuttable = false;
+    this.hasDoubleJumped = false;
+    this.isGroundPounding = false;
     this.sx = 0.8; this.sy = 1.22;
   }
 
   hurt(g, srcX) {
     if (this.invuln > 0) return false;
+    if (this.powerup?.type === 'bubble_shield') {
+      this.powerup = null;
+      if (g.sfx) g.sfx('shieldPop');
+      if (g.poof) g.poof(this.cx, this.cy, '#60a5fa');
+      this.bounce(-320);
+      this.invuln = 0.6;
+      return false;
+    }
     this.hearts--;
     this.invuln = COMBAT.invuln;
     this.hurtT = 0.28;

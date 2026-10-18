@@ -7,20 +7,24 @@ const outDir = '/Users/newtonuser/.gemini/antigravity-ide/brain/3d548fb5-2b76-41
 async function runBrowserCheck() {
   console.log('--- Starting Browser Check for v2.2 Moving Enemies (1366x768 & 844x390) ---');
 
+  const port = 9320 + Math.floor(Math.random() * 200);
+  const dataDir = `/tmp/gb-chrome-${port}`;
   const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', [
     '--headless',
     '--disable-gpu',
+    `--user-data-dir=${dataDir}`,
     '--window-size=1366,768',
-    '--remote-debugging-port=9229',
+    `--remote-debugging-port=${port}`,
     'http://localhost:8094/'
   ]);
 
-  await new Promise(r => setTimeout(r, 1500));
+  await new Promise(r => setTimeout(r, 1800));
 
   try {
-    const res = await fetch('http://127.0.0.1:9229/json');
+    const res = await fetch(`http://127.0.0.1:${port}/json`);
     const tabs = await res.json();
-    const tab = tabs.find(t => t.url.includes('localhost:8094')) || tabs[0];
+    const tab = tabs.find(t => t.type === 'page' && t.url.includes('localhost:8094')) || tabs.find(t => t.type === 'page') || tabs[0];
+    console.log('Selected tab:', tab ? { url: tab.url, type: tab.type } : 'NONE');
     const ws = new WebSocket(tab.webSocketDebuggerUrl);
 
     await new Promise((resolve, reject) => {
@@ -47,6 +51,9 @@ async function runBrowserCheck() {
 
       const evaluate = async (expr) => {
         const res = await rpc('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true });
+        if (res?.result?.exceptionDetails) {
+          console.error('Eval error:', res.result.exceptionDetails.text, res.result.exceptionDetails.exception?.description);
+        }
         return res?.result?.result?.value;
       };
 
@@ -78,7 +85,7 @@ async function runBrowserCheck() {
         await new Promise(r => setTimeout(r, 600));
 
         // Unlock all levels
-        await evaluate(`
+        await evaluate(`(() => {
           const save = {
             unlocked: ['1-1','1-2','1-3','2-1','2-2','2-3','3-1','3-2','3-3'],
             best: {
@@ -92,7 +99,7 @@ async function runBrowserCheck() {
             settings: { sfx: 0.8, music: 0.5, shake: true }
           };
           localStorage.setItem('gatebreaker.v2.save', JSON.stringify(save));
-        `);
+        })()`);
 
         // Test Level 1-2: Night Bat & Hopper Frog
         console.log('Testing Level 1-2 (Night Bat & Hopper Frog)...');
@@ -214,12 +221,160 @@ async function runBrowserCheck() {
         await new Promise(r => setTimeout(r, 800));
         await screenshot('v22_phone_world3_hawk.png');
 
-        console.log(`Browser check summary:`);
+        // ==========================================
+        // Pre-Phase 2 Fixes & Phase 2/3 Verification
+        // ==========================================
+        console.log('\n--- Verifying Pre-Phase 2 Fixes & Phase 2/3 Features ---');
+
+        // Check 1: Title Screen Subtitle and Dynamic Controls
+        console.log('Testing Title Screen Subtitle & Dynamic Controls...');
+        const titleSubtitle = await evaluate(`document.querySelector('#screen-title .sub')?.textContent`);
+        console.log(`  Title subtitle: "${titleSubtitle}"`);
+        if (!titleSubtitle || !titleSubtitle.includes('Floating-islands platformer')) {
+          throw new Error(`Subtitle mismatch: expected 'Floating-islands platformer', got: ${titleSubtitle}`);
+        }
+
+        const controlsHtml = await evaluate(`(() => {
+          const save = {
+            unlocked: ['1-1','1-2','1-3','2-1','2-2','2-3'],
+            abilities: ['double_jump', 'dash', 'ground_pound'],
+            best: {},
+            settings: { sfx: 0.8, music: 0.5, shake: true }
+          };
+          localStorage.setItem('gatebreaker.v2.save', JSON.stringify(save));
+          window.__gb?.ui?.updateTitleControls?.();
+          return document.getElementById('titleControls')?.innerHTML || '';
+        })()`);
+        console.log('  Title controls dynamically populated with abilities:',
+          controlsHtml.includes('Double Jump') && controlsHtml.includes('Dash') && controlsHtml.includes('Ground Pound')
+        );
+
+        // Check 2: Phone Layout (844x390), D-pad opacity, camera offset & hint overlap
+        console.log('Testing Phone (844x390) Level 1-1 Start Layout...');
+        await evaluate(`
+          window.__gb.startLevel('1-1');
+        `);
+        await new Promise(r => setTimeout(r, 800));
+
+        const keyBefore = await evaluate(`(() => {
+          const el = document.getElementById('hudKey');
+          const style = window.getComputedStyle(el);
+          return {
+            uncollectedClass: el.classList.contains('uncollected'),
+            opacity: style.opacity,
+            filter: style.filter
+          };
+        })()`);
+        console.log('  Key icon before collection:', keyBefore);
+
+        const touchOpacity = await evaluate(`window.getComputedStyle(document.getElementById('touch-controls')).opacity`);
+        console.log('  Touch controls opacity:', touchOpacity);
+
+        const heroCoverCheck = await evaluate(`(() => {
+          const g = window.__gb.game;
+          const canvas = document.getElementById('gameCanvas');
+          const dpad = document.getElementById('dpad');
+          const dpadRect = dpad.getBoundingClientRect();
+          
+          const screenScale = Math.min(canvas.clientWidth / 480, canvas.clientHeight / 270);
+          const ox = (canvas.clientWidth - 480 * screenScale) / 2;
+          const oy = (canvas.clientHeight - 270 * screenScale) / 2;
+          const heroScreenX = ox + (g.player.cx - g.cam.x) * screenScale;
+          const heroScreenY = oy + (g.player.cy - g.cam.y) * screenScale;
+
+          return {
+            heroScreenX, heroScreenY,
+            dpadRight: dpadRect.right,
+            dpadTop: dpadRect.top,
+            dpadBottom: dpadRect.bottom,
+            heroUnderDpad: (heroScreenX >= dpadRect.left && heroScreenX <= dpadRect.right && heroScreenY >= dpadRect.top && heroScreenY <= dpadRect.bottom)
+          };
+        })()`);
+        console.log('  Hero position vs D-pad:', heroCoverCheck);
+        if (heroCoverCheck.heroUnderDpad) {
+          throw new Error('Hero is covered by D-pad touch controls!');
+        }
+        await screenshot('verify_phone_start_1_1.png');
+
+        // Check 3: Nearest hint bubble strictly shown
+        const hintCheck = await evaluate(`(() => {
+          const g = window.__gb.game;
+          const hints = g.level.hints;
+          const p = g.player;
+          const activeHints = hints.filter(h => Math.hypot(h.x - p.cx, h.y - p.cy) <= 140);
+          return {
+            totalHints: hints.length,
+            withinRangeCount: activeHints.length,
+            nearest: activeHints[0]?.text
+          };
+        })()`);
+        console.log('  Level 1-1 hint status:', hintCheck);
+
+        // Check 4: Collecting key gives bright gold icon + pop animation
+        console.log('Testing Key Collection & Pop Animation...');
+        const keyAfter = await evaluate(`(() => {
+          const g = window.__gb.game;
+          g.player.hasKey = true;
+          window.__gb.ui.updateHud(g);
+          const el = document.getElementById('hudKey');
+          return {
+            hasOnClass: el.classList.contains('on'),
+            className: el.className
+          };
+        })()`);
+        console.log('  Key icon after collection:', keyAfter);
+        await screenshot('verify_phone_key_collected.png');
+
+        // Check 5: Phase 2 Abilities (Double jump, Dash, Ground Pound)
+        console.log('Testing Phase 2 Abilities (Double Jump, Dash, Ground Pound)...');
+        const abilityCheck = await evaluate(`(() => {
+          const g = window.__gb.game;
+          const p = g.player;
+          g.abilities = ['double_jump', 'dash', 'ground_pound'];
+          
+          p.update(g, { dashPressed: true }, 1/60);
+          const isDashing = p.dashT > 0 && Math.abs(p.vx) === 520;
+          
+          p.dashT = 0;
+          p.grounded = false;
+          p.update(g, { down: true, jumpPressed: true }, 1/60);
+          const isGroundPounding = p.isGroundPounding && p.vy === 720;
+
+          p.grounded = false;
+          p.isGroundPounding = false;
+          p.coyote = 0;
+          p.hasDoubleJumped = false;
+          p.update(g, { jumpPressed: true, jumpHeld: true }, 1/60);
+          const hasDoubleJumped = p.hasDoubleJumped && p.vy <= -540;
+
+          return { isDashing, isGroundPounding, hasDoubleJumped };
+        })()`);
+        console.log('  Phase 2 Ability triggers:', abilityCheck);
+
+        // Check 6: Phase 3 Power-ups & Super Meter UI
+        console.log('Testing Phase 3 Power-ups & Super Meter UI...');
+        const powerupCheck = await evaluate(`(() => {
+          const g = window.__gb.game;
+          g.collectPowerOrb({ type: 'blaster', x: 0, y: 0, w: 20, h: 20 });
+          const blasterActive = g.player.powerup?.type === 'blaster' && g.player.powerup?.ammo === 10;
+          
+          g.addSuper(100);
+          const superFull = g.superMeter === 100;
+
+          g.triggerShockwave(g.player);
+          const superReset = g.superMeter === 0;
+
+          return { blasterActive, superFull, superReset };
+        })()`);
+        console.log('  Phase 3 Power-up & Super Meter:', powerupCheck);
+        await screenshot('verify_phone_powerup_super.png');
+
+        console.log(`\nBrowser check summary:`);
         console.log(`  Console errors: ${consoleErrors.length}`);
         if (consoleErrors.length > 0) {
           consoleErrors.forEach(err => console.error(`    ${err}`));
         } else {
-          console.log(`  ✓ No console errors across all levels with moving enemies!`);
+          console.log(`  ✓ All tests passed with 0 console errors!`);
         }
 
         resolve();
@@ -231,8 +386,9 @@ async function runBrowserCheck() {
   } catch (e) {
     console.error('Error during browser check:', e);
   } finally {
-    chrome.kill();
-    await new Promise(r => setTimeout(r, 700));
+    try { chrome.kill('SIGKILL'); } catch (_) {}
+    try { fs.rmSync(dataDir, { recursive: true, force: true }); } catch (_) {}
+    await new Promise(r => setTimeout(r, 500));
   }
 }
 

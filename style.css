@@ -27,9 +27,14 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #0b1020; c
 .hud-hearts { color: #e63946; letter-spacing: .08em; font-size: 1.1em; text-shadow: 0 .06em 0 rgba(0,0,0,.2); }
 .hud-hearts .lost { color: #c9b27c; }
 .coin-dot { width: 1em; height: 1em; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff3a8, var(--gold) 60%, #c98a08); border: .12em solid #a56b00; display: inline-block; }
-.key-slot { opacity: .25; filter: grayscale(1); transition: all .2s; }
-.key-slot.on { opacity: 1; filter: none; animation: keyPulse 1s infinite alternate; }
-@keyframes keyPulse { to { transform: scale(1.18) rotate(-8deg); } }
+.key-slot { display: inline-block; opacity: .18; filter: grayscale(1) brightness(.65); transform: scale(.88); transition: opacity .25s, filter .25s, transform .25s; }
+.key-slot.on { opacity: 1; filter: drop-shadow(0 0 8px #facc15) brightness(1.2); transform: scale(1.15); animation: keyPop .45s cubic-bezier(.175, .885, .32, 1.275), keyPulse 1.2s infinite alternate; }
+@keyframes keyPop {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.4) rotate(14deg); opacity: 1; }
+  100% { transform: scale(1.15); opacity: 1; }
+}
+@keyframes keyPulse { to { transform: scale(1.22) rotate(-8deg); filter: drop-shadow(0 0 12px #fde047) brightness(1.3); } }
 .round-btn { pointer-events: auto; cursor: pointer; font-family: var(--font); font-size: .9em; width: 2.2em; height: 2.2em; justify-content: center; padding: 0; }
 .round-btn:active { transform: translateY(.1em); box-shadow: 0 .05em 0 var(--wood-dark); }
 
@@ -57,26 +62,55 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #0b1020; c
 .btn.primary { background: linear-gradient(#7be05a, #46b533); color: #123a0c; border-color: #2c7a1f; box-shadow: 0 .18em 0 #1d5c14; }
 
 /* ---------- touch controls ---------- */
-#touch-controls { position: fixed; inset: 0; pointer-events: none; z-index: 20; display: none; }
+#touch-controls { position: fixed; inset: 0; pointer-events: none; z-index: 20; display: none; opacity: .70; transition: opacity .2s; }
 body.touch-device #touch-controls.active { display: block; }
 .tbtn { pointer-events: auto; position: absolute; width: 72px; height: 72px; border-radius: 50%; border: 3px solid rgba(255, 243, 214, .55); background: rgba(255, 243, 214, .22); color: #fff3d6; font-family: var(--font); font-size: 26px; font-weight: 700; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); touch-action: none; cursor: pointer; }
 .tbtn.pressed { background: rgba(255, 243, 214, .5); transform: scale(.94); }
-#dpad { position: absolute; left: max(14px, env(safe-area-inset-left)); bottom: max(12px, env(safe-area-inset-bottom)); width: 216px; height: 216px; }
+#dpad { position: absolute; left: max(6px, env(safe-area-inset-left)); bottom: max(4px, env(safe-area-inset-bottom)); width: 216px; height: 216px; }
 #dpad .tbtn { border-radius: 22px; }
 .t-up { left: 72px; top: 0; } .t-left { left: 0; top: 72px; } .t-right { left: 144px; top: 72px; } .t-down { left: 72px; top: 144px; }
-#actions { position: absolute; right: max(14px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom)); width: 220px; height: 190px; }
-.t-jump { width: 108px; height: 108px; right: 0; bottom: 0; font-size: 20px; background: rgba(123, 224, 90, .3); border-color: rgba(190, 255, 170, .7); }
-.t-knife { width: 82px; height: 82px; right: 124px; bottom: 6px; font-size: 30px; background: rgba(255, 190, 120, .28); border-color: rgba(255, 220, 170, .7); }
+#actions { position: absolute; right: max(8px, env(safe-area-inset-right)); bottom: max(4px, env(safe-area-inset-bottom)); width: 220px; height: 190px; }
+.t-jump { width: 104px; height: 104px; right: 0; bottom: 0; font-size: 20px; background: rgba(123, 224, 90, .3); border-color: rgba(190, 255, 170, .7); }
+.t-knife { width: 80px; height: 80px; right: 120px; bottom: 4px; font-size: 28px; background: rgba(255, 190, 120, .28); border-color: rgba(255, 220, 170, .7); }
 
 @media (max-height: 460px) {
-  #dpad { transform: scale(.9); transform-origin: left bottom; }
-  #actions { transform: scale(.9); transform-origin: right bottom; }
+  #dpad { transform: scale(.80); transform-origin: left bottom; }
+  #actions { transform: scale(.80); transform-origin: right bottom; }
 }
 
 /* ---------- portrait hint ---------- */
 #rotate-hint { position: fixed; left: 50%; top: 8px; transform: translateX(-50%); background: rgba(34,24,18,.9); color: var(--cream); border: 2px solid var(--gold); border-radius: 999px; padding: 6px 14px; font-weight: 600; font-size: 13px; display: none; z-index: 30; pointer-events: none; white-space: nowrap; }
 @media (orientation: portrait) and (max-width: 700px) { body.touch-device #rotate-hint { display: block; } }
 @media (prefers-reduced-motion: reduce) { .key-slot.on { animation: none; } #toast { transition: none; } }
+
+/* ---------- Super Meter & Power-up HUD ---------- */
+.super-bar-bg { width: 60px; height: 10px; background: rgba(40, 25, 15, 0.4); border-radius: 6px; overflow: hidden; border: 1.5px solid var(--wood); }
+.super-bar-fill { height: 100%; background: linear-gradient(90deg, #eab308, #facc15); transition: width .15s ease-out; }
+.super-icon { font-size: 1.1em; color: #a16207; opacity: .45; transition: all .2s; }
+.super-icon.ready { color: #facc15; opacity: 1; filter: drop-shadow(0 0 6px #fef08a); animation: superPulse 0.8s infinite alternate; }
+
+.powerup-ring { width: 1.6em; height: 1.6em; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.25); border: 2px solid #38bdf8; position: relative; }
+.powerup-ammo { font-weight: 700; color: #0284c7; }
+.powerup-flash { animation: powerupFlash 0.4s infinite alternate; }
+@keyframes powerupFlash { to { opacity: 0.2; } }
+
+.hud-abilities { display: flex; gap: 0.35em; padding: 0.2em 0.5em; }
+.ability-slot { font-size: 1.05em; opacity: 0.22; filter: grayscale(1); transition: opacity .25s, filter .25s; }
+.ability-slot.on { opacity: 1; filter: drop-shadow(0 0 4px #facc15); }
+
+/* ---------- Touch extra buttons ---------- */
+.t-super { width: 72px; height: 72px; right: 124px; bottom: 94px; font-size: 26px; background: rgba(250, 204, 21, .35); border-color: rgba(254, 240, 138, .85); color: #fef08a; animation: superPulse 1s infinite alternate; }
+@keyframes superPulse { to { transform: scale(1.08); filter: drop-shadow(0 0 10px #facc15); } }
+.t-dash { width: 76px; height: 76px; right: 0; bottom: 110px; font-size: 16px; font-weight: 800; background: rgba(56, 189, 248, .3); border-color: rgba(186, 230, 253, .8); color: #e0f2fe; }
+.t-blaster { width: 72px; height: 72px; right: 82px; bottom: 114px; font-size: 26px; background: rgba(249, 115, 22, .3); border-color: rgba(254, 215, 170, .8); }
+
+/* ---------- Power Showcase Card ---------- */
+.power-card { max-width: 440px; padding: 1.4em 1.8em; text-align: center; }
+.power-badge { display: inline-block; background: linear-gradient(90deg, #eab308, #f59e0b); color: #fff; font-weight: 800; font-size: 0.8em; letter-spacing: 0.1em; padding: 4px 12px; border-radius: 999px; margin-bottom: 0.6em; box-shadow: 0 2px 8px rgba(234, 179, 8, 0.4); }
+.power-glow-circle { width: 76px; height: 76px; border-radius: 50%; background: radial-gradient(circle, #fde047 30%, #f59e0b 80%); border: 3px solid #fff; margin: 0 auto 0.6em; display: flex; align-items: center; justify-content: center; font-size: 38px; box-shadow: 0 0 20px #facc15; animation: keyPulse 1.2s infinite alternate; }
+.power-desc { font-size: 1.05em; color: #4a2f22; margin-bottom: 0.8em; font-weight: 500; }
+.power-controls-box { background: rgba(255, 255, 255, 0.6); border: 2px solid rgba(138, 90, 43, 0.3); border-radius: 0.8em; padding: 0.6em 0.9em; text-align: left; font-size: 0.9em; line-height: 1.6; margin-bottom: 1em; }
+.pause-powers { display: flex; flex-direction: column; gap: 0.4em; text-align: left; font-size: 0.9em; margin: 0.8em 0; background: rgba(255,255,255,0.5); padding: 0.6em 0.9em; border-radius: 0.8em; border: 1.5px solid var(--wood); }
 
 /* ---------- world map screen ---------- */
 .title-btns { display: flex; flex-direction: column; gap: 0.5em; margin-top: 0.6em; }
