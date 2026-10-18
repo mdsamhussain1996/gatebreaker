@@ -37,6 +37,7 @@ export class Enemy {
   get cy() { return this.y + this.h / 2; }
 
   isAsleep(g) {
+    if (this.isBoss) return false;
     const camX = g.cam ? g.cam.x : (g.player ? g.player.x : this.homeX);
     const camY = g.cam ? g.cam.y : (g.player ? g.player.y : this.homeY);
     const dx = Math.abs((this.x + this.w / 2) - camX);

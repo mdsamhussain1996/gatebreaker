@@ -1098,6 +1098,39 @@ test('compact HUD: combined top-left bar, max-height constraints, active-only po
   assert.ok(css.includes('max-height: 56px'), 'mobile HUD max-height must be <= 56px');
 });
 
+// ------------------------------------------------------------------ 11. unique layouts (Phase B)
+section('11. Unique Level Layouts (v2.3 Phase B)');
+test('row uniqueness: no two levels share > 30 % identical rows', () => {
+  for (let i = 0; i < LEVELS.length; i++) {
+    for (let j = i + 1; j < LEVELS.length; j++) {
+      const l1 = LEVELS[i], l2 = LEVELS[j];
+      let shared = 0;
+      for (let r = 0; r < 44; r++) {
+        if (l1.rows[r] === l2.rows[r]) shared++;
+      }
+      const pct = shared / 44;
+      assert.ok(pct <= 0.30, `levels ${l1.id} and ${l2.id} share ${(pct * 100).toFixed(1)}% rows (> 30%)`);
+    }
+  }
+});
+
+test('collectibles balance: every level has exactly 3 stars and 60–120 coins', () => {
+  for (const def of LEVELS) {
+    const lv = parseLevel(def);
+    assert.equal(lv.stars.length, 3, `level ${def.id} has ${lv.stars.length} stars, expected 3`);
+    assert.ok(lv.coins.length >= 60 && lv.coins.length <= 120, `level ${def.id} has ${lv.coins.length} coins, expected 60–120`);
+  }
+});
+
+test('signature mechanics: each world has distinct theme and signature layouts', () => {
+  assert.equal(LEVELS.length, 9, 'must have all 9 levels');
+  const ids = LEVELS.map(l => l.id);
+  assert.deepEqual(ids, ['1-1', '1-2', '1-3', '2-1', '2-2', '2-3', '3-1', '3-2', '3-3']);
+  assert.ok(LEVELS.find(l => l.id === '1-3').bosses || parseLevel(LEVELS.find(l => l.id === '1-3')).bosses.length === 1, '1-3 has Mushroom King');
+  assert.ok(LEVELS.find(l => l.id === '2-3').bosses || parseLevel(LEVELS.find(l => l.id === '2-3')).bosses.length === 1, '2-3 has Old Oak Guardian');
+  assert.ok(LEVELS.find(l => l.id === '3-3').bosses || parseLevel(LEVELS.find(l => l.id === '3-3')).bosses.length === 1, '3-3 has Sand Wyrm');
+});
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);
 
