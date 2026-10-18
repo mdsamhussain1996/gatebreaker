@@ -9,7 +9,10 @@ import { InputManager } from '../src/input.js';
 import { LEVELS } from '../src/levels.js';
 import { parseLevel } from '../src/level.js';
 import { Game } from '../src/game.js';
-import { MushroomWalker } from '../src/enemies.js';
+import {
+  MushroomWalker, BuzzBee, NightBat, HopperFrog, WildBoar,
+  LeafGlider, RollingArmadillo, DesertHawk, SpinningSaw
+} from '../src/enemies.js';
 
 import { THEMES, getTheme } from '../src/themes.js';
 
@@ -23,7 +26,7 @@ const I = InputManager.synthetic;
 
 /** Minimal stand-in for Game, enough for Player in isolated worlds. */
 function stubGame(world) {
-  return { world, sfx() {}, resolveSlash() {}, playerFell() { this.fell = true; }, onHeroHurt() {} };
+  return { world, sfx() {}, poof() {}, resolveSlash() {}, playerFell() { this.fell = true; }, onHeroHurt() {} };
 }
 function makeWorld(rows) { return new World(rows); }
 function spawn(world, c, r) {          // hero standing with feet at the bottom of cell (c, r)
@@ -648,6 +651,99 @@ test('scorpion has 2 HP and takes 2 knife slashes to defeat', () => {
   stepGame(g, 4);
   assert.equal(sc.hp, 0);
   assert.ok(sc.dead);
+});
+
+section('7. Moving enemies & boss summons (v2.2)');
+test('moving enemy: Buzz Bee flies in sine wave and is defeatable by stomp & knife', () => {
+  const bee = new BuzzBee(200, 100, 160);
+  assert.equal(bee.type, 'buzz_bee');
+  assert.ok(bee.stompable);
+  const startY = bee.y;
+  const g = stubGame(makeWorld(['...']));
+  bee.update(g, 0.2);
+  assert.notEqual(bee.y, startY);
+  bee.hit(g, 1);
+  assert.ok(bee.dead);
+});
+
+test('moving enemy: Night Bat wakes within 5 tiles with telegraph >= 0.4s and swoops', () => {
+  const bat = new NightBat(200, 100);
+  assert.equal(bat.state, 'roosting');
+  const g = stubGame(makeWorld(['...']));
+  g.player = { cx: 400, cy: 300, invuln: 0 };
+  bat.update(g, 0.1);
+  assert.equal(bat.state, 'roosting');
+  g.player.cx = 220; g.player.cy = 180;
+  bat.update(g, 0.1);
+  assert.equal(bat.state, 'waking');
+  assert.ok(bat.telegraph >= 0.4, `expected telegraph >= 0.4s, got ${bat.telegraph}`);
+});
+
+test('moving enemy: Hopper Frog squats with telegraph >= 0.4s then leaps', () => {
+  const frog = new HopperFrog(200, 200);
+  frog.jumpTimer = 0.05;
+  const g = stubGame(makeWorld(['...']));
+  g.player = { cx: 300, cy: 200 };
+  frog.update(g, 0.1);
+  assert.equal(frog.state, 'squat');
+  assert.ok(frog.telegraph >= 0.4);
+});
+
+test('moving enemy: Wild Boar charges when seeing player and is stunned upon wall impact', () => {
+  const w = makeWorld([
+    '#...#',
+    '#===#',
+    '#####'
+  ]);
+  const boar = new WildBoar(TS * 2, TS * 2);
+  const g = stubGame(w);
+  g.player = { cx: TS * 3, cy: TS * 2 - 10 };
+  boar.dir = 1;
+  boar.update(g, 0.1);
+  assert.equal(boar.state, 'telegraph');
+  assert.ok(boar.telegraph >= 0.4);
+});
+
+test('moving enemy: Leaf Glider drifts down on wind and hero bounces harmlessly on top', () => {
+  const glider = new LeafGlider(100, 100);
+  assert.ok(glider.stompable);
+  const g = newGame(LEVELS.find(l => l.id === '2-1'));
+  const startY = glider.y;
+  glider.update(g, 0.5);
+  assert.ok(glider.y > startY, 'glider should drift downward');
+});
+
+test('moving enemy: Rolling Armadillo curls with telegraph and deflects rolling hits', () => {
+  const dillo = new RollingArmadillo(200, 200);
+  const g = stubGame(makeWorld(['...']));
+  g.player = { cx: 220, cy: 200 };
+  dillo.update(g, 0.1);
+  assert.equal(dillo.state, 'curl');
+  assert.ok(dillo.telegraph >= 0.4);
+  dillo.state = 'roll';
+  const hitResult = dillo.hit(g, 1, 1);
+  assert.equal(hitResult, false);
+  assert.ok(!dillo.dead);
+});
+
+test('moving enemy: Spinning Saw follows rail path and is invulnerable', () => {
+  const saw = new SpinningSaw(2, 5, 5, 5, 100);
+  assert.ok(saw.invulnerable);
+  assert.equal(saw.hit(), false);
+  const g = stubGame(makeWorld(['...']));
+  const startX = saw.x;
+  saw.update(g, 0.5);
+  assert.notEqual(saw.x, startX);
+});
+
+test('boss summon: Mushroom King summons Buzz Bees at HP 2', () => {
+  const g = newGame(LEVELS.find(l => l.id === '1-3'));
+  const king = g.bosses[0];
+  const initialEnemies = g.enemies.length;
+  king.hit(g, 1);
+  assert.equal(king.hp, 2);
+  assert.ok(g.enemies.length > initialEnemies, 'king did not summon minions');
+  assert.ok(g.enemies.some(e => e.type === 'buzz_bee'));
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

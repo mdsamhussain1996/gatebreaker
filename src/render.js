@@ -151,7 +151,19 @@ export class Renderer {
       else if (e.type === 'snapvine') this.drawSnapvine(ctx, e);
       else if (e.type === 'scorpion') this.drawScorpion(ctx, e);
       else if (e.type === 'sand_worm') this.drawSandWorm(ctx, e);
+      else if (e.type === 'buzz_bee') this.drawBuzzBee(ctx, e);
+      else if (e.type === 'night_bat') this.drawNightBat(ctx, e);
+      else if (e.type === 'hopper_frog') this.drawHopperFrog(ctx, e);
+      else if (e.type === 'wild_boar') this.drawWildBoar(ctx, e);
+      else if (e.type === 'leaf_glider') this.drawLeafGlider(ctx, e);
+      else if (e.type === 'rolling_armadillo') this.drawRollingArmadillo(ctx, e);
+      else if (e.type === 'desert_hawk') this.drawDesertHawk(ctx, e);
+      else if (e.type === 'spinning_saw') this.drawSpinningSaw(ctx, e);
       else if (e.isBoss) this.drawBoss(ctx, e);
+
+      if (e.telegraph > 0 && e.type !== 'desert_hawk') {
+        this.drawTelegraphIndicator(ctx, e);
+      }
     }
 
     // 6. Key, Hero & Particles
@@ -1122,6 +1134,380 @@ export class Renderer {
     ctx.fillStyle = '#e63946'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.moveTo(14, 0); ctx.lineTo(-10, -12); ctx.lineTo(-4, 0); ctx.lineTo(-10, 12); ctx.closePath();
     ctx.stroke(); ctx.fill();
+    ctx.restore();
+  }
+
+  drawTelegraphIndicator(ctx, e) {
+    const cx = e.x + e.w / 2, cy = e.y - 12;
+    ctx.save();
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 9px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('!', cx, cy);
+    ctx.restore();
+  }
+
+  drawBuzzBee(ctx, e) {
+    const cx = e.x + e.w / 2, cy = e.y + e.h / 2;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(e.dir > 0 ? 1 : -1, 1);
+
+    // Flash / Body
+    ctx.fillStyle = e.flash > 0 ? '#ffffff' : '#facc15';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 11, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Black stripes
+    if (e.flash <= 0) {
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(-3, -7, 3, 14);
+      ctx.fillRect(3, -7, 3, 14);
+    }
+
+    // Wings flapping
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    const flap = Math.sin(e.wingPhase || 0) * 8;
+    ctx.beginPath();
+    ctx.ellipse(-2, -8 + flap * 0.3, 7, Math.max(2, Math.abs(flap)), -0.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Stinger
+    ctx.fillStyle = '#1e293b';
+    ctx.beginPath();
+    ctx.moveTo(-11, 0); ctx.lineTo(-14, -2); ctx.lineTo(-14, 2); ctx.closePath();
+    ctx.fill();
+
+    // Eye
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(6, -3, 3, 3);
+    ctx.restore();
+  }
+
+  drawNightBat(ctx, e) {
+    const cx = e.x + e.w / 2, cy = e.y + e.h / 2;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(e.dir > 0 ? 1 : -1, 1);
+
+    if (e.state === 'roosting') {
+      // Roosting upside down under ceiling
+      ctx.fillStyle = e.flash > 0 ? '#ffffff' : '#334155';
+      ctx.beginPath();
+      ctx.roundRect(-7, -9, 14, 18, 4);
+      ctx.fill();
+      // Glowing eyes
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(-4, 2, 2, 2);
+      ctx.fillRect(2, 2, 2, 2);
+    } else {
+      // Flying / swooping with spread scalloped wings
+      ctx.fillStyle = e.flash > 0 ? '#ffffff' : '#1e1b4b';
+      // Body
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 6, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Scalloped wings
+      ctx.fillStyle = e.flash > 0 ? '#ffffff' : '#312e81';
+      const wingFlap = Math.sin(e.wingPhase || 0) * 6;
+      ctx.beginPath();
+      ctx.moveTo(-5, -2);
+      ctx.quadraticCurveTo(-14, -10 + wingFlap, -18, -2 + wingFlap);
+      ctx.quadraticCurveTo(-12, 4, -4, 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(5, -2);
+      ctx.quadraticCurveTo(14, -10 + wingFlap, 18, -2 + wingFlap);
+      ctx.quadraticCurveTo(12, 4, 4, 2);
+      ctx.fill();
+
+      // Glowing eyes
+      ctx.fillStyle = e.telegraph > 0 ? '#ef4444' : '#facc15';
+      ctx.fillRect(2, -3, 2, 2);
+    }
+    ctx.restore();
+  }
+
+  drawHopperFrog(ctx, e) {
+    const cx = e.x + e.w / 2, by = e.y + e.h;
+    ctx.save();
+    ctx.translate(cx, by);
+    ctx.scale(e.dir > 0 ? 1 : -1, 1);
+
+    const squish = e.state === 'squat' ? 0.7 : e.state === 'jump' ? 1.2 : 1.0;
+    // Body
+    ctx.fillStyle = e.flash > 0 ? '#ffffff' : '#16a34a';
+    ctx.beginPath();
+    ctx.ellipse(0, -10 * squish, 12, 9 * squish, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Cream belly
+    if (e.flash <= 0) {
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath();
+      ctx.ellipse(2, -8 * squish, 7, 5 * squish, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Folded hind legs
+    ctx.fillStyle = e.flash > 0 ? '#ffffff' : '#15803d';
+    ctx.beginPath();
+    ctx.arc(-8, -5, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eyes on top of head
+    ctx.fillStyle = '#facc15';
+    ctx.beginPath();
+    ctx.arc(4, -16 * squish, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(5, -17 * squish, 2, 3);
+
+    ctx.restore();
+  }
+
+  drawWildBoar(ctx, e) {
+    const cx = e.x + e.w / 2, by = e.y + e.h;
+    ctx.save();
+    ctx.translate(cx, by);
+    ctx.scale(e.dir > 0 ? 1 : -1, 1);
+
+    // Stunned wobbling
+    if (e.state === 'stunned') {
+      ctx.rotate(Math.sin(Date.now() * 0.02) * 0.08);
+    }
+
+    // Stout brown body
+    ctx.fillStyle = e.flash > 0 ? '#ffffff' : '#78350f';
+    ctx.beginPath();
+    ctx.roundRect(-16, -22, 32, 20, 6);
+    ctx.fill();
+
+    // Dark bristly spine mane
+    if (e.flash <= 0) {
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(-12, -26, 20, 5);
+    }
+
+    // Snout
+    ctx.fillStyle = '#92400e';
+    ctx.fillRect(10, -16, 7, 10);
+
+    // White ivory tusks
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(13, -10); ctx.lineTo(17, -18); ctx.lineTo(15, -10);
+    ctx.fill();
+
+    // Glowing eyes (red during charge or scrape telegraph)
+    ctx.fillStyle = (e.state === 'charge' || e.state === 'telegraph') ? '#ef4444' : '#0f172a';
+    ctx.fillRect(7, -18, 3, 3);
+
+    // Dizzy stars circling above head while stunned
+    if (e.state === 'stunned') {
+      const t = Date.now() * 0.005;
+      ctx.fillStyle = '#facc15';
+      ctx.fillText('★', Math.cos(t) * 12, -32 + Math.sin(t) * 4);
+      ctx.fillText('★', Math.cos(t + Math.PI) * 12, -32 + Math.sin(t + Math.PI) * 4);
+    }
+
+    ctx.restore();
+  }
+
+  drawLeafGlider(ctx, e) {
+    const cx = e.x + e.w / 2, cy = e.y + e.h / 2;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(Math.sin(e.swayPhase || 0) * 0.25);
+
+    // Autumn maple leaf body
+    ctx.fillStyle = e.flash > 0 ? '#ffffff' : '#f97316';
+    ctx.beginPath();
+    ctx.moveTo(0, -10);
+    ctx.quadraticCurveTo(14, -6, 12, 4);
+    ctx.quadraticCurveTo(4, 10, 0, 10);
+    ctx.quadraticCurveTo(-4, 10, -12, 4);
+    ctx.quadraticCurveTo(-14, -6, 0, -10);
+    ctx.fill();
+
+    // Leaf veins
+    if (e.flash <= 0) {
+      ctx.strokeStyle = '#c2410c';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(0, -8); ctx.lineTo(0, 8);
+      ctx.moveTo(0, -2); ctx.lineTo(8, 2);
+      ctx.moveTo(0, -2); ctx.lineTo(-8, 2);
+      ctx.stroke();
+    }
+
+    // Little moth antennae
+    ctx.strokeStyle = '#78350f';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, -8); ctx.lineTo(4, -13);
+    ctx.moveTo(0, -8); ctx.lineTo(-4, -13);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  drawRollingArmadillo(ctx, e) {
+    const cx = e.x + e.w / 2, by = e.y + e.h;
+    ctx.save();
+    ctx.translate(cx, by);
+
+    if (e.state === 'roll') {
+      // Spinning armored ball
+      ctx.translate(0, -11);
+      ctx.rotate(e.rollAngle || 0);
+      ctx.fillStyle = e.flash > 0 ? '#ffffff' : '#ea580c';
+      ctx.beginPath();
+      ctx.arc(0, 0, 11, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Interlocking armored plates
+      ctx.strokeStyle = '#7c2d12';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 4; i++) {
+        const a = (i * Math.PI) / 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, 10, a, a + 0.9);
+        ctx.stroke();
+      }
+    } else {
+      ctx.scale(e.dir > 0 ? 1 : -1, 1);
+      // Banded terracotta shell
+      ctx.fillStyle = e.flash > 0 ? '#ffffff' : '#c2410c';
+      ctx.beginPath();
+      ctx.roundRect(-13, -18, 24, 16, 5);
+      ctx.fill();
+
+      // Band lines
+      if (e.flash <= 0) {
+        ctx.strokeStyle = '#7c2d12';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(-4, -18); ctx.lineTo(-4, -4);
+        ctx.moveTo(3, -18); ctx.lineTo(3, -4);
+        ctx.stroke();
+      }
+
+      // Pointed snout & eye
+      ctx.fillStyle = '#ea580c';
+      ctx.fillRect(8, -12, 6, 6);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(8, -14, 2, 2);
+    }
+
+    ctx.restore();
+  }
+
+  drawDesertHawk(ctx, e) {
+    const cx = e.x + e.w / 2, cy = e.y + e.h / 2;
+    ctx.save();
+
+    // Projected ground shadow during dive telegraph
+    if (e.state === 'lock' || e.state === 'dive') {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.beginPath();
+      ctx.ellipse(e.targetX, e.targetY + 8, 14, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.translate(cx, cy);
+    ctx.scale(e.dir > 0 ? 1 : -1, 1);
+
+    // Golden-brown desert raptor with spread wings
+    ctx.fillStyle = e.flash > 0 ? '#ffffff' : '#b45309';
+    // Body
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 6, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Spread wings
+    const flap = Math.sin(e.wingPhase || 0) * 8;
+    ctx.beginPath();
+    ctx.moveTo(-4, -3);
+    ctx.quadraticCurveTo(-12, -14 + flap, -20, -4 + flap);
+    ctx.quadraticCurveTo(-14, 2, -4, 2);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(4, -3);
+    ctx.quadraticCurveTo(12, -14 + flap, 20, -4 + flap);
+    ctx.quadraticCurveTo(14, 2, 4, 2);
+    ctx.fill();
+
+    // White breast feathers
+    if (e.flash <= 0) {
+      ctx.fillStyle = '#fef3c7';
+      ctx.fillRect(-2, -4, 4, 7);
+    }
+
+    // Hooked yellow beak
+    ctx.fillStyle = '#facc15';
+    ctx.beginPath();
+    ctx.moveTo(5, -4); ctx.lineTo(10, -2); ctx.lineTo(5, 0); ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  drawSpinningSaw(ctx, e) {
+    ctx.save();
+    // 1. Draw brass mounting rail track between p0 and p1
+    ctx.strokeStyle = '#78350f';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(e.p0.x, e.p0.y);
+    ctx.lineTo(e.p1.x, e.p1.y);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(e.p0.x, e.p0.y);
+    ctx.lineTo(e.p1.x, e.p1.y);
+    ctx.stroke();
+
+    // 2. Draw spinning circular saw blade
+    const cx = e.x + e.w / 2, cy = e.y + e.h / 2;
+    ctx.translate(cx, cy);
+    ctx.rotate(e.spinAngle || 0);
+
+    // Steel disc
+    ctx.fillStyle = '#94a3b8';
+    ctx.beginPath();
+    ctx.arc(0, 0, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Sharp serrated teeth (8 teeth)
+    ctx.fillStyle = '#cbd5e1';
+    for (let i = 0; i < 8; i++) {
+      const a = (i * Math.PI) / 4;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * 9, Math.sin(a) * 9);
+      ctx.lineTo(Math.cos(a + 0.25) * 13, Math.sin(a + 0.25) * 13);
+      ctx.lineTo(Math.cos(a + 0.38) * 8, Math.sin(a + 0.38) * 8);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Center brass bolt
+    ctx.fillStyle = '#f59e0b';
+    ctx.beginPath();
+    ctx.arc(0, 0, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+
     ctx.restore();
   }
 }

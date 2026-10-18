@@ -7,7 +7,8 @@ import { World } from './physics.js';
 
 const ENTITY_CHARS = new Set([
   'P', 'K', 'G', 'c', 'g', 's', 'h', 'C', '*', '^',
-  'm', 'S', 'B', 'T', 'M', 'L', 'b', 'q', 'v', 'O', 'y', 'w', 'Y'
+  'm', 'S', 'B', 'T', 'M', 'L', 'b', 'q', 'v', 'O', 'y', 'w', 'Y',
+  'z', 'N', 'F', 'W', 'l', 'a', 'k', 'I'
 ]);
 
 export function parseLevel(def) {
@@ -41,6 +42,14 @@ export function parseLevel(def) {
     snapvines: [],
     scorpions: [],
     sandWorms: [],
+    buzzBees: [],
+    nightBats: [],
+    hopperFrogs: [],
+    wildBoars: [],
+    leafGliders: [],
+    armadillos: [],
+    desertHawks: [],
+    spinningSaws: [],
     bosses: [],
     errors: []
   };
@@ -77,6 +86,14 @@ export function parseLevel(def) {
         else if (ch === 'v') out.snapvines.push({ x: cx, feetY, c, r });
         else if (ch === 'y') out.scorpions.push({ x: cx, feetY, c, r });
         else if (ch === 'w') out.sandWorms.push({ x: cx, feetY, c, r });
+        else if (ch === 'z') out.buzzBees.push({ x: cx, y: cy, c, r });
+        else if (ch === 'N') out.nightBats.push({ x: cx, ceilingY: r * TS, c, r });
+        else if (ch === 'F') out.hopperFrogs.push({ x: cx, feetY, c, r });
+        else if (ch === 'W') out.wildBoars.push({ x: cx, feetY, c, r });
+        else if (ch === 'l') out.leafGliders.push({ x: cx, y: cy, c, r });
+        else if (ch === 'a') out.armadillos.push({ x: cx, feetY, c, r });
+        else if (ch === 'k') out.desertHawks.push({ x: cx, skyY: r * TS, c, r });
+        else if (ch === 'I') out.spinningSaws.push({ c0: c, r0: r, c1: c + 3, r1: r });
         else if (ch === 'B') out.bosses.push({ type: 'mushroom_king', x: cx, feetY, c, r });
         else if (ch === 'O') out.bosses.push({ type: 'oak_guardian', x: cx, feetY, c, r });
         else if (ch === 'Y') out.bosses.push({ type: 'sand_wyrm', x: cx, feetY, c, r });
@@ -93,6 +110,14 @@ export function parseLevel(def) {
     def.entities.forEach(ent => {
       if (ent.type === 'movingPlank') out.movingPlanks.push(ent);
       else if (ent.type === 'lift') out.lifts.push(ent);
+      else if (ent.type === 'buzzBee') out.buzzBees.push(ent);
+      else if (ent.type === 'nightBat') out.nightBats.push(ent);
+      else if (ent.type === 'hopperFrog') out.hopperFrogs.push(ent);
+      else if (ent.type === 'wildBoar') out.wildBoars.push(ent);
+      else if (ent.type === 'leafGlider') out.leafGliders.push(ent);
+      else if (ent.type === 'armadillo') out.armadillos.push(ent);
+      else if (ent.type === 'desertHawk') out.desertHawks.push(ent);
+      else if (ent.type === 'spinningSaw') out.spinningSaws.push(ent);
     });
   }
 

@@ -7,7 +7,9 @@ import { Player } from './player.js';
 import {
   MushroomWalker, SpikyHedgehog, MushroomKing,
   AcornSquirrel, SnapvinePlant, OldOakGuardian,
-  Scorpion, SandWorm, SandWyrm
+  Scorpion, SandWorm, SandWyrm,
+  BuzzBee, NightBat, HopperFrog, WildBoar,
+  LeafGlider, RollingArmadillo, DesertHawk, SpinningSaw
 } from './enemies.js';
 import {
   Coin, Gem, Star, HeartPickup, Chest, Checkpoint, Spikes, Key, Gate,
@@ -28,6 +30,7 @@ export class Game {
     this.player = new Player();
     this.infiniteLives = false;
     this.state = 'idle';
+    this.hitStop = 0;
   }
 
   load(levelDef) {
@@ -36,6 +39,7 @@ export class Game {
     this.world = lv.world;
     this.theme = getTheme(lv.theme);
     this.def = levelDef;
+    this.hitStop = 0;
 
     this.coins = lv.coins.map(c => new Coin(c.x, c.y));
     this.gems = lv.gems.map(g => new Gem(g.x, g.y));
@@ -58,6 +62,14 @@ export class Game {
       ...lv.snapvines.map(v => new SnapvinePlant(v.x, v.feetY)),
       ...lv.scorpions.map(y => new Scorpion(y.x, y.feetY)),
       ...lv.sandWorms.map(w => new SandWorm(w.x, w.feetY)),
+      ...lv.buzzBees.map(z => new BuzzBee(z.x, z.y, z.span || 160)),
+      ...lv.nightBats.map(n => new NightBat(n.x, n.ceilingY)),
+      ...lv.hopperFrogs.map(f => new HopperFrog(f.x, f.feetY)),
+      ...lv.wildBoars.map(b => new WildBoar(b.x, b.feetY)),
+      ...lv.leafGliders.map(l => new LeafGlider(l.x, l.y, l.rangeX || 220, l.rangeY || 280)),
+      ...lv.armadillos.map(a => new RollingArmadillo(a.x, a.feetY)),
+      ...lv.desertHawks.map(k => new DesertHawk(k.x, k.skyY)),
+      ...lv.spinningSaws.map(i => new SpinningSaw(i.c0, i.r0, i.c1, i.r1, i.speed || 120)),
       ...lv.bosses.map(b => {
         if (b.type === 'oak_guardian') return new OldOakGuardian(b.x, b.feetY);
         if (b.type === 'sand_wyrm') return new SandWyrm(b.x, b.feetY);
@@ -104,14 +116,32 @@ export class Game {
       this.updateEffects(dt);
       return;
     }
+
+    // 50ms hit-stop on kills
+    if (this.hitStop > 0) {
+      this.hitStop -= dt;
+      this.updateEffects(dt);
+      return;
+    }
+
     this.time += dt;
     const p = this.player;
 
     p.update(this, input, dt);
     this.updateBridges(dt);
 
-    // Update enemies
-    for (const e of this.enemies) e.update(this, dt);
+    // Update enemies with off-screen sleep (> 1.5 screens) & max 6 active moving enemies on screen rule
+    let activeMovingCount = 0;
+    for (const e of this.enemies) {
+      if (e.dead) continue;
+      e.sleep = typeof e.isAsleep === 'function' ? e.isAsleep(this) : false;
+      if (e.sleep) continue;
+      if (e.isMovingEnemy) {
+        if (activeMovingCount >= 6) continue;
+        activeMovingCount++;
+      }
+      e.update(this, dt);
+    }
     this.resolveEnemyContacts();
 
     // Pickups & Items
@@ -283,6 +313,40 @@ export class Game {
     const p = this.player;
     for (const e of this.enemies) {
       if (e.dead || !aabb(p, e)) continue;
+
+      // Special contact: Leaf Glider is harmless from above (hero bounces on it)
+      if (e.type === 'leaf_glider') {
+        if (p.vy >= 0 && p.prevBottom <= e.y + 14) {
+          p.bounce(-390);
+          this.sfx('pogo');
+          continue;
+        }
+      }
+
+      // Special contact: Wild Boar charge front deflects stomps unless stunned
+      if (e.type === 'wild_boar') {
+        if (e.state === 'stunned') {
+          if (p.vy > 0 && p.prevBottom <= e.y + 14) {
+            e.hit(this, 1, 0);
+            p.bounce(-430);
+            this.sfx('stomp');
+            continue;
+          }
+        }
+      }
+
+      // Special contact: Rolling Armadillo while rolling deflects stomps
+      if (e.type === 'rolling_armadillo' && e.state === 'roll') {
+        p.hurt(this, e.x + e.w / 2);
+        continue;
+      }
+
+      // Special contact: Spinning Saw is an indestructible obstacle
+      if (e.type === 'spinning_saw') {
+        p.hurt(this, e.x + e.w / 2);
+        continue;
+      }
+
       const stomp = p.vy > 0 && p.prevBottom <= e.y + 12 && e.stompable;
       if (stomp) {
         e.hit(this, 1, 0);

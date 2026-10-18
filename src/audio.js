@@ -176,6 +176,22 @@ export function playSound(type) {
       [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5, 1318.5].forEach((f, i) => tone('triangle', f, f, 0.22, 0.28, 0.55 + i * 0.13));
     } else if (type === 'gameOver') {
       [392, 330, 262, 196].forEach((f, i) => tone('triangle', f, f * 0.97, 0.3, 0.3, i * 0.22));
+    } else if (type === 'buzz') {
+      tone('sawtooth', 360, 420, 0.12, 0.12);
+    } else if (type === 'batScreech') {
+      tone('sine', 880, 540, 0.15, 0.20);
+    } else if (type === 'frogCroak') {
+      tone('square', 140, 95, 0.14, 0.22);
+    } else if (type === 'boarScrape') {
+      tone('sawtooth', 90, 60, 0.25, 0.25);
+    } else if (type === 'boarCharge') {
+      tone('triangle', 180, 260, 0.20, 0.30);
+    } else if (type === 'boarCrash') {
+      tone('sawtooth', 120, 40, 0.30, 0.40);
+    } else if (type === 'hawkScreech') {
+      tone('triangle', 1100, 650, 0.28, 0.25);
+    } else if (type === 'sawWhirr') {
+      tone('sawtooth', 280, 320, 0.10, 0.15);
     }
   } catch (err) {
     // Audio synthesis failure should never crash the game
