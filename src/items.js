@@ -207,3 +207,125 @@ export class Gate {
     }
   }
 }
+
+/** Mushroom Spring: launches the hero high when landed on! */
+export class Spring {
+  constructor(c, r) {
+    this.c = c; this.r = r;
+    this.w = 26; this.h = 16;
+    this.x = (c + 0.5) * TS - this.w / 2;
+    this.y = (r + 1) * TS - this.h;
+    this.squash = 1.0;
+  }
+  bounce(p, g) {
+    this.squash = 0.45;
+    p.vy = -690;
+    p.grounded = false;
+    p.jumpBuffer = 0;
+    g.sfx('spring');
+    for (let i = 0; i < 6; i++) {
+      g.poof(this.x + Math.random() * this.w, this.y + 2, '#34d399');
+    }
+  }
+  update(g, dt) {
+    if (this.squash < 1.0) {
+      this.squash = Math.min(1.0, this.squash + dt * 4.5);
+    }
+  }
+}
+
+/** Moving Plank: floating platform that travels horizontally or vertically */
+export class MovingPlank {
+  constructor(c, r, opts = {}) {
+    this.w = opts.w || 48;
+    this.h = opts.h || 12;
+    this.baseX = opts.x ?? (c * TS);
+    this.baseY = opts.y ?? ((r + 0.5) * TS);
+    this.x = this.baseX;
+    this.y = this.baseY;
+    this.rangeX = opts.rangeX ?? 64;
+    this.rangeY = opts.rangeY ?? 0;
+    this.speed = opts.speed ?? 1.8;
+    this.t = opts.phase ?? 0;
+    this.dx = 0;
+    this.dy = 0;
+    this.isOneWay = true;
+  }
+  update(g, dt) {
+    this.t += dt * this.speed;
+    const prevX = this.x, prevY = this.y;
+    this.x = this.baseX + Math.sin(this.t) * this.rangeX;
+    this.y = this.baseY + Math.sin(this.t) * this.rangeY;
+    this.dx = this.x - prevX;
+    this.dy = this.y - prevY;
+  }
+}
+
+/** Crane Lift: wooden platform suspended by heavy chains */
+export class CraneLift {
+  constructor(c, r, opts = {}) {
+    this.w = opts.w || 44;
+    this.h = opts.h || 12;
+    this.baseX = opts.x ?? ((c + 0.5) * TS - this.w / 2);
+    this.baseY = opts.y ?? (r * TS);
+    this.x = this.baseX;
+    this.y = this.baseY;
+    this.rangeY = opts.rangeY ?? 96;
+    this.speed = opts.speed ?? 1.3;
+    this.t = opts.phase ?? 0;
+    this.dx = 0;
+    this.dy = 0;
+    this.isOneWay = true;
+  }
+  update(g, dt) {
+    this.t += dt * this.speed;
+    const prevY = this.y;
+    this.y = this.baseY + ((Math.sin(this.t) + 1) / 2) * this.rangeY;
+    this.dy = this.y - prevY;
+    this.dx = 0;
+  }
+}
+
+/** Crumbling Plank: sandstone or fragile wood that shakes and drops when stepped on */
+export class CrumblingPlank {
+  constructor(c, r) {
+    this.c = c; this.r = r;
+    this.w = TS; this.h = 10;
+    this.x = c * TS;
+    this.y = r * TS;
+    this.active = true;
+    this.stepped = false;
+    this.timer = 0.7;
+    this.respawnTimer = 0;
+    this.shake = 0;
+  }
+  stepOn(g) {
+    if (!this.stepped && this.active) {
+      this.stepped = true;
+      this.timer = 0.7;
+      g.sfx('crumble');
+    }
+  }
+  update(g, dt) {
+    if (this.stepped && this.active) {
+      this.timer -= dt;
+      this.shake = Math.sin(Date.now() * 0.05) * 2;
+      if (this.timer <= 0) {
+        this.active = false;
+        this.respawnTimer = 3.2;
+        g.poof(this.x + this.w / 2, this.y + 4, '#d97706');
+        g.sfx('crumbleFall');
+      }
+    } else if (!this.active) {
+      this.respawnTimer -= dt;
+      if (this.respawnTimer <= 0) {
+        this.active = true;
+        this.stepped = false;
+        this.timer = 0.7;
+        this.shake = 0;
+        g.poof(this.x + this.w / 2, this.y + 4, '#fbbf24');
+      }
+    }
+  }
+}
+

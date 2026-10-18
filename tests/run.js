@@ -587,6 +587,68 @@ test('boss: Mushroom King can be defeated with 3 hits, key drops on death', () =
   assert.ok(g.key, 'key did not spawn on boss defeat');
   assert.equal(g.key.state, 'rest');
 });
+test('boss: Old Oak Guardian (World 2) takes 3 hits and drops key on death', () => {
+  const g = newGame(LEVELS.find(l => l.id === '2-3'));
+  assert.ok(g.bosses.length === 1, 'boss not spawned in 2-3');
+  const boss = g.bosses[0];
+  assert.equal(boss.hp, 3);
+  boss.hit(g);
+  assert.equal(boss.hp, 2);
+  stepGame(g, 60);
+  boss.hit(g);
+  assert.equal(boss.hp, 1);
+  stepGame(g, 60);
+  boss.hit(g);
+  assert.equal(boss.hp, 0);
+  assert.ok(boss.dead);
+  assert.ok(g.key, 'key not dropped by Old Oak Guardian');
+});
+test('boss: Sand Wyrm (World 3) takes 3 hits and drops key on death', () => {
+  const g = newGame(LEVELS.find(l => l.id === '3-3'));
+  assert.ok(g.bosses.length === 1, 'boss not spawned in 3-3');
+  const boss = g.bosses[0];
+  assert.equal(boss.hp, 3);
+  boss.hit(g);
+  assert.equal(boss.hp, 2);
+  stepGame(g, 60);
+  boss.hit(g);
+  assert.equal(boss.hp, 1);
+  stepGame(g, 60);
+  boss.hit(g);
+  assert.equal(boss.hp, 0);
+  assert.ok(boss.dead);
+  assert.ok(g.key, 'key not dropped by Sand Wyrm');
+});
+test('mushroom spring launches hero high (vy < -650)', () => {
+  const g = newGame(LEVELS.find(l => l.id === '2-1'));
+  const s = g.springs[0];
+  assert.ok(s, 'spring not found in 2-1');
+  g.player.place(s.x + s.w / 2, s.y);
+  g.player.vy = 200;
+  stepGame(g, 2);
+  assert.ok(g.player.vy < -650, `spring did not launch hero high: vy=${g.player.vy}`);
+});
+test('scorpion has 2 HP and takes 2 knife slashes to defeat', () => {
+  const g = newGame(LEVELS.find(l => l.id === '3-1'));
+  const sc = g.enemies.find(e => e.type === 'scorpion');
+  assert.ok(sc, 'scorpion not found in 3-1');
+  assert.equal(sc.hp, 2);
+  sc.speed = 0;
+  g.player.invuln = 99;
+  g.player.place(sc.x - 14, sc.y + sc.h);
+  g.player.face = 1;
+  // First slash
+  stepGame(g, 1, I({ knifePressed: true, knifeHeld: true }));
+  stepGame(g, 4);
+  assert.equal(sc.hp, 1);
+  assert.ok(!sc.dead);
+  // Second slash
+  stepGame(g, 12);
+  stepGame(g, 1, I({ knifePressed: true, knifeHeld: true }));
+  stepGame(g, 4);
+  assert.equal(sc.hp, 0);
+  assert.ok(sc.dead);
+});
 
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

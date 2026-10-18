@@ -4,8 +4,15 @@
 import { TS, VIEW_W, VIEW_H, COMBAT } from './constants.js';
 import { aabb, moveY } from './physics.js';
 import { Player } from './player.js';
-import { MushroomWalker, SpikyHedgehog, MushroomKing } from './enemies.js';
-import { Coin, Gem, Star, HeartPickup, Chest, Checkpoint, Spikes, Key, Gate } from './items.js';
+import {
+  MushroomWalker, SpikyHedgehog, MushroomKing,
+  AcornSquirrel, SnapvinePlant, OldOakGuardian,
+  Scorpion, SandWorm, SandWyrm
+} from './enemies.js';
+import {
+  Coin, Gem, Star, HeartPickup, Chest, Checkpoint, Spikes, Key, Gate,
+  Spring, MovingPlank, CraneLift, CrumblingPlank
+} from './items.js';
 import { parseLevel } from './level.js';
 import { getTheme } from './themes.js';
 
@@ -37,12 +44,25 @@ export class Game {
     this.chests = lv.chests.map(ch => new Chest(ch.c, ch.r));
     this.checkpoints = lv.checkpoints.map(cp => new Checkpoint(cp.c, cp.r));
     this.spikes = lv.spikes.map(sp => new Spikes(sp.c, sp.r));
+    this.springs = lv.springs.map(s => new Spring(s.c, s.r));
+    this.movingPlanks = lv.movingPlanks.map(m => new MovingPlank(m.c, m.r, m));
+    this.lifts = lv.lifts.map(l => new CraneLift(l.c, l.r, l));
+    this.crumblingPlanks = lv.crumblingPlanks.map(b => new CrumblingPlank(b.c, b.r));
+    this.projectiles = [];
 
     // Enemies & Bosses
     this.enemies = [
       ...lv.walkers.map(m => new MushroomWalker(m.x, m.feetY)),
       ...lv.hedgehogs.map(s => new SpikyHedgehog(s.x, s.feetY)),
-      ...lv.bosses.map(b => new MushroomKing(b.x, b.feetY))
+      ...lv.squirrels.map(q => new AcornSquirrel(q.x, q.feetY)),
+      ...lv.snapvines.map(v => new SnapvinePlant(v.x, v.feetY)),
+      ...lv.scorpions.map(y => new Scorpion(y.x, y.feetY)),
+      ...lv.sandWorms.map(w => new SandWorm(w.x, w.feetY)),
+      ...lv.bosses.map(b => {
+        if (b.type === 'oak_guardian') return new OldOakGuardian(b.x, b.feetY);
+        if (b.type === 'sand_wyrm') return new SandWyrm(b.x, b.feetY);
+        return new MushroomKing(b.x, b.feetY);
+      })
     ];
 
     this.key = lv.key ? new Key(lv.key.x, lv.key.y) : null;
@@ -124,6 +144,55 @@ export class Game {
     }
     for (const ch of this.chests) ch.update(this, dt);
 
+    // Springs
+    for (const sp of this.springs) {
+      sp.update(this, dt);
+      if (aabb(p, sp) && p.vy > 0 && (p.y + p.h) <= sp.y + 14) {
+        sp.bounce(p, this);
+      }
+    }
+
+    // Crumbling Planks
+    for (const cp of this.crumblingPlanks) {
+      cp.update(this, dt);
+      if (cp.active && aabb(p, cp) && p.vy >= 0 && (p.y + p.h) <= cp.y + 10) {
+        p.grounded = true;
+        p.vy = 0;
+        p.y = cp.y - p.h;
+        cp.stepOn(this);
+      }
+    }
+
+    // Moving Planks
+    for (const mp of this.movingPlanks) {
+      mp.update(this, dt);
+      if (p.vy >= 0 && (p.y + p.h) >= mp.y && (p.y + p.h) <= mp.y + 14 && p.x + p.w > mp.x && p.x < mp.x + mp.w) {
+        p.grounded = true;
+        p.vy = 0;
+        p.y = mp.y - p.h;
+        p.x += mp.dx;
+        p.y += mp.dy;
+      }
+    }
+
+    // Crane Lifts
+    for (const cl of this.lifts) {
+      cl.update(this, dt);
+      if (p.vy >= 0 && (p.y + p.h) >= cl.y && (p.y + p.h) <= cl.y + 14 && p.x + p.w > cl.x && p.x < cl.x + cl.w) {
+        p.grounded = true;
+        p.vy = 0;
+        p.y = cl.y - p.h;
+        p.y += cl.dy;
+      }
+    }
+
+    // Projectiles
+    for (let i = this.projectiles.length - 1; i >= 0; i--) {
+      const pr = this.projectiles[i];
+      pr.update(this, dt);
+      if (pr.dead) this.projectiles.splice(i, 1);
+    }
+
     if (this.key) {
       this.key.update(this, dt);
       this.updateKey();
@@ -162,6 +231,14 @@ export class Game {
       this.sfx('knifeHit');
       e.hit(this, 1, p.face);
       if (p.slashDown) p.bounce(COMBAT.pogoV);
+    }
+    // Deflect / destroy projectiles
+    for (const pr of this.projectiles) {
+      if (!pr.dead && aabb(box, pr)) {
+        pr.dead = true;
+        this.sfx('knifeHit');
+        this.poof(pr.x, pr.y, '#f59e0b');
+      }
     }
     // Chests
     for (const ch of this.chests) {

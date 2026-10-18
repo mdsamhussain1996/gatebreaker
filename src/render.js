@@ -129,6 +129,13 @@ export class Renderer {
     this.drawCrates(ctx, g, camX, camY);
     for (const b of g.bridges) this.drawBridge(ctx, b);
 
+    // Interactive mechanics
+    for (const sp of (g.springs || [])) this.drawSpring(ctx, sp);
+    for (const cp of (g.crumblingPlanks || [])) this.drawCrumblingPlank(ctx, cp);
+    for (const mp of (g.movingPlanks || [])) this.drawMovingPlank(ctx, mp);
+    for (const cl of (g.lifts || [])) this.drawCraneLift(ctx, cl);
+    for (const pr of (g.projectiles || [])) this.drawProjectile(ctx, pr);
+
     // 4. Collectibles
     for (const c of g.coins) if (!c.collected) this.drawCoin(ctx, c);
     for (const gm of g.gems) if (!gm.collected) this.drawGem(ctx, gm);
@@ -140,6 +147,10 @@ export class Renderer {
       if (e.dead) continue;
       if (e.type === 'mushroom') this.drawMushroom(ctx, e);
       else if (e.type === 'hedgehog') this.drawHedgehog(ctx, e);
+      else if (e.type === 'squirrel') this.drawSquirrel(ctx, e);
+      else if (e.type === 'snapvine') this.drawSnapvine(ctx, e);
+      else if (e.type === 'scorpion') this.drawScorpion(ctx, e);
+      else if (e.type === 'sand_worm') this.drawSandWorm(ctx, e);
       else if (e.isBoss) this.drawBoss(ctx, e);
     }
 
@@ -562,6 +573,340 @@ export class Renderer {
   }
 
   drawBoss(ctx, b) {
+    const cx = b.x + b.w / 2, by = b.y + b.h;
+    ctx.save();
+    ctx.translate(cx, by);
+    ctx.scale(b.dir > 0 ? 1 : -1, b.squash);
+
+    // Stalk / Body
+    ctx.fillStyle = b.flash > 0 ? '#fff' : (b.state === 'telegraph' ? '#fed7aa' : '#fde68a');
+    ctx.beginPath();
+    ctx.roundRect(-18, -30, 36, 30, 8);
+    ctx.fill();
+
+    // Giant cap
+    ctx.fillStyle = b.flash > 0 ? '#fff' : (b.state === 'telegraph' ? '#ea580c' : '#dc2626');
+    ctx.beginPath();
+    ctx.moveTo(-32, -26);
+    ctx.quadraticCurveTo(-34, -62, 0, -62);
+    ctx.quadraticCurveTo(34, -62, 32, -26);
+    ctx.closePath();
+    ctx.fill();
+
+    // Cap spots
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(-14, -46, 5, 0, Math.PI * 2);
+    ctx.arc(12, -50, 4.5, 0, Math.PI * 2);
+    ctx.arc(18, -38, 3.5, 0, Math.PI * 2);
+    ctx.arc(-2, -34, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Golden Crown
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.moveTo(-16, -60);
+    ctx.lineTo(-12, -74);
+    ctx.lineTo(-6, -64);
+    ctx.lineTo(0, -78);
+    ctx.lineTo(6, -64);
+    ctx.lineTo(12, -74);
+    ctx.lineTo(16, -60);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#d97706';
+    ctx.fillRect(-14, -60, 28, 3);
+
+    // Eyes
+    ctx.fillStyle = '#1c1917';
+    ctx.fillRect(-10, -22, 5, 7);
+    ctx.fillRect(5, -22, 5, 7);
+    ctx.restore();
+  }
+
+  drawSpring(ctx, s) {
+    ctx.save();
+    ctx.translate(s.x + s.w / 2, s.y + s.h);
+    ctx.scale(1, s.squash);
+    // Stem
+    ctx.fillStyle = '#f1f5f9';
+    ctx.fillRect(-6, -10, 12, 10);
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(-6, -6, 12, 2);
+    // Cap
+    ctx.fillStyle = '#10b981';
+    ctx.beginPath();
+    ctx.arc(0, -10, 13, Math.PI, 0);
+    ctx.fill();
+    ctx.fillStyle = '#6ee7b7';
+    ctx.beginPath();
+    ctx.arc(-5, -13, 2.5, 0, Math.PI * 2);
+    ctx.arc(4, -14, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  drawMovingPlank(ctx, mp) {
+    ctx.save();
+    ctx.translate(mp.x, mp.y);
+    // Plank body
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(0, 0, mp.w, mp.h);
+    ctx.fillStyle = '#92400e';
+    ctx.fillRect(2, 2, mp.w - 4, mp.h - 4);
+    // Top cap
+    ctx.fillStyle = '#4ade80';
+    ctx.fillRect(0, 0, mp.w, 3);
+    // End brackets
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(0, 0, 4, mp.h);
+    ctx.fillRect(mp.w - 4, 0, 4, mp.h);
+    ctx.restore();
+  }
+
+  drawCraneLift(ctx, cl) {
+    ctx.save();
+    ctx.translate(cl.x, cl.y);
+    // Chains rising up
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(4, 0); ctx.lineTo(4, -300);
+    ctx.moveTo(cl.w - 4, 0); ctx.lineTo(cl.w - 4, -300);
+    ctx.stroke();
+    // Platform
+    ctx.fillStyle = '#451a03';
+    ctx.fillRect(0, 0, cl.w, cl.h);
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(2, 2, cl.w - 4, cl.h - 4);
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillRect(0, 0, cl.w, 3);
+    ctx.restore();
+  }
+
+  drawCrumblingPlank(ctx, cp) {
+    if (!cp.active) return;
+    ctx.save();
+    ctx.translate(cp.x + cp.shake, cp.y);
+    ctx.fillStyle = '#d97706';
+    ctx.fillRect(0, 0, cp.w, cp.h);
+    ctx.fillStyle = '#b45309';
+    ctx.fillRect(1, 1, cp.w - 2, cp.h - 2);
+    if (cp.stepped) {
+      // Crack lines
+      ctx.strokeStyle = '#451a03';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(8, 0); ctx.lineTo(12, 6); ctx.lineTo(16, 2); ctx.lineTo(22, 10);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  drawProjectile(ctx, pr) {
+    if (pr.dead) return;
+    ctx.save();
+    ctx.translate(pr.x, pr.y);
+    if (pr.type === 'acorn') {
+      ctx.fillStyle = '#92400e';
+      ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(-6, -6, 12, 4);
+    } else {
+      ctx.fillStyle = '#eab308';
+      ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#15803d';
+      ctx.fillRect(-2, -6, 4, 4);
+    }
+    ctx.restore();
+  }
+
+  drawSquirrel(ctx, e) {
+    const cx = e.x + e.w / 2, by = e.y + e.h;
+    ctx.save();
+    ctx.translate(cx, by);
+    ctx.scale(e.dir < 0 ? 1 : -1, 1);
+    // Tail
+    ctx.fillStyle = '#ea580c';
+    ctx.beginPath();
+    ctx.arc(10, -14, 10, 0, Math.PI * 2);
+    ctx.fill();
+    // Body
+    ctx.fillStyle = e.flash > 0 ? '#fff' : '#c2410c';
+    ctx.beginPath();
+    ctx.roundRect(-8, -18, 16, 18, 5);
+    ctx.fill();
+    // Belly
+    ctx.fillStyle = '#fed7aa';
+    ctx.beginPath();
+    ctx.arc(-2, -8, 6, 0, Math.PI * 2);
+    ctx.fill();
+    // Head & Ear
+    ctx.fillStyle = '#c2410c';
+    ctx.beginPath();
+    ctx.arc(-4, -18, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(-4, -25, 3, 5); // ear
+    // Eye
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(-7, -20, 2, 3);
+    ctx.restore();
+  }
+
+  drawSnapvine(ctx, e) {
+    const cx = e.x + e.w / 2, by = e.y + e.h;
+    ctx.save();
+    ctx.translate(cx, by);
+    // Stem
+    ctx.strokeStyle = '#15803d';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(0, 0); ctx.quadraticCurveTo(-6, -10, 0, -20);
+    ctx.stroke();
+    // Head / Mouth
+    ctx.fillStyle = e.flash > 0 ? '#facc15' : (e.state === 'telegraph' ? '#f59e0b' : '#166534');
+    ctx.beginPath();
+    ctx.arc(0, -20, 10, 0, Math.PI * 2);
+    ctx.fill();
+    // Teeth
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(-6, -22, 3, 4);
+    ctx.fillRect(2, -22, 3, 4);
+    ctx.restore();
+  }
+
+  drawScorpion(ctx, e) {
+    const cx = e.x + e.w / 2, by = e.y + e.h;
+    ctx.save();
+    ctx.translate(cx, by);
+    ctx.scale(e.dir < 0 ? 1 : -1, 1);
+    // Body
+    ctx.fillStyle = e.flash > 0 ? '#fff' : '#b45309';
+    ctx.beginPath();
+    ctx.roundRect(-12, -12, 22, 12, 4);
+    ctx.fill();
+    // Tail with curved stinger
+    ctx.strokeStyle = '#78350f';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(8, -8);
+    ctx.quadraticCurveTo(16, -20, 6, -22);
+    ctx.stroke();
+    // Red stinger tip
+    ctx.fillStyle = '#dc2626';
+    ctx.beginPath();
+    ctx.arc(4, -22, 3, 0, Math.PI * 2);
+    ctx.fill();
+    // Pincers
+    ctx.fillStyle = '#92400e';
+    ctx.fillRect(-15, -8, 5, 4);
+    // Eye
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(-10, -10, 2, 2);
+    ctx.restore();
+  }
+
+  drawSandWorm(ctx, e) {
+    if (e.dead) return;
+    const cx = e.x + e.w / 2;
+    ctx.save();
+    if (e.state === 'underground' || e.state === 'ripples') {
+      // Sand ripple mound
+      ctx.fillStyle = '#d97706';
+      ctx.beginPath();
+      ctx.ellipse(cx, e.baseY, 14, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.translate(cx, e.y);
+      ctx.fillStyle = e.flash > 0 ? '#fff' : '#ea580c';
+      // Segmented worm body
+      for (let i = 0; i < 4; i++) {
+        ctx.beginPath();
+        ctx.arc(0, i * 7, 10 - i, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // Teeth / Mandibles
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(-6, -4, 3, 4);
+      ctx.fillRect(3, -4, 3, 4);
+    }
+    ctx.restore();
+  }
+
+  drawOldOak(ctx, b) {
+    const cx = b.x + b.w / 2, by = b.y + b.h;
+    ctx.save();
+    ctx.translate(cx, by);
+    ctx.scale(b.dir > 0 ? 1 : -1, 1);
+    // Tree trunk body
+    ctx.fillStyle = b.flash > 0 ? '#fff' : '#451a03';
+    ctx.beginPath();
+    ctx.roundRect(-26, -70, 52, 70, 10);
+    ctx.fill();
+    // Branch arms
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(-34, -55, 14, 8);
+    ctx.fillRect(20, -55, 14, 8);
+    // Foliage top
+    ctx.fillStyle = '#ea580c';
+    ctx.beginPath();
+    ctx.arc(0, -74, 22, 0, Math.PI * 2);
+    ctx.arc(-16, -65, 14, 0, Math.PI * 2);
+    ctx.arc(16, -65, 14, 0, Math.PI * 2);
+    ctx.fill();
+    // Hollow core in trunk (weak spot)
+    ctx.fillStyle = b.vulnerable ? '#facc15' : '#1c1917';
+    ctx.beginPath();
+    ctx.ellipse(0, -32, 10, 14, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (b.vulnerable) {
+      // Glowing core aura
+      ctx.strokeStyle = '#fef08a';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+    }
+    // Eyes
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(-12, -48, 5, 5);
+    ctx.fillRect(7, -48, 5, 5);
+    ctx.restore();
+  }
+
+  drawSandWyrm(ctx, b) {
+    const cx = b.x + b.w / 2, by = b.y + b.h;
+    ctx.save();
+    ctx.translate(cx, by);
+    // Giant worm head
+    ctx.fillStyle = b.flash > 0 ? '#fff' : (b.state === 'telegraph' ? '#f59e0b' : '#b45309');
+    ctx.beginPath();
+    ctx.roundRect(-24, -56, 48, 56, 12);
+    ctx.fill();
+    // Armor plates
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(-20, -45, 40, 5);
+    ctx.fillRect(-18, -30, 36, 5);
+    // Horns
+    ctx.fillStyle = '#fef08a';
+    ctx.beginPath();
+    ctx.moveTo(-18, -54); ctx.lineTo(-24, -68); ctx.lineTo(-12, -54);
+    ctx.moveTo(18, -54); ctx.lineTo(24, -68); ctx.lineTo(12, -54);
+    ctx.fill();
+    // Eyes
+    ctx.fillStyle = '#dc2626';
+    ctx.fillRect(-12, -38, 6, 6);
+    ctx.fillRect(6, -38, 6, 6);
+    ctx.restore();
+  }
+
+  drawBoss(ctx, b) {
+    if (b.type === 'oak_guardian') {
+      this.drawOldOak(ctx, b);
+      return;
+    }
+    if (b.type === 'sand_wyrm') {
+      this.drawSandWyrm(ctx, b);
+      return;
+    }
     const cx = b.x + b.w / 2, by = b.y + b.h;
     ctx.save();
     ctx.translate(cx, by);

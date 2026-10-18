@@ -5,20 +5,20 @@ import path from 'path';
 const outDir = '/Users/newtonuser/.gemini/antigravity-ide/brain/3d548fb5-2b76-41d6-95e2-088477819984';
 
 async function runBrowserCheck() {
-  console.log('--- Starting Browser Check & Performance Pass (1366x768 & 844x390) ---');
+  console.log('--- Starting Browser Check for Worlds 1, 2 & 3 (1366x768 & 844x390) ---');
 
   const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', [
     '--headless',
     '--disable-gpu',
     '--window-size=1366,768',
-    '--remote-debugging-port=9228',
+    '--remote-debugging-port=9229',
     'http://localhost:8094/'
   ]);
 
   await new Promise(r => setTimeout(r, 1500));
 
   try {
-    const res = await fetch('http://127.0.0.1:9228/json');
+    const res = await fetch('http://127.0.0.1:9229/json');
     const tabs = await res.json();
     const tab = tabs.find(t => t.url.includes('localhost:8094')) || tabs[0];
     const ws = new WebSocket(tab.webSocketDebuggerUrl);
@@ -63,7 +63,6 @@ async function runBrowserCheck() {
         await rpc('Page.enable');
         await rpc('Runtime.enable');
 
-        // Check console errors
         const consoleErrors = [];
         ws.addEventListener('message', evt => {
           const m = JSON.parse(evt.data);
@@ -78,75 +77,41 @@ async function runBrowserCheck() {
         });
         await new Promise(r => setTimeout(r, 600));
 
-        // Open World Map
+        // Unlock all levels in save for screenshot taking
         await evaluate(`
-          if (window.__gb) {
-            window.__gb.showWorldMap(1);
-          }
+          const save = {
+            unlocked: ['1-1','1-2','1-3','2-1','2-2','2-3','3-1','3-2','3-3'],
+            best: {
+              '1-1': { stars: 3, time: 45.2, coins: 65 },
+              '1-2': { stars: 2, time: 58.4, coins: 74 },
+              '1-3': { stars: 3, time: 82.1, coins: 62 },
+              '2-1': { stars: 2, time: 64.0, coins: 70 },
+              '2-2': { stars: 3, time: 71.5, coins: 68 },
+              '2-3': { stars: 3, time: 94.2, coins: 66 }
+            },
+            settings: { sfx: 0.8, music: 0.5, shake: true }
+          };
+          localStorage.setItem('gatebreaker.v2.save', JSON.stringify(save));
         `);
+
+        // World 2 Map (Laptop)
+        console.log('Capturing World 2 Map (Laptop)...');
+        await evaluate(`window.__gb.showWorldMap(2);`);
         await new Promise(r => setTimeout(r, 600));
-        await screenshot('phase1_laptop_worldmap.png');
+        await screenshot('phase2_laptop_world2_map.png');
 
-        // Test Level 1-1
-        console.log('Testing Level 1-1 in browser...');
+        // World 2-3 Boss Arena: Old Oak Guardian (Laptop)
+        console.log('Testing Level 2-3 Boss (Old Oak Guardian)...');
         await evaluate(`
           import('./src/levels.js').then(m => {
-            window.__gb.startPlay(m.LEVELS[0]);
-          });
-        `);
-        await new Promise(r => setTimeout(r, 800));
-        const fps11 = await evaluate(`
-          new Promise(res => {
-            let frames = 0, start = performance.now();
-            function step() {
-              frames++;
-              if (performance.now() - start >= 500) {
-                res(Math.round((frames * 1000) / (performance.now() - start)));
-              } else requestAnimationFrame(step);
-            }
-            requestAnimationFrame(step);
-          })
-        `);
-        console.log(`  Level 1-1 FPS: ${fps11}`);
-        await screenshot('phase1_laptop_level1_1.png');
-
-        // Test Level 1-2
-        console.log('Testing Level 1-2 in browser...');
-        await evaluate(`
-          import('./src/levels.js').then(m => {
-            window.__gb.startPlay(m.LEVELS[1]);
-          });
-        `);
-        await new Promise(r => setTimeout(r, 800));
-        const fps12 = await evaluate(`
-          new Promise(res => {
-            let frames = 0, start = performance.now();
-            function step() {
-              frames++;
-              if (performance.now() - start >= 500) {
-                res(Math.round((frames * 1000) / (performance.now() - start)));
-              } else requestAnimationFrame(step);
-            }
-            requestAnimationFrame(step);
-          })
-        `);
-        console.log(`  Level 1-2 FPS: ${fps12}`);
-        await screenshot('phase1_laptop_level1_2.png');
-
-        // Test Level 1-3 (Boss Level)
-        console.log('Testing Level 1-3 (Boss Level) in browser...');
-        await evaluate(`
-          import('./src/levels.js').then(m => {
-            window.__gb.startPlay(m.LEVELS[2]);
+            window.__gb.startPlay(m.LEVELS.find(l => l.id === '2-3'));
             const p = window.__gb.game.player;
-            p.x = 24 * 32;
-            p.y = 8 * 32;
-            window.__gb.game.cam.x = 200;
-            window.__gb.game.cam.y = 0;
+            p.x = 24 * 32; p.y = 8 * 32;
+            window.__gb.game.cam.x = 200; window.__gb.game.cam.y = 0;
           });
         `);
         await new Promise(r => setTimeout(r, 800));
-        const fps13 = await evaluate(`
+        const fps23 = await evaluate(`
           new Promise(res => {
             let frames = 0, start = performance.now();
             function step() {
@@ -158,8 +123,40 @@ async function runBrowserCheck() {
             requestAnimationFrame(step);
           })
         `);
-        console.log(`  Level 1-3 FPS: ${fps13}`);
-        await screenshot('phase1_laptop_level1_3_boss.png');
+        console.log(`  Level 2-3 FPS: ${fps23}`);
+        await screenshot('phase2_laptop_level2_3_boss.png');
+
+        // World 3 Map (Laptop)
+        console.log('Capturing World 3 Map (Laptop)...');
+        await evaluate(`window.__gb.showWorldMap(3);`);
+        await new Promise(r => setTimeout(r, 600));
+        await screenshot('phase2_laptop_world3_map.png');
+
+        // World 3-3 Boss Arena: Sand Wyrm (Laptop)
+        console.log('Testing Level 3-3 Boss (Sand Wyrm)...');
+        await evaluate(`
+          import('./src/levels.js').then(m => {
+            window.__gb.startPlay(m.LEVELS.find(l => l.id === '3-3'));
+            const p = window.__gb.game.player;
+            p.x = 24 * 32; p.y = 8 * 32;
+            window.__gb.game.cam.x = 200; window.__gb.game.cam.y = 0;
+          });
+        `);
+        await new Promise(r => setTimeout(r, 800));
+        const fps33 = await evaluate(`
+          new Promise(res => {
+            let frames = 0, start = performance.now();
+            function step() {
+              frames++;
+              if (performance.now() - start >= 500) {
+                res(Math.round((frames * 1000) / (performance.now() - start)));
+              } else requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+          })
+        `);
+        console.log(`  Level 3-3 FPS: ${fps33}`);
+        await screenshot('phase2_laptop_level3_3_boss.png');
 
         // 2. Phone Landscape (844x390)
         console.log('Switching to Phone landscape (844x390)...');
@@ -169,23 +166,22 @@ async function runBrowserCheck() {
         await rpc('Emulation.setTouchEmulationEnabled', { enabled: true });
         await evaluate(`
           document.body.classList.add('touch-device');
-          window.__gb.showWorldMap(1);
+          window.__gb.showWorldMap(2);
         `);
         await new Promise(r => setTimeout(r, 600));
-        await screenshot('phase1_phone_worldmap.png');
+        await screenshot('phase2_phone_world2_map.png');
 
+        // World 2 Boss on Phone
         await evaluate(`
           import('./src/levels.js').then(m => {
-            window.__gb.startPlay(m.LEVELS[2]);
+            window.__gb.startPlay(m.LEVELS.find(l => l.id === '2-3'));
             const p = window.__gb.game.player;
-            p.x = 24 * 32;
-            p.y = 8 * 32;
-            window.__gb.game.cam.x = 200;
-            window.__gb.game.cam.y = 0;
+            p.x = 24 * 32; p.y = 8 * 32;
+            window.__gb.game.cam.x = 200; window.__gb.game.cam.y = 0;
           });
         `);
         await new Promise(r => setTimeout(r, 800));
-        const phoneFps = await evaluate(`
+        const phoneFps2 = await evaluate(`
           new Promise(res => {
             let frames = 0, start = performance.now();
             function step() {
@@ -197,8 +193,33 @@ async function runBrowserCheck() {
             requestAnimationFrame(step);
           })
         `);
-        console.log(`  Phone 844x390 Level 1-3 FPS: ${phoneFps}`);
-        await screenshot('phase1_phone_level1_3_boss.png');
+        console.log(`  Phone 844x390 Level 2-3 FPS: ${phoneFps2}`);
+        await screenshot('phase2_phone_level2_3_boss.png');
+
+        // World 3 Boss on Phone
+        await evaluate(`
+          import('./src/levels.js').then(m => {
+            window.__gb.startPlay(m.LEVELS.find(l => l.id === '3-3'));
+            const p = window.__gb.game.player;
+            p.x = 24 * 32; p.y = 8 * 32;
+            window.__gb.game.cam.x = 200; window.__gb.game.cam.y = 0;
+          });
+        `);
+        await new Promise(r => setTimeout(r, 800));
+        const phoneFps3 = await evaluate(`
+          new Promise(res => {
+            let frames = 0, start = performance.now();
+            function step() {
+              frames++;
+              if (performance.now() - start >= 500) {
+                res(Math.round((frames * 1000) / (performance.now() - start)));
+              } else requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+          })
+        `);
+        console.log(`  Phone 844x390 Level 3-3 FPS: ${phoneFps3}`);
+        await screenshot('phase2_phone_level3_3_boss.png');
 
         console.log(`Browser check summary:`);
         console.log(`  Console errors: ${consoleErrors.length}`);
