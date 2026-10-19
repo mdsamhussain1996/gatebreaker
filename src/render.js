@@ -40,111 +40,494 @@ function getCachedGlow(color, radius) {
 function drawBakedProp(ctx, theme, px, py, h) {
   const type = h % 8;
   const tid = theme.id;
-  const x = px + 8;
+  const x = px + 4;
   const y = py;
 
   ctx.save();
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = '#0f172a';
+
   if (tid === 'green_hills') {
     if (type === 0) {
-      ctx.fillStyle = '#64748b'; ctx.fillRect(x, y - 10, 8, 10);
-      ctx.fillStyle = '#fef08a'; ctx.fillRect(x + 2, y - 8, 4, 4);
-      ctx.fillStyle = '#475569'; ctx.fillRect(x - 2, y - 12, 12, 3);
+      // Ancient stone lantern with glowing amber flame (height 26px)
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(x + 5, y - 24, 14, 24);
+      ctx.strokeRect(x + 5, y - 24, 14, 24);
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(x + 8, y - 18, 8, 8);
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(x + 3, y - 26, 18, 4);
     } else if (type === 1) {
-      ctx.fillStyle = '#22c55e'; ctx.fillRect(x + 2, y - 8, 2, 8); ctx.fillRect(x + 6, y - 6, 2, 6);
-      ctx.fillStyle = '#ec4899'; ctx.fillRect(x + 1, y - 10, 4, 4);
-      ctx.fillStyle = '#eab308'; ctx.fillRect(x + 5, y - 8, 4, 4);
+      // Tall flowering woodland shrub (height 25px)
+      ctx.fillStyle = '#15803d';
+      ctx.fillRect(x + 9, y - 22, 6, 22);
+      ctx.fillStyle = '#22c55e';
+      ctx.beginPath();
+      ctx.arc(x + 12, y - 18, 11, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#ec4899';
+      ctx.beginPath();
+      ctx.arc(x + 8, y - 22, 4, 0, Math.PI * 2);
+      ctx.arc(x + 16, y - 20, 3.5, 0, Math.PI * 2);
+      ctx.arc(x + 12, y - 14, 4, 0, Math.PI * 2);
+      ctx.fill();
     } else if (type === 2) {
-      ctx.fillStyle = '#78350f'; ctx.fillRect(x + 3, y - 14, 3, 14);
-      ctx.fillStyle = '#92400e'; ctx.fillRect(x, y - 13, 11, 5);
-      ctx.fillStyle = '#fef3c7'; ctx.fillRect(x + 2, y - 11, 7, 1);
+      // Wooden milestone signpost (height 26px)
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(x + 10, y - 26, 4, 26);
+      ctx.strokeRect(x + 10, y - 26, 4, 26);
+      ctx.fillStyle = '#92400e';
+      ctx.fillRect(x + 2, y - 24, 20, 10);
+      ctx.strokeRect(x + 2, y - 24, 20, 10);
+      ctx.fillStyle = '#fef3c7';
+      ctx.fillRect(x + 5, y - 20, 14, 2);
     } else if (type === 3) {
-      ctx.fillStyle = '#b45309'; ctx.beginPath(); ctx.arc(x + 5, y - 4, 5, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#d97706'; ctx.fillRect(x + 2, y - 9, 6, 2);
+      // Large wooden keg barrel (height 24px)
+      ctx.fillStyle = '#92400e';
+      ctx.beginPath();
+      ctx.roundRect(x + 3, y - 24, 18, 24, 5);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(x + 3, y - 20, 18, 3);
+      ctx.fillRect(x + 3, y - 7, 18, 3);
     } else if (type === 4) {
-      ctx.fillStyle = '#78350f'; ctx.fillRect(x + 4, y - 12, 2, 12);
-      ctx.fillStyle = '#16a34a'; ctx.beginPath(); ctx.arc(x + 5, y - 12, 6, 0, Math.PI * 2); ctx.fill();
+      // Young hilltop pine sapling (height 28px)
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(x + 10, y - 28, 4, 28);
+      ctx.fillStyle = '#16a34a';
+      ctx.beginPath();
+      ctx.moveTo(x + 12, y - 28);
+      ctx.lineTo(x + 22, y - 10);
+      ctx.lineTo(x + 2, y - 10);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
     } else if (type === 5) {
-      ctx.fillStyle = '#854d0e'; ctx.fillRect(x, y - 10, 10, 10);
-      ctx.fillStyle = '#475569'; ctx.fillRect(x, y - 8, 10, 1.5); ctx.fillRect(x, y - 3, 10, 1.5);
+      // Large mossy boulder with clover (height 24px)
+      ctx.fillStyle = '#64748b';
+      ctx.beginPath();
+      ctx.ellipse(x + 12, y - 12, 11, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#4ade80';
+      ctx.fillRect(x + 6, y - 20, 12, 4);
     } else if (type === 6) {
-      ctx.fillStyle = '#f8fafc'; ctx.fillRect(x + 2, y - 6, 2, 6); ctx.fillRect(x + 6, y - 4, 2, 4);
+      // Cluster of giant forest toadstools (height 26px)
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(x + 8, y - 18, 6, 18);
+      ctx.fillRect(x + 16, y - 12, 4, 12);
       ctx.fillStyle = '#ef4444';
-      ctx.beginPath(); ctx.arc(x + 3, y - 6, 4, Math.PI, 0); ctx.fill();
-      ctx.beginPath(); ctx.arc(x + 7, y - 4, 3, Math.PI, 0); ctx.fill();
+      ctx.beginPath();
+      ctx.arc(x + 11, y - 18, 11, Math.PI, 0);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(x + 18, y - 12, 7, Math.PI, 0);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x + 8, y - 25, 3, 3);
+      ctx.fillRect(x + 13, y - 22, 2.5, 2.5);
     } else {
-      ctx.fillStyle = '#475569'; ctx.beginPath(); ctx.arc(x + 5, y - 3, 6, Math.PI, 0); ctx.fill();
-      ctx.fillStyle = '#4ade80'; ctx.fillRect(x + 2, y - 7, 5, 2);
+      // Ancient stone marker cairn (height 25px)
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(x + 4, y - 8, 16, 8);
+      ctx.strokeRect(x + 4, y - 8, 16, 8);
+      ctx.fillRect(x + 6, y - 16, 12, 8);
+      ctx.strokeRect(x + 6, y - 16, 12, 8);
+      ctx.fillRect(x + 8, y - 24, 8, 8);
+      ctx.strokeRect(x + 8, y - 24, 8, 8);
     }
   } else if (tid === 'autumn_forest') {
     if (type === 0) {
-      ctx.fillStyle = '#451a03'; ctx.fillRect(x + 3, y - 16, 2, 16);
-      ctx.fillStyle = '#f59e0b'; ctx.fillRect(x + 1, y - 14, 6, 6);
-      ctx.fillStyle = '#292524'; ctx.fillRect(x, y - 15, 8, 2);
-    } else if (type === 1) {
-      ctx.fillStyle = '#78350f'; ctx.fillRect(x, y - 8, 10, 8);
-      ctx.fillStyle = '#292524'; ctx.fillRect(x + 2, y - 8, 6, 3);
-      ctx.fillStyle = '#65a30d'; ctx.fillRect(x - 1, y - 4, 3, 3);
-    } else if (type === 2) {
-      ctx.fillStyle = '#92400e'; ctx.fillRect(x + 1, y - 12, 8, 12);
-      ctx.fillStyle = '#fef08a'; ctx.fillRect(x + 3, y - 10, 2, 2); ctx.fillRect(x + 6, y - 10, 2, 2);
-    } else if (type === 3) {
-      ctx.fillStyle = '#fcd34d'; ctx.fillRect(x + 2, y - 5, 2, 5); ctx.fillRect(x + 7, y - 7, 2, 7);
+      // Autumn carved totem post (height 27px)
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(x + 8, y - 26, 8, 26);
+      ctx.strokeRect(x + 8, y - 26, 8, 26);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(x + 5, y - 22, 14, 8);
+      ctx.strokeRect(x + 5, y - 22, 14, 8);
       ctx.fillStyle = '#ea580c';
-      ctx.beginPath(); ctx.arc(x + 3, y - 5, 4, Math.PI, 0); ctx.fill();
-      ctx.beginPath(); ctx.arc(x + 8, y - 7, 4.5, Math.PI, 0); ctx.fill();
+      ctx.fillRect(x + 9, y - 18, 6, 3);
+    } else if (type === 1) {
+      // Golden harvest pumpkin (height 24px)
+      ctx.fillStyle = '#ea580c';
+      ctx.beginPath();
+      ctx.ellipse(x + 12, y - 11, 11, 11, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#15803d';
+      ctx.fillRect(x + 10, y - 25, 4, 6);
+    } else if (type === 2) {
+      // Ancient hollow birch stump with glowing shelf fungi (height 25px)
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(x + 4, y - 22, 16, 22);
+      ctx.strokeRect(x + 4, y - 22, 16, 22);
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(x + 14, y - 16, 7, 4);
+      ctx.fillRect(x + 1, y - 9, 6, 3);
+    } else if (type === 3) {
+      // Amber forest lantern (height 26px)
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(x + 10, y - 26, 4, 26);
+      ctx.strokeRect(x + 10, y - 26, 4, 26);
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.arc(x + 12, y - 18, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
     } else if (type === 4) {
+      // Large autumnal bush with amber berries (height 24px)
       ctx.fillStyle = '#a16207';
-      ctx.beginPath(); ctx.arc(x + 3, y - 3, 3, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(x + 8, y - 3, 3.5, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#451a03'; ctx.fillRect(x + 2, y - 6, 2, 2); ctx.fillRect(x + 7, y - 6, 2, 2);
+      ctx.beginPath();
+      ctx.arc(x + 12, y - 12, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#f97316';
+      ctx.fillRect(x + 7, y - 16, 3, 3);
+      ctx.fillRect(x + 14, y - 14, 3, 3);
     } else if (type === 5) {
-      ctx.fillStyle = '#57534e'; ctx.fillRect(x + 1, y - 11, 7, 11);
-      ctx.fillStyle = '#f59e0b'; ctx.fillRect(x + 2, y - 8, 3, 3);
+      // Autumn road shrine (height 26px)
+      ctx.fillStyle = '#57534e';
+      ctx.fillRect(x + 6, y - 24, 12, 24);
+      ctx.strokeRect(x + 6, y - 24, 12, 24);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(x + 8, y - 18, 8, 8);
     } else if (type === 6) {
-      ctx.fillStyle = '#ea580c'; ctx.beginPath(); ctx.ellipse(x + 5, y - 3, 7, 3, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#facc15'; ctx.fillRect(x + 3, y - 5, 4, 3);
-      ctx.strokeStyle = '#451a03'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(x + 1, y - 2); ctx.lineTo(x + 9, y - 7); ctx.stroke();
+      // Rustling maple leaf mound (height 24px)
+      ctx.fillStyle = '#c2410c';
+      ctx.beginPath();
+      ctx.ellipse(x + 12, y - 9, 12, 9, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(x + 8, y - 18, 8, 5);
     } else {
-      ctx.fillStyle = '#451a03'; ctx.fillRect(x + 1, y - 16, 2, 16);
-      ctx.fillStyle = '#b91c1c'; ctx.beginPath();
-      ctx.moveTo(x + 3, y - 15); ctx.lineTo(x + 11, y - 12); ctx.lineTo(x + 3, y - 9);
-      ctx.closePath(); ctx.fill();
+      // Forest trail blaze banner (height 27px)
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(x + 10, y - 27, 4, 27);
+      ctx.strokeRect(x + 10, y - 27, 4, 27);
+      ctx.fillStyle = '#b91c1c';
+      ctx.beginPath();
+      ctx.moveTo(x + 14, y - 25);
+      ctx.lineTo(x + 24, y - 19);
+      ctx.lineTo(x + 14, y - 13);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
     }
   } else if (tid === 'desert_ruins') {
     if (type === 0) {
-      ctx.fillStyle = '#c2410c'; ctx.beginPath(); ctx.arc(x + 5, y - 5, 5, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#ea580c'; ctx.fillRect(x + 3, y - 11, 4, 3);
+      // Large terracotta amphora urn (height 26px)
+      ctx.fillStyle = '#c2410c';
+      ctx.beginPath();
+      ctx.roundRect(x + 5, y - 24, 14, 24, 6);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#ea580c';
+      ctx.fillRect(x + 3, y - 20, 18, 3);
     } else if (type === 1) {
-      ctx.fillStyle = '#15803d'; ctx.fillRect(x + 3, y - 12, 4, 12);
-      ctx.fillRect(x + 1, y - 9, 3, 3); ctx.fillRect(x + 6, y - 7, 3, 3);
-      ctx.fillStyle = '#f43f5e'; ctx.fillRect(x + 4, y - 14, 2, 2);
+      // Giant saguaro desert cactus (height 28px)
+      ctx.fillStyle = '#15803d';
+      ctx.fillRect(x + 9, y - 28, 6, 28);
+      ctx.strokeRect(x + 9, y - 28, 6, 28);
+      ctx.fillRect(x + 3, y - 22, 6, 5);
+      ctx.fillRect(x + 3, y - 22, 4, 10);
+      ctx.fillRect(x + 15, y - 17, 6, 5);
+      ctx.fillRect(x + 17, y - 17, 4, 9);
+      ctx.fillStyle = '#f43f5e';
+      ctx.fillRect(x + 10, y - 31, 4, 4);
     } else if (type === 2) {
-      ctx.fillStyle = '#f8fafc'; ctx.fillRect(x + 2, y - 6, 6, 6);
-      ctx.fillStyle = '#0f172a'; ctx.fillRect(x + 3, y - 4, 1.5, 2); ctx.fillRect(x + 6, y - 4, 1.5, 2);
-      ctx.strokeStyle = '#cbd5e1'; ctx.beginPath(); ctx.moveTo(x + 2, y - 6); ctx.lineTo(x - 1, y - 10); ctx.stroke();
+      // Ancient hieroglyphic sandstone tablet (height 25px)
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(x + 5, y - 24, 14, 24);
+      ctx.strokeRect(x + 5, y - 24, 14, 24);
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(x + 7, y - 20, 10, 2);
+      ctx.fillRect(x + 7, y - 15, 10, 2);
+      ctx.fillRect(x + 7, y - 10, 10, 2);
     } else if (type === 3) {
-      ctx.fillStyle = '#d97706'; ctx.fillRect(x, y - 8, 10, 8);
-      ctx.fillStyle = '#b45309'; ctx.fillRect(x - 1, y - 10, 12, 3);
+      // Desert stone sun-dial pillar (height 26px)
+      ctx.fillStyle = '#d97706';
+      ctx.fillRect(x + 8, y - 24, 8, 24);
+      ctx.strokeRect(x + 8, y - 24, 8, 24);
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(x + 4, y - 27, 16, 5);
+      ctx.strokeRect(x + 4, y - 27, 16, 5);
     } else if (type === 4) {
-      ctx.fillStyle = '#b45309'; ctx.beginPath();
-      ctx.moveTo(x + 1, y); ctx.lineTo(x + 3, y - 13); ctx.lineTo(x + 6, y - 13); ctx.lineTo(x + 8, y);
-      ctx.closePath(); ctx.fill();
+      // Sandstone pyramid obelisk (height 27px)
+      ctx.fillStyle = '#b45309';
+      ctx.beginPath();
+      ctx.moveTo(x + 12, y - 27);
+      ctx.lineTo(x + 22, y);
+      ctx.lineTo(x + 2, y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
     } else if (type === 5) {
-      ctx.fillStyle = '#78350f'; ctx.fillRect(x + 2, y - 16, 2, 16);
-      ctx.fillStyle = '#fed7aa'; ctx.fillRect(x + 4, y - 15, 7, 8);
+      // Ancient desert skull fossil (height 24px)
+      ctx.fillStyle = '#fef3c7';
+      ctx.beginPath();
+      ctx.arc(x + 12, y - 14, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#1c1917';
+      ctx.fillRect(x + 8, y - 16, 3, 3);
+      ctx.fillRect(x + 13, y - 16, 3, 3);
     } else if (type === 6) {
-      ctx.fillStyle = '#92400e'; ctx.fillRect(x + 1, y - 9, 8, 9);
-      ctx.fillStyle = '#fef08a'; ctx.fillRect(x + 3, y - 7, 4, 1.5); ctx.fillRect(x + 3, y - 4, 4, 1.5);
+      // Weathered desert chest urn (height 24px)
+      ctx.fillStyle = '#92400e';
+      ctx.fillRect(x + 4, y - 22, 16, 22);
+      ctx.strokeRect(x + 4, y - 22, 16, 22);
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(x + 9, y - 14, 6, 4);
     } else {
-      ctx.fillStyle = '#c2410c'; ctx.fillRect(x + 2, y - 7, 7, 7);
-      ctx.fillStyle = '#451a03'; ctx.fillRect(x + 4, y - 6, 1, 4);
+      // Desert nomad flag beacon (height 28px)
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(x + 10, y - 28, 4, 28);
+      ctx.strokeRect(x + 10, y - 28, 4, 28);
+      ctx.fillStyle = '#ea580c';
+      ctx.fillRect(x + 14, y - 26, 10, 8);
+      ctx.strokeRect(x + 14, y - 26, 10, 8);
     }
+  } else if (tid === 'frozen_peaks') {
+    // Frost crystal spire, ice lanterns, frozen cairns (height >= 24px)
+    if (type % 2 === 0) {
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath();
+      ctx.moveTo(x + 12, y - 28);
+      ctx.lineTo(x + 20, y);
+      ctx.lineTo(x + 4, y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#e0f2fe';
+      ctx.fillRect(x + 10, y - 22, 4, 12);
+    } else {
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(x + 6, y - 24, 12, 24);
+      ctx.strokeRect(x + 6, y - 24, 12, 24);
+      ctx.fillStyle = '#bae6fd';
+      ctx.fillRect(x + 4, y - 27, 16, 5);
+      ctx.strokeRect(x + 4, y - 27, 16, 5);
+    }
+  } else if (tid === 'crystal_caves') {
+    // Glowing crystal clusters (height >= 24px)
+    ctx.fillStyle = type % 2 === 0 ? '#c084fc' : '#38bdf8';
+    ctx.beginPath();
+    ctx.moveTo(x + 12, y - 27);
+    ctx.lineTo(x + 21, y);
+    ctx.lineTo(x + 3, y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#f5d0fe';
+    ctx.fillRect(x + 10, y - 20, 4, 10);
+  } else if (tid === 'volcano_fortress') {
+    // Obsidian obelisk & magma braziers (height >= 24px)
+    ctx.fillStyle = '#1e1b4b';
+    ctx.fillRect(x + 6, y - 26, 12, 26);
+    ctx.strokeRect(x + 6, y - 26, 12, 26);
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(x + 8, y - 18, 8, 8);
   } else {
-    ctx.fillStyle = '#38bdf8'; ctx.beginPath();
-    ctx.moveTo(x + 5, y - 12); ctx.lineTo(x + 9, y); ctx.lineTo(x + 1, y);
-    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath();
+    ctx.moveTo(x + 12, y - 24);
+    ctx.lineTo(x + 20, y);
+    ctx.lineTo(x + 4, y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
   }
+  ctx.restore();
+}
+
+function drawAncientOakBackground(ctx, world) {
+  const hollowLeft = 19 * TS;
+  const hollowRight = 27 * TS;
+  const hollowWidth = hollowRight - hollowLeft;
+  const topY = 8 * TS;
+  const botY = 41 * TS;
+
+  ctx.save();
+  // 1. Dark hollow interior heartwood
+  const grad = ctx.createLinearGradient(hollowLeft, 0, hollowRight, 0);
+  grad.addColorStop(0, '#150904');
+  grad.addColorStop(0.18, '#261108');
+  grad.addColorStop(0.5, '#33170b');
+  grad.addColorStop(0.82, '#261108');
+  grad.addColorStop(1, '#150904');
+  ctx.fillStyle = grad;
+  ctx.fillRect(hollowLeft, topY, hollowWidth, botY - topY);
+
+  // Subtle interior vertical heartwood grain
+  ctx.strokeStyle = '#1a0b05';
+  ctx.lineWidth = 2;
+  for (let gx = hollowLeft + 12; gx < hollowRight; gx += 18) {
+    ctx.beginPath();
+    ctx.moveTo(gx, topY);
+    for (let gy = topY; gy < botY; gy += 48) {
+      ctx.quadraticCurveTo(gx + Math.sin(gy * 0.04) * 8, gy + 24, gx, gy + 48);
+    }
+    ctx.stroke();
+  }
+
+  // 2. Knot-hole windows (rows 15, 21, 27, 33, 38)
+  const windowRows = [15, 21, 27, 33, 38];
+  windowRows.forEach((r, idx) => {
+    const cx = hollowLeft + hollowWidth * (idx % 2 === 0 ? 0.38 : 0.62);
+    const cy = r * TS + 16;
+    const rx = 24, ry = 34;
+
+    // Outer bark ridge around knot
+    ctx.fillStyle = '#100502';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx + 12, ry + 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#3d1a0b';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx + 6, ry + 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Inner window opening (golden sky + mountain silhouette)
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    ctx.clip();
+
+    // Autumn sky inside window
+    const skyGrad = ctx.createLinearGradient(0, cy - ry, 0, cy + ry);
+    skyGrad.addColorStop(0, '#78350f');
+    skyGrad.addColorStop(0.5, '#c2410c');
+    skyGrad.addColorStop(1, '#fbbf24');
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(cx - rx, cy - ry, rx * 2, ry * 2);
+
+    // Distant mountain & pine silhouette through window
+    ctx.fillStyle = '#3a1306';
+    ctx.beginPath();
+    ctx.moveTo(cx - rx, cy + ry);
+    ctx.lineTo(cx - 6, cy + 6);
+    ctx.lineTo(cx + 8, cy + 14);
+    ctx.lineTo(cx + rx, cy + ry);
+    ctx.fill();
+
+    // Distant pine tree
+    ctx.fillStyle = '#220802';
+    ctx.fillRect(cx - 2, cy - 2, 4, 18);
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - 10);
+    ctx.lineTo(cx + 8, cy + 4);
+    ctx.lineTo(cx - 8, cy + 4);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+
+    // Concentric knot rings on bark
+    ctx.strokeStyle = '#220b04';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#92400e';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx + 3, ry + 3, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Warm sunbeam streaming into hollow chamber
+    ctx.fillStyle = 'rgba(254, 240, 138, 0.08)';
+    ctx.beginPath();
+    ctx.moveTo(cx - 12, cy);
+    ctx.lineTo(cx + 12, cy);
+    ctx.lineTo(cx + 140, cy + 150);
+    ctx.lineTo(cx + 50, cy + 160);
+    ctx.closePath();
+    ctx.fill();
+  });
+
+  ctx.restore();
+}
+
+function drawAncientOakCrown(ctx, world) {
+  ctx.save();
+  const crownBaseY = 7 * TS;
+  const leafColors = ['#451a03', '#78350f', '#9a3412', '#c2410c', '#d97706', '#ea580c', '#f59e0b', '#fbbf24'];
+
+  // Arching branch boughs supporting the crown
+  ctx.strokeStyle = '#321408';
+  ctx.lineWidth = 22;
+  ctx.beginPath();
+  ctx.moveTo(19 * TS, 9 * TS);
+  ctx.quadraticCurveTo(14 * TS, 8 * TS, 10 * TS, 7 * TS);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(27 * TS, 9 * TS);
+  ctx.quadraticCurveTo(32 * TS, 8 * TS, 38 * TS, 7 * TS);
+  ctx.stroke();
+
+  // Multi-layered organic oak leaf canopy clusters
+  for (let c = 8; c <= 40; c += 1.8) {
+    const cx = c * TS;
+    const curve = Math.sin((c - 8) / 32 * Math.PI) * 45;
+    const cy = crownBaseY - 60 - curve;
+
+    for (let i = 0; i < 5; i++) {
+      const colIdx = (Math.floor(c * 3 + i * 2) % (leafColors.length - 2)) + 2;
+      ctx.fillStyle = leafColors[colIdx];
+      ctx.strokeStyle = '#230a04';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      const lx = cx + (i - 2) * 16;
+      const ly = cy + (i % 2 === 0 ? -12 : 8) + Math.cos(c * 2) * 8;
+      ctx.arc(lx, ly, 22 + (i % 3) * 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(254, 240, 138, 0.22)';
+      ctx.beginPath();
+      ctx.arc(lx - 4, ly - 4, 8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // Hanging acorns with caps
+  const acornCols = [12, 16, 20, 24, 28, 32, 36];
+  acornCols.forEach(ac => {
+    const ax = ac * TS + 16;
+    const ay = crownBaseY - 20;
+
+    ctx.strokeStyle = '#451a03';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(ax, ay - 14);
+    ctx.lineTo(ax, ay);
+    ctx.stroke();
+
+    ctx.fillStyle = '#5c2c16';
+    ctx.beginPath();
+    ctx.arc(ax, ay, 7, Math.PI, 0);
+    ctx.fill();
+    ctx.strokeStyle = '#1f0d05';
+    ctx.stroke();
+
+    ctx.fillStyle = '#b45309';
+    ctx.beginPath();
+    ctx.ellipse(ax, ay + 7, 6, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#451a03';
+    ctx.fillRect(ax - 1, ay + 15, 2, 3);
+  });
+
   ctx.restore();
 }
 
@@ -153,6 +536,11 @@ export function bakeTerrain(world, theme = getTheme('green_hills')) {
   cv.width = world.w;
   cv.height = world.h;
   const x = cv.getContext('2d');
+  const isAncientOak = world.levelId === '2-3' || world.name === 'Ancient Oak';
+
+  if (isAncientOak) {
+    drawAncientOakBackground(x, world);
+  }
 
   for (let r = 0; r < world.rowCount; r++) {
     for (let c = 0; c < world.cols; c++) {
@@ -167,6 +555,53 @@ export function bakeTerrain(world, theme = getTheme('green_hills')) {
         left: world.get(c - 1, r),
         right: world.get(c + 1, r)
       };
+
+      if (isAncientOak && r < 41) {
+        const isTrunk = (c >= 17 && c <= 20) || (c >= 26 && c <= 29);
+        if (isTrunk) {
+          x.fillStyle = '#2c1207';
+          x.fillRect(px, py, TS, TS);
+          x.fillStyle = (h % 2 === 0) ? '#3d1a0c' : '#451e0e';
+          x.fillRect(px + 4, py, TS - 8, TS);
+          x.strokeStyle = '#1b0903';
+          x.lineWidth = 2;
+          x.beginPath();
+          x.moveTo(px + (h % 10) + 6, py);
+          x.lineTo(px + (h % 10) + 8, py + TS);
+          x.moveTo(px + (h % 10) + 18, py);
+          x.lineTo(px + (h % 10) + 16, py + TS);
+          x.stroke();
+          if ((h % 4) === 0) {
+            x.fillStyle = '#4d7c0f';
+            x.beginPath();
+            x.ellipse(px + 14, py + 16, 6, 4, 0.4, 0, Math.PI * 2);
+            x.fill();
+          }
+          if (ch === '=') {
+            x.fillStyle = '#854d24';
+            x.fillRect(px, py, TS, 4);
+          }
+          continue;
+        } else if (r > 7) {
+          x.fillStyle = '#3a1809';
+          x.beginPath();
+          x.roundRect(px, py + 4, TS, TS - 6, [4, 4, 8, 8]);
+          x.fill();
+          x.fillStyle = '#5c2710';
+          x.fillRect(px, py + 2, TS, 6);
+          if (ch === '=') {
+            x.fillStyle = '#d97706';
+            x.fillRect(px, py, TS, 4);
+            x.fillStyle = '#ea580c';
+            for (let i = 0; i < 3; i++) {
+              x.beginPath();
+              x.arc(px + 6 + i * 10, py + 12, 4.5, 0, Math.PI * 2);
+              x.fill();
+            }
+          }
+          continue;
+        }
+      }
 
       if (ch === '#') {
         theme.terrain.soil(x, px, py, TS, h, neighbors);
@@ -222,6 +657,11 @@ export function bakeTerrain(world, theme = getTheme('green_hills')) {
       }
     }
   }
+
+  if (isAncientOak) {
+    drawAncientOakCrown(x, world);
+  }
+
   return cv;
 }
 
@@ -346,7 +786,7 @@ export class Renderer {
       else if (e.type === 'rolling_armadillo') this.drawRollingArmadillo(ctx, e);
       else if (e.type === 'desert_hawk') this.drawDesertHawk(ctx, e);
       else if (e.type === 'spinning_saw') this.drawSpinningSaw(ctx, e);
-      else if (e.isBoss) this.drawBoss(ctx, e);
+      else if (e.isBoss) this.drawBoss(ctx, e, g.player);
 
       if (e.telegraph > 0 && e.type !== 'desert_hawk') {
         this.drawTelegraphIndicator(ctx, e);
@@ -1080,140 +1520,680 @@ export class Renderer {
     ctx.restore();
   }
 
-  drawOldOak(ctx, b) {
+  drawDamageCracks(ctx, x, y, hp, maxHp = 3, color = '#fbbf24') {
+    if (hp >= maxHp) return;
+    ctx.save();
+    ctx.strokeStyle = hp === 1 ? color : '#1e293b';
+    ctx.lineWidth = hp === 1 ? 2.5 : 1.5;
+    if (hp === 1) {
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 6;
+    }
+    ctx.beginPath();
+    // Primary crack
+    ctx.moveTo(x - 14, y - 18);
+    ctx.lineTo(x - 4, y - 4);
+    ctx.lineTo(x + 4, y + 12);
+    // Branch crack
+    ctx.moveTo(x - 4, y - 4);
+    ctx.lineTo(x + 14, y - 10);
+    if (hp === 1) {
+      // Secondary glowing fracture
+      ctx.moveTo(x + 8, y + 6);
+      ctx.lineTo(x + 20, y + 18);
+      ctx.moveTo(x - 8, y + 6);
+      ctx.lineTo(x - 18, y + 20);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  drawMushroomKing(ctx, b, p) {
     const cx = b.x + b.w / 2, by = b.y + b.h;
+    const t = this.t;
+    const breath = Math.sin(t * 3.5) * 0.03;
+    const isTelegraph = b.state === 'telegraph';
+    const isJump = b.state === 'jump';
+
     ctx.save();
     ctx.translate(cx, by);
-    ctx.scale(b.dir > 0 ? 1 : -1, 1);
-    // Tree trunk body
-    ctx.fillStyle = b.flash > 0 ? '#fff' : '#451a03';
+    ctx.scale(b.dir > 0 ? 1 : -1, b.squash * (1 + breath));
+
+    // 1. Royal Velvet Cape (billowing in wind behind the king)
+    ctx.save();
+    const capeFlutter = Math.sin(t * 5) * 8;
+    ctx.fillStyle = '#6b21a8';
+    ctx.strokeStyle = '#3b0764';
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.roundRect(-26, -70, 52, 70, 10);
+    ctx.moveTo(-16, -90);
+    ctx.quadraticCurveTo(-45 + capeFlutter * 0.5, -60, -52 + capeFlutter, -10);
+    ctx.lineTo(-24, -10);
+    ctx.lineTo(-12, -70);
+    ctx.closePath();
     ctx.fill();
-    // Branch arms
+    ctx.stroke();
+    // Ermine Gold Trim
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(-52 + capeFlutter, -14, 28, 4);
+    ctx.restore();
+
+    // 2. King's Stalk / Robes (outlined, shaded)
+    ctx.save();
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#0f172a';
+    ctx.fillStyle = b.flash > 0 ? '#ffffff' : (isTelegraph ? '#fed7aa' : '#fef3c7');
+    ctx.beginPath();
+    ctx.roundRect(-24, -80, 48, 80, 14);
+    ctx.fill();
+    ctx.stroke();
+    // Shading on stalk
+    ctx.fillStyle = '#e2d4a8';
+    ctx.fillRect(-24, -50, 14, 48);
+
+    // Royal Crimson Sash across chest
+    ctx.fillStyle = '#dc2626';
+    ctx.beginPath();
+    ctx.moveTo(-24, -68); ctx.lineTo(24, -40); ctx.lineTo(24, -28); ctx.lineTo(-24, -56);
+    ctx.closePath();
+    ctx.fill();
+    // Golden Medallion
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.arc(0, -50, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    // 3. Golden Sceptre with glowing Ruby
+    ctx.save();
+    const sceptreAngle = isTelegraph ? -0.4 : 0.15;
+    ctx.translate(28, -50);
+    ctx.rotate(sceptreAngle);
+    // Gold shaft
+    ctx.fillStyle = '#eab308';
+    ctx.strokeStyle = '#78350f';
+    ctx.lineWidth = 2;
+    ctx.fillRect(-3, -38, 6, 68);
+    ctx.strokeRect(-3, -38, 6, 68);
+    // Ornate finial crown
+    ctx.fillStyle = '#facc15';
+    ctx.beginPath();
+    ctx.moveTo(-10, -38); ctx.lineTo(10, -38); ctx.lineTo(0, -48);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // Ruby Orb
+    ctx.fillStyle = '#ef4444';
+    ctx.shadowColor = '#ef4444';
+    ctx.shadowBlur = isTelegraph ? 14 : 6;
+    ctx.beginPath();
+    ctx.arc(0, -42, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.restore();
+
+    // 4. Colossal Spotted Cap (3–4x scale)
+    ctx.save();
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#0f172a';
+    ctx.fillStyle = b.flash > 0 ? '#ffffff' : (isTelegraph ? '#ea580c' : '#dc2626');
+    ctx.beginPath();
+    ctx.moveTo(-44, -75);
+    ctx.quadraticCurveTo(-48, -120, 0, -120);
+    ctx.quadraticCurveTo(48, -120, 44, -75);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Cap underside rim shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+    ctx.beginPath();
+    ctx.ellipse(0, -76, 42, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Ivory Spots with drop shadow
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(-22, -98, 7, 0, Math.PI * 2);
+    ctx.arc(18, -104, 6.5, 0, Math.PI * 2);
+    ctx.arc(28, -88, 5.5, 0, Math.PI * 2);
+    ctx.arc(-4, -84, 6, 0, Math.PI * 2);
+    ctx.arc(-32, -85, 4.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // 5. Golden Royal Crown on top of cap
+    ctx.save();
+    ctx.fillStyle = '#fbbf24';
+    ctx.strokeStyle = '#78350f';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-20, -118);
+    ctx.lineTo(-16, -134);
+    ctx.lineTo(-8, -124);
+    ctx.lineTo(0, -138);
+    ctx.lineTo(8, -124);
+    ctx.lineTo(16, -134);
+    ctx.lineTo(20, -118);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // Crown jewels
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(-2, -128, 4, 4);
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(-12, -126, 3, 3);
+    ctx.fillRect(9, -126, 3, 3);
+    ctx.restore();
+
+    // 6. Eyes that track the hero
+    const targetX = p ? p.cx : b.x;
+    const targetY = p ? p.cy : b.y;
+    const eyeWorldX = cx;
+    const eyeWorldY = by - 58;
+    const dx = targetX - eyeWorldX;
+    const dy = targetY - eyeWorldY;
+    const dist = Math.hypot(dx, dy) || 1;
+    const lookX = (dx / dist) * 3.5 * (b.dir > 0 ? 1 : -1);
+    const lookY = (dy / dist) * 3.0;
+
+    // Eye sockets
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 1.8;
+    // Left eye
+    ctx.beginPath();
+    ctx.ellipse(-12, -58, 6, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    // Right eye
+    ctx.beginPath();
+    ctx.ellipse(12, -58, 6, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Tracking Pupils
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.arc(-12 + lookX, -58 + lookY, 3, 0, Math.PI * 2);
+    ctx.arc(12 + lookX, -58 + lookY, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Royal Mustache
+    ctx.fillStyle = '#451a03';
+    ctx.beginPath();
+    ctx.moveTo(0, -48);
+    ctx.quadraticCurveTo(-14, -44, -18, -48);
+    ctx.quadraticCurveTo(-8, -40, 0, -46);
+    ctx.quadraticCurveTo(8, -40, 18, -48);
+    ctx.quadraticCurveTo(14, -44, 0, -48);
+    ctx.fill();
+
+    // 7. Damage Cracks per Phase
+    this.drawDamageCracks(ctx, 0, -96, b.hp, b.maxHp, '#fef08a');
+
+    ctx.restore();
+  }
+
+  drawOldOak(ctx, b, p) {
+    const cx = b.x + b.w / 2, by = b.y + b.h;
+    const t = this.t;
+    const breath = Math.sin(t * 2.2) * 0.025;
+    const isTelegraph = b.state === 'swing_telegraph';
+    const isHurt = b.state === 'hurt';
+
+    ctx.save();
+    ctx.translate(cx, by);
+    ctx.scale(b.dir > 0 ? 1 : -1, 1 + breath);
+
+    // 1. Root feet gripping terrain
+    ctx.fillStyle = '#291809';
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(-32, 0); ctx.lineTo(-44, 0); ctx.lineTo(-24, -16);
+    ctx.moveTo(32, 0); ctx.lineTo(44, 0); ctx.lineTo(24, -16);
+    ctx.stroke();
+
+    // 2. Massive Ancient Oak Trunk Torso (3–4x hero height)
+    ctx.fillStyle = b.flash > 0 ? '#ffffff' : (isHurt ? '#78350f' : '#451a03');
+    ctx.beginPath();
+    ctx.roundRect(-34, -110, 68, 110, 18);
+    ctx.fill();
+    ctx.stroke();
+
+    // Bark woodgrain plates & contours
+    ctx.fillStyle = '#5c2406';
+    ctx.fillRect(-28, -95, 14, 75);
+    ctx.fillRect(14, -85, 14, 65);
+    ctx.strokeStyle = '#291809';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-16, -95); ctx.lineTo(-12, -40); ctx.lineTo(-16, -10);
+    ctx.moveTo(16, -85); ctx.lineTo(12, -35); ctx.lineTo(16, -10);
+    ctx.stroke();
+
+    // 3. Powerful Gnarled Branch Arms
+    const armLift = isTelegraph ? -25 : 0;
     ctx.fillStyle = '#78350f';
-    ctx.fillRect(-34, -55, 14, 8);
-    ctx.fillRect(20, -55, 14, 8);
-    // Foliage top
-    ctx.fillStyle = '#ea580c';
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 2.5;
+    // Left arm
     ctx.beginPath();
-    ctx.arc(0, -74, 22, 0, Math.PI * 2);
-    ctx.arc(-16, -65, 14, 0, Math.PI * 2);
-    ctx.arc(16, -65, 14, 0, Math.PI * 2);
+    ctx.moveTo(-34, -85);
+    ctx.quadraticCurveTo(-55, -80 + armLift, -50, -45 + armLift);
+    ctx.lineTo(-40, -45 + armLift);
+    ctx.quadraticCurveTo(-44, -72 + armLift, -34, -75);
+    ctx.closePath();
     ctx.fill();
-    // Hollow core in trunk (weak spot)
+    ctx.stroke();
+    // Right arm
+    ctx.beginPath();
+    ctx.moveTo(34, -85);
+    ctx.quadraticCurveTo(55, -80 + armLift, 50, -45 + armLift);
+    ctx.lineTo(40, -45 + armLift);
+    ctx.quadraticCurveTo(44, -72 + armLift, 34, -75);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // 4. Carved Bark Face & Furrowed Brow
+    ctx.fillStyle = '#291809';
+    ctx.beginPath();
+    ctx.roundRect(-18, -98, 36, 12, 4);
+    ctx.fill();
+
+    // 5. Glowing Eyes that track the hero
+    const targetX = p ? p.cx : b.x;
+    const targetY = p ? p.cy : b.y;
+    const eyeWorldX = cx;
+    const eyeWorldY = by - 86;
+    const dx = targetX - eyeWorldX;
+    const dy = targetY - eyeWorldY;
+    const dist = Math.hypot(dx, dy) || 1;
+    const lookX = (dx / dist) * 3.2 * (b.dir > 0 ? 1 : -1);
+    const lookY = (dy / dist) * 2.8;
+
+    // Deep eye sockets
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(-14, -90, 8, 8);
+    ctx.fillRect(6, -90, 8, 8);
+    // Glowing amber eyes
+    ctx.fillStyle = '#fbbf24';
+    ctx.shadowColor = '#f59e0b';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.arc(-10 + lookX, -86 + lookY, 3.2, 0, Math.PI * 2);
+    ctx.arc(10 + lookX, -86 + lookY, 3.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // 6. Hollow Heartwood Core (Weak Spot)
     ctx.fillStyle = b.vulnerable ? '#facc15' : '#1c1917';
     ctx.beginPath();
-    ctx.ellipse(0, -32, 10, 14, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, -44, 14, 20, 0, 0, Math.PI * 2);
     ctx.fill();
     if (b.vulnerable) {
-      // Glowing core aura
       ctx.strokeStyle = '#fef08a';
-      ctx.lineWidth = 2.5;
+      ctx.lineWidth = 3;
+      ctx.shadowColor = '#facc15';
+      ctx.shadowBlur = 12;
       ctx.stroke();
+      ctx.shadowBlur = 0;
     }
-    // Eyes
-    ctx.fillStyle = '#fbbf24';
-    ctx.fillRect(-12, -48, 5, 5);
-    ctx.fillRect(7, -48, 5, 5);
+
+    // 7. Leafy Canopy Crown (autumn colors)
+    ctx.fillStyle = '#ea580c';
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(0, -118, 30, 0, Math.PI * 2);
+    ctx.arc(-24, -108, 20, 0, Math.PI * 2);
+    ctx.arc(24, -108, 20, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    // Inner foliage golden highlights
+    ctx.fillStyle = '#f59e0b';
+    ctx.beginPath();
+    ctx.arc(-10, -122, 16, 0, Math.PI * 2);
+    ctx.arc(12, -120, 14, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 8. Dynamic Falling Autumn Leaves
+    for (let i = 0; i < 4; i++) {
+      const leafT = (t * 1.6 + i * 0.75) % 3.0;
+      const lx = -36 + i * 24 + Math.sin(t * 3.5 + i) * 14;
+      const ly = -118 + leafT * 44;
+      ctx.fillStyle = i % 2 === 0 ? '#ea580c' : '#f59e0b';
+      ctx.beginPath();
+      ctx.ellipse(lx, ly, 5, 2.8, leafT * 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 9. Damage Cracks per Phase
+    this.drawDamageCracks(ctx, 0, -70, b.hp, b.maxHp, '#facc15');
+
     ctx.restore();
   }
 
-  drawSandWyrm(ctx, b) {
+  drawSandWyrm(ctx, b, p) {
     const cx = b.x + b.w / 2, by = b.y + b.h;
+    const t = this.t;
+    const breath = Math.sin(t * 3.0) * 0.03;
+    const isTelegraph = b.state === 'telegraph';
+    const isSurge = b.state === 'surge';
+
     ctx.save();
     ctx.translate(cx, by);
-    // Giant worm head
-    ctx.fillStyle = b.flash > 0 ? '#fff' : (b.state === 'telegraph' ? '#f59e0b' : '#b45309');
+    ctx.scale(b.dir > 0 ? 1 : -1, 1 + breath);
+
+    // 1. Sand dust swirl at the base
+    ctx.fillStyle = 'rgba(245, 158, 11, 0.35)';
     ctx.beginPath();
-    ctx.roundRect(-24, -56, 48, 56, 12);
+    ctx.ellipse(0, -6, 42, 10, 0, 0, Math.PI * 2);
     ctx.fill();
-    // Armor plates
-    ctx.fillStyle = '#78350f';
-    ctx.fillRect(-20, -45, 40, 5);
-    ctx.fillRect(-18, -30, 36, 5);
-    // Horns
+
+    // 2. Segmented Armoured Body Plates (overlapping carapace)
+    const segments = 5;
+    for (let i = segments; i >= 1; i--) {
+      const segY = -i * 18;
+      const segW = 60 - i * 4;
+      ctx.fillStyle = b.flash > 0 ? '#ffffff' : (i % 2 === 0 ? '#b45309' : '#d97706');
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.roundRect(-segW / 2, segY, segW, 24, 8);
+      ctx.fill();
+      ctx.stroke();
+      // Dorsal ridge spike
+      ctx.fillStyle = '#78350f';
+      ctx.beginPath();
+      ctx.moveTo(-4, segY + 2); ctx.lineTo(0, segY - 6); ctx.lineTo(4, segY + 2);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // 3. Colossal Horned Head Shell (3–4x hero height)
+    ctx.fillStyle = b.flash > 0 ? '#ffffff' : (isTelegraph ? '#f59e0b' : '#b45309');
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.roundRect(-34, -118, 68, 48, 16);
+    ctx.fill();
+    ctx.stroke();
+
+    // Sweeping Obsidian Horns
+    ctx.fillStyle = '#292524';
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 2;
+    // Left Horn
+    ctx.beginPath();
+    ctx.moveTo(-24, -114);
+    ctx.quadraticCurveTo(-46, -138, -32, -148);
+    ctx.quadraticCurveTo(-26, -132, -14, -116);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // Right Horn
+    ctx.beginPath();
+    ctx.moveTo(24, -114);
+    ctx.quadraticCurveTo(46, -138, 32, -148);
+    ctx.quadraticCurveTo(26, -132, 14, -116);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // 4. Snapping Mandibles
+    const biteOffset = isTelegraph ? 8 : 0;
     ctx.fillStyle = '#fef08a';
+    ctx.strokeStyle = '#78350f';
+    ctx.lineWidth = 2;
+    // Left mandible
     ctx.beginPath();
-    ctx.moveTo(-18, -54); ctx.lineTo(-24, -68); ctx.lineTo(-12, -54);
-    ctx.moveTo(18, -54); ctx.lineTo(24, -68); ctx.lineTo(12, -54);
+    ctx.moveTo(-22 - biteOffset, -88);
+    ctx.lineTo(-32 - biteOffset, -72);
+    ctx.lineTo(-18, -78);
+    ctx.closePath();
     ctx.fill();
-    // Eyes
-    ctx.fillStyle = '#dc2626';
-    ctx.fillRect(-12, -38, 6, 6);
-    ctx.fillRect(6, -38, 6, 6);
+    ctx.stroke();
+    // Right mandible
+    ctx.beginPath();
+    ctx.moveTo(22 + biteOffset, -88);
+    ctx.lineTo(32 + biteOffset, -72);
+    ctx.lineTo(18, -78);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // 5. Tracking Emerald / Amber Eyes
+    const targetX = p ? p.cx : b.x;
+    const targetY = p ? p.cy : b.y;
+    const eyeWorldX = cx;
+    const eyeWorldY = by - 98;
+    const dx = targetX - eyeWorldX;
+    const dy = targetY - eyeWorldY;
+    const dist = Math.hypot(dx, dy) || 1;
+    const lookX = (dx / dist) * 3.0 * (b.dir > 0 ? 1 : -1);
+    const lookY = (dy / dist) * 2.5;
+
+    // Eye sockets
+    ctx.fillStyle = '#1c1917';
+    ctx.fillRect(-18, -102, 10, 8);
+    ctx.fillRect(8, -102, 10, 8);
+
+    // Glowing eyes
+    ctx.fillStyle = '#10b981';
+    ctx.shadowColor = '#10b981';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.ellipse(-13 + lookX, -98 + lookY, 4, 3, 0, 0, Math.PI * 2);
+    ctx.ellipse(13 + lookX, -98 + lookY, 4, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Slit pupils
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(-14 + lookX, -100 + lookY, 2, 4);
+    ctx.fillRect(12 + lookX, -100 + lookY, 2, 4);
+
+    // 6. Damage Cracks per Phase
+    this.drawDamageCracks(ctx, 0, -90, b.hp, b.maxHp, '#fbbf24');
+
     ctx.restore();
   }
 
-  drawBoss(ctx, b) {
+  drawFrostTitan(ctx, b, p) {
+    const cx = b.x + b.w / 2, by = b.y + b.h;
+    const t = this.t;
+    const breath = Math.sin(t * 2.5) * 0.03;
+    ctx.save();
+    ctx.translate(cx, by);
+    ctx.scale(b.dir > 0 ? 1 : -1, 1 + breath);
+
+    // Colossal Glacier Torso (height 132px)
+    ctx.fillStyle = b.flash > 0 ? '#ffffff' : '#0284c7';
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.roundRect(-36, -114, 72, 114, 16);
+    ctx.fill();
+    ctx.stroke();
+
+    // Ice armor plates
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(-28, -98, 56, 30);
+    ctx.fillStyle = '#e0f2fe';
+    ctx.fillRect(-20, -92, 40, 10);
+
+    // Crystalline Horns
+    ctx.fillStyle = '#bae6fd';
+    ctx.strokeStyle = '#0284c7';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-24, -110); ctx.lineTo(-38, -138); ctx.lineTo(-16, -120);
+    ctx.moveTo(24, -110); ctx.lineTo(38, -138); ctx.lineTo(16, -120);
+    ctx.fill();
+    ctx.stroke();
+
+    // Glowing Blizzard Eyes
+    const dx = (p ? p.cx : b.x) - cx;
+    const dy = (p ? p.cy : b.y) - (by - 88);
+    const dist = Math.hypot(dx, dy) || 1;
+    const lx = (dx / dist) * 3 * (b.dir > 0 ? 1 : -1);
+    const ly = (dy / dist) * 2.5;
+
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = '#38bdf8';
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.arc(-14 + lx, -88 + ly, 4, 0, Math.PI * 2);
+    ctx.arc(14 + lx, -88 + ly, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Damage Cracks per Phase
+    this.drawDamageCracks(ctx, 0, -80, b.hp, b.maxHp, '#38bdf8');
+    ctx.restore();
+  }
+
+  drawCrystalBehemoth(ctx, b, p) {
+    const cx = b.x + b.w / 2, by = b.y + b.h;
+    const t = this.t;
+    const breath = Math.sin(t * 3.2) * 0.03;
+    ctx.save();
+    ctx.translate(cx, by);
+    ctx.scale(b.dir > 0 ? 1 : -1, 1 + breath);
+
+    // Faceted Crystal Carapace (height 126px)
+    ctx.fillStyle = b.flash > 0 ? '#ffffff' : '#7e22ce';
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.roundRect(-36, -108, 72, 108, 16);
+    ctx.fill();
+    ctx.stroke();
+
+    // Crystal Shards on back
+    ctx.fillStyle = '#c084fc';
+    ctx.beginPath();
+    ctx.moveTo(-18, -108); ctx.lineTo(-24, -132); ctx.lineTo(-8, -112);
+    ctx.moveTo(18, -108); ctx.lineTo(24, -132); ctx.lineTo(8, -112);
+    ctx.moveTo(0, -108); ctx.lineTo(0, -138); ctx.lineTo(10, -112);
+    ctx.fill();
+    ctx.stroke();
+
+    // Glowing Violet Tracking Eyes
+    const dx = (p ? p.cx : b.x) - cx;
+    const dy = (p ? p.cy : b.y) - (by - 82);
+    const dist = Math.hypot(dx, dy) || 1;
+    const lx = (dx / dist) * 3 * (b.dir > 0 ? 1 : -1);
+    const ly = (dy / dist) * 2.5;
+
+    ctx.fillStyle = '#f0abfc';
+    ctx.shadowColor = '#d946ef';
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.arc(-12 + lx, -82 + ly, 4, 0, Math.PI * 2);
+    ctx.arc(12 + lx, -82 + ly, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Damage Cracks per Phase
+    this.drawDamageCracks(ctx, 0, -75, b.hp, b.maxHp, '#f0abfc');
+    ctx.restore();
+  }
+
+  drawMagmaOverlord(ctx, b, p) {
+    const cx = b.x + b.w / 2, by = b.y + b.h;
+    const t = this.t;
+    const breath = Math.sin(t * 3.5) * 0.03;
+    ctx.save();
+    ctx.translate(cx, by);
+    ctx.scale(b.dir > 0 ? 1 : -1, 1 + breath);
+
+    // Colossal Obsidian Demon Torso (height 134px)
+    ctx.fillStyle = b.flash > 0 ? '#ffffff' : '#1e1b4b';
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.roundRect(-38, -116, 76, 116, 18);
+    ctx.fill();
+    ctx.stroke();
+
+    // Burning Lava Veins
+    ctx.strokeStyle = '#f97316';
+    ctx.lineWidth = 3;
+    ctx.shadowColor = '#ea580c';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.moveTo(-20, -100); ctx.lineTo(-10, -60); ctx.lineTo(-18, -20);
+    ctx.moveTo(20, -100); ctx.lineTo(10, -60); ctx.lineTo(18, -20);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Curved Obsidian Horns
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.moveTo(-24, -112); ctx.quadraticCurveTo(-48, -135, -34, -145); ctx.lineTo(-14, -118);
+    ctx.moveTo(24, -112); ctx.quadraticCurveTo(48, -135, 34, -145); ctx.lineTo(14, -118);
+    ctx.fill();
+
+    // Fiery Eyes
+    const dx = (p ? p.cx : b.x) - cx;
+    const dy = (p ? p.cy : b.y) - (by - 90);
+    const dist = Math.hypot(dx, dy) || 1;
+    const lx = (dx / dist) * 3 * (b.dir > 0 ? 1 : -1);
+    const ly = (dy / dist) * 2.5;
+
+    ctx.fillStyle = '#fef08a';
+    ctx.shadowColor = '#ef4444';
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.arc(-14 + lx, -90 + ly, 4, 0, Math.PI * 2);
+    ctx.arc(14 + lx, -90 + ly, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Damage Cracks per Phase
+    this.drawDamageCracks(ctx, 0, -80, b.hp, b.maxHp, '#f97316');
+    ctx.restore();
+  }
+
+  drawBoss(ctx, b, p) {
     if (b.type === 'oak_guardian') {
-      this.drawOldOak(ctx, b);
+      this.drawOldOak(ctx, b, p);
       return;
     }
     if (b.type === 'sand_wyrm') {
-      this.drawSandWyrm(ctx, b);
+      this.drawSandWyrm(ctx, b, p);
       return;
     }
-    const cx = b.x + b.w / 2, by = b.y + b.h;
-    ctx.save();
-    ctx.translate(cx, by);
-    ctx.scale(b.dir > 0 ? 1 : -1, b.squash);
-
-    // Stalk / Body
-    ctx.fillStyle = b.flash > 0 ? '#fff' : (b.state === 'telegraph' ? '#fed7aa' : '#fde68a');
-    ctx.beginPath();
-    ctx.roundRect(-18, -30, 36, 30, 8);
-    ctx.fill();
-
-    // Giant cap
-    ctx.fillStyle = b.flash > 0 ? '#fff' : (b.state === 'telegraph' ? '#ea580c' : '#dc2626');
-    ctx.beginPath();
-    ctx.moveTo(-32, -26);
-    ctx.quadraticCurveTo(-34, -62, 0, -62);
-    ctx.quadraticCurveTo(34, -62, 32, -26);
-    ctx.closePath();
-    ctx.fill();
-
-    // Cap spots
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.arc(-14, -46, 5, 0, Math.PI * 2);
-    ctx.arc(12, -50, 4.5, 0, Math.PI * 2);
-    ctx.arc(18, -38, 3.5, 0, Math.PI * 2);
-    ctx.arc(-2, -34, 4, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Golden Crown
-    ctx.fillStyle = '#fbbf24';
-    ctx.beginPath();
-    ctx.moveTo(-16, -60);
-    ctx.lineTo(-12, -74);
-    ctx.lineTo(-6, -64);
-    ctx.lineTo(0, -78);
-    ctx.lineTo(6, -64);
-    ctx.lineTo(12, -74);
-    ctx.lineTo(16, -60);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = '#d97706';
-    ctx.fillRect(-14, -60, 28, 3);
-
-    // Eyes
-    ctx.fillStyle = '#1c1917';
-    ctx.fillRect(-10, -22, 5, 7);
-    ctx.fillRect(5, -22, 5, 7);
-    ctx.restore();
+    if (b.type === 'frost_titan') {
+      this.drawFrostTitan(ctx, b, p);
+      return;
+    }
+    if (b.type === 'crystal_behemoth') {
+      this.drawCrystalBehemoth(ctx, b, p);
+      return;
+    }
+    if (b.type === 'magma_overlord') {
+      this.drawMagmaOverlord(ctx, b, p);
+      return;
+    }
+    this.drawMushroomKing(ctx, b, p);
   }
 
   drawBossHealthBar(ctx, boss) {
     const bw = 240, bh = 14;
-    const bx = (VIEW_W - bw) / 2, by = 48;
+    // Position comfortably below top letterbox bar (letterbox is y: 0..36)
+    const bx = (VIEW_W - bw) / 2, by = 60;
     ctx.save();
-    // Name (show boss name only)
+    // Name (show boss name only, comfortably below letterbox bar)
     ctx.font = '700 13px Fredoka, sans-serif';
     ctx.fillStyle = '#fed7aa';
     ctx.textAlign = 'center';
-    ctx.fillText(boss.name.toUpperCase(), VIEW_W / 2, by - 6);
+    ctx.fillText(boss.name.toUpperCase(), VIEW_W / 2, by - 8);
 
     // Background bar
     ctx.fillStyle = '#1c1917';
@@ -1252,7 +2232,7 @@ export class Renderer {
     ctx.save();
     ctx.translate(cx, feet);
     const gs = p.giantScale || 1;
-    const heroScale = 1.15; // 15% larger hero for cartoon feel
+    const heroScale = 1.18; // 18% larger hero with 2px outline for cartoon clarity
     ctx.scale(heroScale * p.sx * gs, heroScale * p.sy * gs);
     ctx.scale(p.face, 1);
 
@@ -1424,6 +2404,8 @@ export class Renderer {
   }
 
   drawHints(ctx, g) {
+    // Hide completely during boss intro
+    if (g.bossIntro) return;
     if (!g.level.hints || !g.level.hints.length) return;
     const p = g.player;
     let nearest = null;
@@ -1445,19 +2427,45 @@ export class Renderer {
     const h = 28;
     const halfW = w / 2;
 
-    // Nearest hint screen position
     const camX = g.cam.x, camY = g.cam.y;
-    const rawScreenX = nearest.x - camX;
-    const rawScreenY = (nearest.y - 74) - camY;
-
-    // Clamp bubble within view with 16 px margin
     const margin = 16;
-    const clampedScreenX = Math.max(margin + halfW, Math.min(VIEW_W - margin - halfW, rawScreenX));
-    const clampedScreenY = Math.max(margin, Math.min(VIEW_H - margin - h, rawScreenY));
 
-    // Convert back to world coordinates since ctx is translated by -camX, -camY
-    const drawX = clampedScreenX + camX;
-    const drawY = clampedScreenY + camY;
+    // Desired position: Above hero's head with >= 40 px gap
+    // Hero head top is p.y. Bubble bottom is drawY + h, so drawY + h <= p.y - 40
+    let drawX = p.cx;
+    let drawY = p.y - 40 - h;
+
+    // Check if placing above hero's head would violate the screen top margin
+    const screenY = drawY - camY;
+    if (screenY < margin) {
+      // Offset sideways so bubble NEVER presses down onto hero
+      drawY = p.y - 6;
+      const heroScreenX = p.cx - camX;
+      if (heroScreenX < VIEW_W / 2) {
+        drawX = p.x + p.w + 24 + halfW;
+      } else {
+        drawX = p.x - 24 - halfW;
+      }
+    }
+
+    // Clamp within screen boundaries
+    let screenX = drawX - camX;
+    let clampedScreenX = Math.max(margin + halfW, Math.min(VIEW_W - margin - halfW, screenX));
+    let clampedScreenY = Math.max(margin, Math.min(VIEW_H - margin - h, drawY - camY));
+    drawX = clampedScreenX + camX;
+    drawY = clampedScreenY + camY;
+
+    // Strict guarantee: Bubble must NEVER cover the hero!
+    const bL = drawX - halfW, bR = drawX + halfW;
+    const bT = drawY, bB = drawY + h;
+    const overlapsHero = (bL < p.x + p.w + 8 && bR > p.x - 8 && bT < p.y + p.h + 4 && bB > p.y - 36);
+    if (overlapsHero) {
+      if (drawX >= p.cx) {
+        drawX = Math.min(p.x + p.w + 20 + halfW, camX + VIEW_W - margin - halfW);
+      } else {
+        drawX = Math.max(p.x - 20 - halfW, camX + margin + halfW);
+      }
+    }
 
     ctx.save();
     ctx.globalAlpha = a;
@@ -2150,20 +3158,61 @@ export class Renderer {
     const fgX = camX * speed;
     const fgY = camY * 0.35;
     ctx.save();
-    ctx.globalAlpha = 0.22;
-    const color = theme.id === 'autumn_forest' ? '#ea580c' : (theme.id === 'desert_ruins' ? '#f59e0b' : '#86efac');
-    ctx.fillStyle = color;
 
-    for (let i = 0; i < 18; i++) {
+    for (let i = 0; i < 20; i++) {
       const seedX = (i * 137.5) % (VIEW_W + 120);
       const seedY = (i * 83.1) % (VIEW_H + 80);
       const x = ((seedX - fgX + t * (20 + (i % 5) * 6)) % (VIEW_W + 120) + (VIEW_W + 120)) % (VIEW_W + 120) - 60;
       const y = ((seedY - fgY + Math.sin(t * 2 + i) * 16) % (VIEW_H + 80) + (VIEW_H + 80)) % (VIEW_H + 80) - 40;
       const size = 6 + (i % 4) * 3;
 
-      ctx.beginPath();
-      ctx.ellipse(x, y, size, size * 0.5, (t + i) * 0.8, 0, Math.PI * 2);
-      ctx.fill();
+      if (theme.id === 'autumn_forest') {
+        // Tumbling autumn leaves (rich gold & amber ellipses)
+        ctx.globalAlpha = 0.28;
+        ctx.fillStyle = i % 2 === 0 ? '#ea580c' : '#f59e0b';
+        ctx.beginPath();
+        ctx.ellipse(x, y, size, size * 0.5, (t + i) * 0.8, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (theme.id === 'desert_ruins') {
+        // Desert: sand dust grains + heat shimmer motes ONLY (NEVER leaves)
+        if (i % 3 === 0) {
+          // Heat shimmer circular mote with subtle glow
+          ctx.globalAlpha = 0.20 + Math.sin(t * 4 + i) * 0.12;
+          ctx.fillStyle = '#fef08a';
+          ctx.beginPath();
+          ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          // Sand dust speck
+          ctx.globalAlpha = 0.30;
+          ctx.fillStyle = i % 2 === 0 ? '#f59e0b' : '#d97706';
+          ctx.fillRect(x, y, 2.5, 2.5);
+        }
+      } else if (theme.id === 'frozen_peaks') {
+        // Drifting snow flurries
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(x, y, 2 + (i % 3), 0, Math.PI * 2);
+        ctx.fill();
+      } else if (theme.id === 'crystal_caves') {
+        // Floating crystal sparkles
+        ctx.globalAlpha = 0.30;
+        ctx.fillStyle = i % 2 === 0 ? '#c084fc' : '#38bdf8';
+        ctx.fillRect(x, y, 3, 3);
+      } else if (theme.id === 'volcano_fortress') {
+        // Rising fiery embers
+        ctx.globalAlpha = 0.38;
+        ctx.fillStyle = i % 2 === 0 ? '#f97316' : '#ef4444';
+        ctx.fillRect(x, y - (t * 20 % 30), 2.5, 2.5);
+      } else {
+        // Green hills: soft floating pollen motes
+        ctx.globalAlpha = 0.25;
+        ctx.fillStyle = '#86efac';
+        ctx.beginPath();
+        ctx.arc(x, y, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
     ctx.restore();
   }

@@ -576,6 +576,22 @@ export const THEME_FROZEN_PEAKS = {
         ctx.lineTo(x + 40, h);
         ctx.fill();
       }
+    },
+    foliage(ctx, w, h) {
+      // Near snow-dusted pine tree silhouettes
+      ctx.fillStyle = '#1c314f';
+      for (let x = 60; x < w; x += 190) {
+        ctx.beginPath();
+        ctx.moveTo(x, h - 220);
+        ctx.lineTo(x + 24, h - 140);
+        ctx.lineTo(x - 24, h - 140);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(x, h - 160);
+        ctx.lineTo(x + 32, h - 80);
+        ctx.lineTo(x - 32, h - 80);
+        ctx.fill();
+      }
     }
   },
   clouds(ctx, t, camX, camY) {},
@@ -678,7 +694,27 @@ export const THEME_CRYSTAL_CAVES = {
         ctx.fill();
       }
     },
-    near(ctx, w, h) {}
+    near(ctx, w, h) {
+      ctx.fillStyle = '#26173a';
+      for (let x = 60; x < w; x += 160) {
+        ctx.beginPath();
+        ctx.moveTo(x, h);
+        ctx.lineTo(x + 15, h - 110);
+        ctx.lineTo(x + 30, h);
+        ctx.fill();
+      }
+    },
+    foliage(ctx, w, h) {
+      // Near luminescent crystal spires
+      ctx.fillStyle = '#341a52';
+      for (let x = 80; x < w; x += 210) {
+        ctx.beginPath();
+        ctx.moveTo(x, h - 210);
+        ctx.lineTo(x + 18, h - 60);
+        ctx.lineTo(x - 18, h - 60);
+        ctx.fill();
+      }
+    }
   },
   clouds(ctx, t, camX, camY) {},
   terrain: {
@@ -778,6 +814,17 @@ export const THEME_VOLCANO_FORTRESS = {
       // Fortress battlements in the distance
       for (let x = 60; x < w; x += 140) {
         ctx.fillRect(x, h - 160, 48, 160);
+      }
+    },
+    foliage(ctx, w, h) {
+      // Jagged volcanic basalt pillars & fortress spikes
+      ctx.fillStyle = '#1c0709';
+      for (let x = 50; x < w; x += 200) {
+        ctx.beginPath();
+        ctx.moveTo(x, h - 230);
+        ctx.lineTo(x + 16, h - 70);
+        ctx.lineTo(x - 16, h - 70);
+        ctx.fill();
       }
     }
   },

@@ -25,6 +25,12 @@ export function toast(text, ms = 2200) {
   toastTimer = setTimeout(() => el.classList.remove('show'), ms);
 }
 
+export function hideToast() {
+  const el = $('toast');
+  if (el) el.classList.remove('show');
+  clearTimeout(toastTimer);
+}
+
 export function showScreen(id) {
   for (const el of document.querySelectorAll('.screen')) {
     el.hidden = el.id !== `screen-${id}`;

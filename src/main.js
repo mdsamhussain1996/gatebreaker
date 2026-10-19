@@ -59,8 +59,24 @@ function startPlay(defOrIndex = 0) {
   mode = 'playing';
   ui.hideScreens();
   ui.setPlaying(true);
-  ui.toast(`World ${currentLevelDef.world} · ${currentLevelDef.name}`, 2400);
+  const toastMsg = `World ${currentLevelDef.world} · ${currentLevelDef.name}`;
+  if (game.bossIntro) {
+    game.pendingLevelToast = toastMsg;
+    if (ui.hideToast) ui.hideToast();
+  } else {
+    ui.toast(toastMsg, 2400);
+  }
 }
+
+game.onBossIntroStart = () => {
+  if (ui.hideToast) ui.hideToast();
+};
+game.onBossIntroEnd = () => {
+  if (game.pendingLevelToast) {
+    ui.toast(game.pendingLevelToast, 2400);
+    game.pendingLevelToast = null;
+  }
+};
 
 function showWorldMap(w = currentWorld) {
   currentWorld = Math.max(1, Math.min(6, w));

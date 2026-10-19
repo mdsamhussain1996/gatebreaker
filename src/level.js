@@ -8,7 +8,8 @@ import { World } from './physics.js';
 const ENTITY_CHARS = new Set([
   'P', 'K', 'G', 'c', 'g', 's', 'h', 'C', '*', '^',
   'm', 'S', 'B', 'T', 'M', 'L', 'b', 'q', 'v', 'O', 'y', 'w', 'Y',
-  'z', 'N', 'F', 'W', 'l', 'a', 'k', 'I', 'Q'
+  'z', 'N', 'F', 'W', 'l', 'a', 'k', 'I', 'Q',
+  'J', 'U', 'V', 'j', 'u'
 ]);
 
 export function parseLevel(def) {
@@ -99,6 +100,11 @@ export function parseLevel(def) {
         else if (ch === 'B') out.bosses.push({ type: 'mushroom_king', x: cx, feetY, c, r });
         else if (ch === 'O') out.bosses.push({ type: 'oak_guardian', x: cx, feetY, c, r });
         else if (ch === 'Y') out.bosses.push({ type: 'sand_wyrm', x: cx, feetY, c, r });
+        else if (ch === 'J') out.bosses.push({ type: 'frost_titan', x: cx, feetY, c, r });
+        else if (ch === 'U') out.bosses.push({ type: 'crystal_behemoth', x: cx, feetY, c, r });
+        else if (ch === 'V') out.bosses.push({ type: 'magma_overlord', x: cx, feetY, c, r });
+        else if (ch === 'j') out.walkers.push({ x: cx, feetY, c, r, subtype: 'frost_walker' });
+        else if (ch === 'u') out.walkers.push({ x: cx, feetY, c, r, subtype: 'crystal_crawler' });
 
         line += '.';
       } else {
@@ -125,5 +131,7 @@ export function parseLevel(def) {
   }
 
   out.world = new World(clean);
+  out.world.levelId = def.id;
+  out.world.name = def.name;
   return out;
 }

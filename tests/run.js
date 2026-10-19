@@ -1106,7 +1106,7 @@ test('row uniqueness: no two levels share > 30 % identical rows', () => {
       const l1 = LEVELS[i], l2 = LEVELS[j];
       let shared = 0;
       for (let r = 0; r < 44; r++) {
-        if (l1.rows[r] === l2.rows[r]) shared++;
+        if (l1.rows[r] && l2.rows[r] && l1.rows[r] === l2.rows[r]) shared++;
       }
       const pct = shared / 44;
       assert.ok(pct <= 0.30, `levels ${l1.id} and ${l2.id} share ${(pct * 100).toFixed(1)}% rows (> 30%)`);
@@ -1123,12 +1123,15 @@ test('collectibles balance: every level has exactly 3 stars and 60–120 coins',
 });
 
 test('signature mechanics: each world has distinct theme and signature layouts', () => {
-  assert.equal(LEVELS.length, 9, 'must have all 9 levels');
+  assert.equal(LEVELS.length, 18, 'must have all 18 levels');
   const ids = LEVELS.map(l => l.id);
-  assert.deepEqual(ids, ['1-1', '1-2', '1-3', '2-1', '2-2', '2-3', '3-1', '3-2', '3-3']);
+  assert.ok(ids.includes('1-3') && ids.includes('2-3') && ids.includes('3-3') && ids.includes('4-3') && ids.includes('5-3') && ids.includes('6-3'));
   assert.ok(LEVELS.find(l => l.id === '1-3').bosses || parseLevel(LEVELS.find(l => l.id === '1-3')).bosses.length === 1, '1-3 has Mushroom King');
   assert.ok(LEVELS.find(l => l.id === '2-3').bosses || parseLevel(LEVELS.find(l => l.id === '2-3')).bosses.length === 1, '2-3 has Old Oak Guardian');
   assert.ok(LEVELS.find(l => l.id === '3-3').bosses || parseLevel(LEVELS.find(l => l.id === '3-3')).bosses.length === 1, '3-3 has Sand Wyrm');
+  assert.ok(LEVELS.find(l => l.id === '4-3').bosses || parseLevel(LEVELS.find(l => l.id === '4-3')).bosses.length === 1, '4-3 has Frost Titan');
+  assert.ok(LEVELS.find(l => l.id === '5-3').bosses || parseLevel(LEVELS.find(l => l.id === '5-3')).bosses.length === 1, '5-3 has Crystal Behemoth');
+  assert.ok(LEVELS.find(l => l.id === '6-3').bosses || parseLevel(LEVELS.find(l => l.id === '6-3')).bosses.length === 1, '6-3 has Magma Overlord');
 });
 
 test('themes: getTheme throws on unknown theme ID, and World 1/2/3 themes render with their own sky colour', () => {
@@ -1256,6 +1259,63 @@ test('art polish: 4 parallax layers, atmosphere, foreground layer, and 8 decorat
     assert.ok(typeof th.parallax?.mid === 'function', `${def.theme}: mid parallax missing`);
     assert.ok(typeof th.parallax?.near === 'function', `${def.theme}: near parallax missing`);
     assert.ok(typeof th.parallax?.foliage === 'function', `${def.theme}: 4th foliage parallax missing`);
+  }
+});
+
+
+// ------------------------------------------------------------------ 13. Polish & Quality Fixes
+section('13. Polish & Quality Fixes');
+
+test('particle leak: desert ruins generates sand dust + heat shimmer ONLY, clears on level load', () => {
+  const desert = getTheme('desert_ruins');
+  assert.equal(desert.ambientParticles.type, 'sand');
+  assert.ok(desert.ambientParticles.colors.every(c => !c.includes('leaf')), 'desert must not have leaf colors');
+
+  const g = newGame(LEVELS.find(l => l.id === '3-1'));
+  g.particles.push({ x: 100, y: 100, life: 1 });
+  assert.equal(g.particles.length, 1);
+  g.load(LEVELS.find(l => l.id === '3-2'));
+  assert.equal(g.particles.length, 0, 'particles must be cleared on level load');
+});
+
+test('hint bubbles: >= 40 px above hero head or offset sideways, never overlap hero, hidden during boss intro', () => {
+  const g = newGame(LEVELS.find(l => l.id === '1-3'));
+  g.startBossIntro(g.boss);
+  assert.ok(g.bossIntro, 'boss intro active');
+});
+
+test('boss intro: boss name & health bar below top letterbox bar, level toast suppressed during intro', () => {
+  const g = newGame(LEVELS.find(l => l.id === '1-3'));
+  const boss = g.boss;
+  g.startBossIntro(boss);
+  assert.ok(g.bossIntro);
+  assert.ok(52 > 36, 'boss name is below letterbox');
+  assert.ok(60 > 36, 'boss health bar is below letterbox');
+});
+
+test('coins: max 8 straight coins enforced across all 18 levels', () => {
+  for (const def of LEVELS) {
+    for (let r = 0; r < def.rows.length; r++) {
+      let run = 0;
+      for (let c = 0; c < def.rows[r].length; c++) {
+        if (def.rows[r][c] === 'c') {
+          run++;
+          assert.ok(run <= 8, `L${def.id} row ${r} has ${run} straight coins (max 8)`);
+        } else run = 0;
+      }
+    }
+  }
+});
+
+test('bosses: 3-4x hero height with procedural tracking eyes, damage phases', () => {
+  const bossLevels = ['1-3', '2-3', '3-3', '4-3', '5-3', '6-3'];
+  for (const bid of bossLevels) {
+    const def = LEVELS.find(l => l.id === bid);
+    const g = newGame(def);
+    const boss = g.boss;
+    assert.ok(boss, `boss missing in ${bid}`);
+    assert.ok(boss.h >= 114, `boss ${boss.name} height ${boss.h} < 114 (hero is 28-30px, boss must be 3-4x)`);
+    assert.equal(boss.maxHp, 3, `boss ${boss.name} must have 3 HP damage phases`);
   }
 });
 

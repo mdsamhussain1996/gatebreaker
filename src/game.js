@@ -9,7 +9,9 @@ import {
   AcornSquirrel, SnapvinePlant, OldOakGuardian,
   Scorpion, SandWorm, SandWyrm,
   BuzzBee, NightBat, HopperFrog, WildBoar,
-  LeafGlider, RollingArmadillo, DesertHawk, SpinningSaw
+  LeafGlider, RollingArmadillo, DesertHawk, SpinningSaw,
+  FrostTitan, CrystalBehemoth, MagmaOverlord,
+  FrostWalker, CrystalCrawler
 } from './enemies.js';
 import {
   Coin, Gem, Star, HeartPickup, Chest, Checkpoint, Spikes, Key, Gate,
@@ -70,7 +72,11 @@ export class Game {
 
     // Enemies & Bosses
     this.enemies = [
-      ...lv.walkers.map(m => new MushroomWalker(m.x, m.feetY)),
+      ...lv.walkers.map(m => {
+        if (m.subtype === 'frost_walker') return new FrostWalker(m.x, m.feetY);
+        if (m.subtype === 'crystal_crawler') return new CrystalCrawler(m.x, m.feetY);
+        return new MushroomWalker(m.x, m.feetY);
+      }),
       ...lv.hedgehogs.map(s => new SpikyHedgehog(s.x, s.feetY)),
       ...lv.squirrels.map(q => new AcornSquirrel(q.x, q.feetY)),
       ...lv.snapvines.map(v => new SnapvinePlant(v.x, v.feetY)),
@@ -87,6 +93,9 @@ export class Game {
       ...lv.bosses.map(b => {
         if (b.type === 'oak_guardian') return new OldOakGuardian(b.x, b.feetY);
         if (b.type === 'sand_wyrm') return new SandWyrm(b.x, b.feetY);
+        if (b.type === 'frost_titan') return new FrostTitan(b.x, b.feetY);
+        if (b.type === 'crystal_behemoth') return new CrystalBehemoth(b.x, b.feetY);
+        if (b.type === 'magma_overlord') return new MagmaOverlord(b.x, b.feetY);
         return new MushroomKing(b.x, b.feetY);
       })
     ];
@@ -144,6 +153,7 @@ export class Game {
       title: boss.name.toUpperCase(),
       subtitle: '★ ARENA BOSS ★'
     };
+    if (this.onBossIntroStart) this.onBossIntroStart();
     this.sfx('bossRoar');
     this.shakeScreen(0.5);
   }
@@ -154,6 +164,7 @@ export class Game {
     this.cam.fx = this.player.cx;
     this.cam.fy = this.player.cy;
     this.applyCamera();
+    if (this.onBossIntroEnd) this.onBossIntroEnd();
   }
 
   spawnArenaSpores(cx, cy) {
@@ -216,6 +227,7 @@ export class Game {
         this.bossIntro.timer -= dt;
         if (this.bossIntro.timer <= 0) {
           this.bossIntro = null;
+          if (this.onBossIntroEnd) this.onBossIntroEnd();
         } else {
           this.player.vx = 0;
           const targetCamFx = this.bossIntro.boss.cx;
@@ -393,7 +405,11 @@ export class Game {
     // Boss arena entry detection & lock
     if (this.boss && !this.boss.dead && !this.bossArenaEntered) {
       const dist = Math.hypot(p.cx - this.boss.cx, p.cy - this.boss.cy);
-      if (dist < 340 || p.cx >= this.boss.x - 220) {
+      const isVerticalLevel = (this.world.h > 800 && this.boss.y < 350);
+      const inArenaZone = isVerticalLevel
+        ? (p.y <= this.boss.y + 160 && Math.abs(p.cx - this.boss.cx) < 360)
+        : (dist < 340 || (p.cx >= this.boss.x - 220 && Math.abs(p.cy - this.boss.cy) < 240));
+      if (inArenaZone) {
         this.bossArenaEntered = true;
         this.arenaLocked = true;
         this.arenaLeft = Math.max(0, Math.floor(p.x - 48));
@@ -551,7 +567,7 @@ export class Game {
         continue;
       }
 
-      const stomp = p.vy > 0 && p.prevBottom <= e.y + 12 && e.stompable;
+      const stomp = p.vy > 0 && p.prevBottom <= e.y + (e.isBoss ? 32 : 14) && e.stompable;
       if (stomp) {
         e.hit(this, 1, 0);
         p.bounce(-430);

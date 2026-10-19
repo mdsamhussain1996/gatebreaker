@@ -865,7 +865,7 @@ export class SandWorm extends Enemy {
 
 export class MushroomKing extends Enemy {
   constructor(cx, feetY) {
-    super(cx, feetY, 54, 58);
+    super(cx, feetY, 76, 120);
     this.isBoss = true;
     this.type = 'mushroom_king';
     this.name = 'Mushroom King';
@@ -1006,7 +1006,7 @@ export class MushroomKing extends Enemy {
 
 export class OldOakGuardian extends Enemy {
   constructor(cx, feetY) {
-    super(cx, feetY, 64, 76);
+    super(cx, feetY, 88, 136);
     this.isBoss = true;
     this.type = 'oak_guardian';
     this.name = 'Old Oak Guardian';
@@ -1126,7 +1126,7 @@ export class OldOakGuardian extends Enemy {
 
 export class SandWyrm extends Enemy {
   constructor(cx, feetY) {
-    super(cx, feetY, 58, 60);
+    super(cx, feetY, 84, 128);
     this.isBoss = true;
     this.type = 'sand_wyrm';
     this.name = 'Sand Wyrm';
@@ -1241,5 +1241,463 @@ export class SandWyrm extends Enemy {
     }
     if (g) g.sfx('knifeHit');
     return false;
+  }
+}
+
+export class FrostTitan extends Enemy {
+  constructor(cx, feetY) {
+    super(cx, feetY, 90, 132);
+    this.isBoss = true;
+    this.type = 'frost_titan';
+    this.name = 'Frost Titan';
+    this.hp = 3;
+    this.maxHp = 3;
+    this.invuln = 0;
+    this.state = 'idle';
+    this.timer = 1.2;
+    this.stompable = true;
+    this.squash = 1;
+    this.shockwaves = [];
+    this.hasSummoned = false;
+    this.deathColor = '#38bdf8';
+  }
+
+  update(g, dt) {
+    if (this.dead) return;
+    this.updateBase(g, dt);
+    const w = g.world;
+    const p = g.player;
+    this.invuln = Math.max(0, this.invuln - dt);
+    this.timer -= dt;
+    this.dir = p.cx > this.x + this.w / 2 ? 1 : -1;
+
+    this.vy = Math.min(this.vy + 1600 * dt, 720);
+    moveX(w, this, this.vx * dt);
+    const res = moveY(w, this, this.vy * dt);
+
+    if (res.floor && this.state === 'jump') {
+      this.state = 'idle';
+      this.timer = 1.6;
+      this.squash = 1.5;
+      g.shake = 8;
+      g.sfx('bossStomp');
+
+      this.shockwaves.push({ x: this.x - 10, y: this.y + this.h - 14, vx: -210, life: 1.2 });
+      this.shockwaves.push({ x: this.x + this.w + 10, y: this.y + this.h - 14, vx: 210, life: 1.2 });
+    }
+
+    if (this.state === 'idle') {
+      this.vx = 0;
+      if (this.timer <= 0) {
+        this.state = 'telegraph';
+        this.timer = 0.65;
+        this.squash = 0.65;
+      }
+    } else if (this.state === 'telegraph') {
+      this.telegraph = 0.65;
+      if (this.timer <= 0) {
+        this.state = 'jump';
+        this.vy = -560;
+        this.vx = this.dir * 130;
+        this.squash = 1.3;
+      }
+    }
+
+    // Update shockwaves
+    for (let i = this.shockwaves.length - 1; i >= 0; i--) {
+      const sw = this.shockwaves[i];
+      sw.life -= dt;
+      sw.x += sw.vx * dt;
+      if (sw.life <= 0) { this.shockwaves.splice(i, 1); continue; }
+      if (p.invuln <= 0 && Math.abs(p.cx - sw.x) < 22 && Math.abs(p.cy - sw.y) < 24) {
+        p.hurt(g, sw.x);
+      }
+    }
+  }
+
+  hit(g, dmg = 1, fromDir = 0) {
+    if (this.dead || this.invuln > 0) return false;
+    this.hp -= dmg;
+    this.flash = 0.45;
+    this.invuln = 0.5;
+    this.squash = 0.7;
+    if (g) g.shake = 8;
+
+    if (this.hp > 0 && g) {
+      g.hitStop = 0.35;
+      g.sfx('bossPhase');
+    }
+
+    if (this.hp <= 2 && !this.hasSummoned && g) {
+      this.hasSummoned = true;
+      g.toast('Frost Titan summons the blizzard flurries!');
+      g.enemies.push(new NightBat(this.x - 80, this.y - 100));
+      g.enemies.push(new NightBat(this.x + this.w + 80, this.y - 100));
+    }
+
+    if (this.hp <= 0) {
+      this.dead = true;
+      const keyX = this.x + this.w / 2;
+      const keyY = this.y + this.h / 2;
+      if (g) {
+        g.arenaLocked = false;
+        g.slowMo = 0.6;
+        g.sfx('bossDie');
+        g.sfx('bossVictory');
+        g.keyBeam = { x: keyX, y: keyY, timer: 6.0 };
+        for (let i = 0; i < 35; i++) {
+          g.particles.push({
+            x: this.x + Math.random() * this.w,
+            y: this.y + Math.random() * this.h,
+            vx: (Math.random() - 0.5) * 320,
+            vy: -140 - Math.random() * 260,
+            life: 0.8 + Math.random() * 0.5,
+            size: 4 + Math.random() * 4,
+            color: ['#38bdf8', '#0284c7', '#e0f2fe', '#ffffff', '#bae6fd'][Math.floor(Math.random() * 5)],
+            g: 600
+          });
+        }
+        for (let i = 0; i < 10; i++) {
+          const coin = new Coin(keyX, keyY - 8, true);
+          const angle = (i / 10) * Math.PI * 2;
+          coin.vx = Math.cos(angle) * (100 + Math.random() * 120);
+          coin.vy = -200 - Math.random() * 150;
+          g.coins.push(coin);
+        }
+        g.addScore(2500, keyX, this.y - 10);
+        g.toast('Frost Titan shattered! 🗝');
+
+        const droppedKey = new Key(keyX, keyY);
+        droppedKey.homeX = keyX; droppedKey.homeY = keyY; droppedKey.state = 'rest';
+        g.key = droppedKey;
+      }
+      return true;
+    }
+    if (g) g.sfx('knifeHit');
+    return false;
+  }
+}
+
+export class CrystalBehemoth extends Enemy {
+  constructor(cx, feetY) {
+    super(cx, feetY, 92, 126);
+    this.isBoss = true;
+    this.type = 'crystal_behemoth';
+    this.name = 'Crystal Behemoth';
+    this.hp = 3;
+    this.maxHp = 3;
+    this.invuln = 0;
+    this.state = 'idle';
+    this.timer = 1.3;
+    this.stompable = true;
+    this.squash = 1;
+    this.shockwaves = [];
+    this.hasSummoned = false;
+    this.deathColor = '#c084fc';
+  }
+
+  update(g, dt) {
+    if (this.dead) return;
+    this.updateBase(g, dt);
+    const w = g.world;
+    const p = g.player;
+    this.invuln = Math.max(0, this.invuln - dt);
+    this.timer -= dt;
+    this.dir = p.cx > this.x + this.w / 2 ? 1 : -1;
+
+    this.vy = Math.min(this.vy + 1600 * dt, 720);
+    moveX(w, this, this.vx * dt);
+    const res = moveY(w, this, this.vy * dt);
+
+    if (res.floor && this.state === 'jump') {
+      this.state = 'idle';
+      this.timer = 1.5;
+      this.squash = 1.5;
+      g.shake = 8;
+      g.sfx('bossStomp');
+
+      this.shockwaves.push({ x: this.x - 10, y: this.y + this.h - 14, vx: -200, life: 1.2 });
+      this.shockwaves.push({ x: this.x + this.w + 10, y: this.y + this.h - 14, vx: 200, life: 1.2 });
+    }
+
+    if (this.state === 'idle') {
+      this.vx = 0;
+      if (this.timer <= 0) {
+        this.state = 'telegraph';
+        this.timer = 0.65;
+        this.squash = 0.65;
+      }
+    } else if (this.state === 'telegraph') {
+      this.telegraph = 0.65;
+      if (this.timer <= 0) {
+        this.state = 'jump';
+        this.vy = -540;
+        this.vx = this.dir * 125;
+        this.squash = 1.3;
+      }
+    }
+
+    // Update shockwaves
+    for (let i = this.shockwaves.length - 1; i >= 0; i--) {
+      const sw = this.shockwaves[i];
+      sw.life -= dt;
+      sw.x += sw.vx * dt;
+      if (sw.life <= 0) { this.shockwaves.splice(i, 1); continue; }
+      if (p.invuln <= 0 && Math.abs(p.cx - sw.x) < 22 && Math.abs(p.cy - sw.y) < 24) {
+        p.hurt(g, sw.x);
+      }
+    }
+  }
+
+  hit(g, dmg = 1, fromDir = 0) {
+    if (this.dead || this.invuln > 0) return false;
+    this.hp -= dmg;
+    this.flash = 0.45;
+    this.invuln = 0.5;
+    this.squash = 0.7;
+    if (g) g.shake = 8;
+
+    if (this.hp > 0 && g) {
+      g.hitStop = 0.35;
+      g.sfx('bossPhase');
+    }
+
+    if (this.hp <= 2 && !this.hasSummoned && g) {
+      this.hasSummoned = true;
+      g.toast('Crystal Behemoth summons the amethyst brood!');
+      g.enemies.push(new HopperFrog(this.x - 70, this.y + this.h));
+      g.enemies.push(new HopperFrog(this.x + this.w + 70, this.y + this.h));
+    }
+
+    if (this.hp <= 0) {
+      this.dead = true;
+      const keyX = this.x + this.w / 2;
+      const keyY = this.y + this.h / 2;
+      if (g) {
+        g.arenaLocked = false;
+        g.slowMo = 0.6;
+        g.sfx('bossDie');
+        g.sfx('bossVictory');
+        g.keyBeam = { x: keyX, y: keyY, timer: 6.0 };
+        for (let i = 0; i < 35; i++) {
+          g.particles.push({
+            x: this.x + Math.random() * this.w,
+            y: this.y + Math.random() * this.h,
+            vx: (Math.random() - 0.5) * 320,
+            vy: -140 - Math.random() * 260,
+            life: 0.8 + Math.random() * 0.5,
+            size: 4 + Math.random() * 4,
+            color: ['#c084fc', '#e879f9', '#a855f7', '#ffffff', '#38bdf8'][Math.floor(Math.random() * 5)],
+            g: 600
+          });
+        }
+        for (let i = 0; i < 10; i++) {
+          const coin = new Coin(keyX, keyY - 8, true);
+          const angle = (i / 10) * Math.PI * 2;
+          coin.vx = Math.cos(angle) * (100 + Math.random() * 120);
+          coin.vy = -200 - Math.random() * 150;
+          g.coins.push(coin);
+        }
+        g.addScore(3000, keyX, this.y - 10);
+        g.toast('Crystal Behemoth shattered! 🗝');
+
+        const droppedKey = new Key(keyX, keyY);
+        droppedKey.homeX = keyX; droppedKey.homeY = keyY; droppedKey.state = 'rest';
+        g.key = droppedKey;
+      }
+      return true;
+    }
+    if (g) g.sfx('knifeHit');
+    return false;
+  }
+}
+
+export class MagmaOverlord extends Enemy {
+  constructor(cx, feetY) {
+    super(cx, feetY, 94, 134);
+    this.isBoss = true;
+    this.type = 'magma_overlord';
+    this.name = 'Magma Overlord';
+    this.hp = 3;
+    this.maxHp = 3;
+    this.invuln = 0;
+    this.state = 'idle';
+    this.timer = 1.3;
+    this.stompable = true;
+    this.squash = 1;
+    this.shockwaves = [];
+    this.hasSummoned = false;
+    this.deathColor = '#ef4444';
+  }
+
+  update(g, dt) {
+    if (this.dead) return;
+    this.updateBase(g, dt);
+    const w = g.world;
+    const p = g.player;
+    this.invuln = Math.max(0, this.invuln - dt);
+    this.timer -= dt;
+    this.dir = p.cx > this.x + this.w / 2 ? 1 : -1;
+
+    this.vy = Math.min(this.vy + 1600 * dt, 720);
+    moveX(w, this, this.vx * dt);
+    const res = moveY(w, this, this.vy * dt);
+
+    if (res.floor && this.state === 'jump') {
+      this.state = 'idle';
+      this.timer = 1.5;
+      this.squash = 1.6;
+      g.shake = 10;
+      g.sfx('bossStomp');
+
+      this.shockwaves.push({ x: this.x - 10, y: this.y + this.h - 14, vx: -220, life: 1.3 });
+      this.shockwaves.push({ x: this.x + this.w + 10, y: this.y + this.h - 14, vx: 220, life: 1.3 });
+    }
+
+    if (this.state === 'idle') {
+      this.vx = 0;
+      if (this.timer <= 0) {
+        this.state = 'telegraph';
+        this.timer = 0.65;
+        this.squash = 0.65;
+      }
+    } else if (this.state === 'telegraph') {
+      this.telegraph = 0.65;
+      if (this.timer <= 0) {
+        this.state = 'jump';
+        this.vy = -580;
+        this.vx = this.dir * 140;
+        this.squash = 1.3;
+      }
+    }
+
+    // Update shockwaves
+    for (let i = this.shockwaves.length - 1; i >= 0; i--) {
+      const sw = this.shockwaves[i];
+      sw.life -= dt;
+      sw.x += sw.vx * dt;
+      if (sw.life <= 0) { this.shockwaves.splice(i, 1); continue; }
+      if (p.invuln <= 0 && Math.abs(p.cx - sw.x) < 24 && Math.abs(p.cy - sw.y) < 24) {
+        p.hurt(g, sw.x);
+      }
+    }
+  }
+
+  hit(g, dmg = 1, fromDir = 0) {
+    if (this.dead || this.invuln > 0) return false;
+    this.hp -= dmg;
+    this.flash = 0.45;
+    this.invuln = 0.5;
+    this.squash = 0.7;
+    if (g) g.shake = 10;
+
+    if (this.hp > 0 && g) {
+      g.hitStop = 0.35;
+      g.sfx('bossPhase');
+    }
+
+    if (this.hp <= 2 && !this.hasSummoned && g) {
+      this.hasSummoned = true;
+      g.toast('Magma Overlord erupts! Fire drakes awaken!');
+      g.enemies.push(new DesertHawk(this.x - 80, this.y - 120));
+      g.enemies.push(new DesertHawk(this.x + this.w + 80, this.y - 120));
+    }
+
+    if (this.hp <= 0) {
+      this.dead = true;
+      const keyX = this.x + this.w / 2;
+      const keyY = this.y + this.h / 2;
+      if (g) {
+        g.arenaLocked = false;
+        g.slowMo = 0.6;
+        g.sfx('bossDie');
+        g.sfx('bossVictory');
+        g.keyBeam = { x: keyX, y: keyY, timer: 6.0 };
+        for (let i = 0; i < 40; i++) {
+          g.particles.push({
+            x: this.x + Math.random() * this.w,
+            y: this.y + Math.random() * this.h,
+            vx: (Math.random() - 0.5) * 360,
+            vy: -150 - Math.random() * 280,
+            life: 0.9 + Math.random() * 0.5,
+            size: 4 + Math.random() * 5,
+            color: ['#ef4444', '#f97316', '#fbbf24', '#ffffff', '#7f1d1d'][Math.floor(Math.random() * 5)],
+            g: 600
+          });
+        }
+        for (let i = 0; i < 12; i++) {
+          const coin = new Coin(keyX, keyY - 8, true);
+          const angle = (i / 12) * Math.PI * 2;
+          coin.vx = Math.cos(angle) * (100 + Math.random() * 120);
+          coin.vy = -200 - Math.random() * 150;
+          g.coins.push(coin);
+        }
+        g.addScore(5000, keyX, this.y - 10);
+        g.toast('Magma Overlord banished! Sky Fortress conquered! 👑');
+
+        const droppedKey = new Key(keyX, keyY);
+        droppedKey.homeX = keyX; droppedKey.homeY = keyY; droppedKey.state = 'rest';
+        g.key = droppedKey;
+      }
+      return true;
+    }
+    if (g) g.sfx('knifeHit');
+    return false;
+  }
+}
+
+export class FrostWalker extends Enemy {
+  constructor(cx, feetY) {
+    super(cx, feetY, 26, 28);
+    this.type = 'frost_walker';
+    this.hp = 1;
+    this.vx = 55;
+    this.stompable = true;
+    this.deathColor = '#38bdf8';
+  }
+
+  update(g, dt) {
+    if (this.dead) return;
+    this.updateBase(g, dt);
+    const w = g.world;
+    this.vy = Math.min(this.vy + 1200 * dt, 500);
+    const rx = moveX(w, this, this.vx * dt);
+    if (rx.wall) this.vx = -this.vx;
+    const ry = moveY(w, this, this.vy * dt);
+    if (ry.floor) {
+      const probeAheadX = this.vx > 0 ? this.x + this.w + 4 : this.x - 4;
+      if (!probeGround(w, probeAheadX, this.y + this.h + 2)) {
+        this.vx = -this.vx;
+      }
+    }
+    this.dir = this.vx >= 0 ? 1 : -1;
+  }
+}
+
+export class CrystalCrawler extends Enemy {
+  constructor(cx, feetY) {
+    super(cx, feetY, 28, 26);
+    this.type = 'crystal_crawler';
+    this.hp = 1;
+    this.vx = 65;
+    this.stompable = true;
+    this.deathColor = '#c084fc';
+  }
+
+  update(g, dt) {
+    if (this.dead) return;
+    this.updateBase(g, dt);
+    const w = g.world;
+    this.vy = Math.min(this.vy + 1200 * dt, 500);
+    const rx = moveX(w, this, this.vx * dt);
+    if (rx.wall) this.vx = -this.vx;
+    const ry = moveY(w, this, this.vy * dt);
+    if (ry.floor) {
+      const probeAheadX = this.vx > 0 ? this.x + this.w + 4 : this.x - 4;
+      if (!probeGround(w, probeAheadX, this.y + this.h + 2)) {
+        this.vx = -this.vx;
+      }
+    }
+    this.dir = this.vx >= 0 ? 1 : -1;
   }
 }
