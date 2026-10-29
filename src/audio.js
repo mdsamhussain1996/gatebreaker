@@ -226,6 +226,31 @@ export function playSound(type) {
       tone('triangle', 220, 580, 0.35, 0.40, 0.08);
     } else if (type === 'bossVictory') {
       [523.25, 659.25, 783.99, 1046.5, 1318.5, 1567.98].forEach((f, i) => tone('triangle', f, f, 0.25, 0.32, i * 0.1));
+    } else if (type === 'fireWarn') {
+      tone('sawtooth', 320, 180, 0.08, 0.18);
+      tone('square', 440, 220, 0.06, 0.15, 0.04);
+    } else if (type === 'fireWhoosh') {
+      tone('sawtooth', 140, 280, 0.22, 0.30);
+      tone('triangle', 90, 180, 0.25, 0.25, 0.03);
+    } else if (type === 'lavaBubble') {
+      tone('sine', 180, 440, 0.12, 0.24);
+      tone('sine', 440, 220, 0.08, 0.18, 0.08);
+    } else if (type === 'drip') {
+      tone('sine', 1200, 1900, 0.08, 0.22);
+    } else if (type === 'icicleCrack') {
+      tone('triangle', 1600, 700, 0.12, 0.28);
+      tone('sawtooth', 800, 300, 0.10, 0.20, 0.05);
+    } else if (type === 'laserCharge') {
+      tone('sine', 340, 1150, 0.32, 0.25);
+    } else if (type === 'laserFire') {
+      tone('sawtooth', 950, 140, 0.14, 0.35);
+      tone('square', 650, 90, 0.12, 0.25, 0.02);
+    } else if (type === 'geyser') {
+      tone('triangle', 150, 320, 0.25, 0.35);
+      tone('sawtooth', 220, 110, 0.20, 0.25, 0.05);
+    } else if (type === 'plankIgnite') {
+      tone('square', 240, 120, 0.10, 0.20);
+      tone('sawtooth', 360, 180, 0.08, 0.18, 0.04);
     }
   } catch (err) {
     // Audio synthesis failure should never crash the game

@@ -32,12 +32,20 @@ export class World {
     return t === '=' || t === '~' || (t === 'H' && this.get(c, r - 1) !== 'H');
   }
   isClimb(c, r) { const t = this.get(c, r); return t === 'H' || t === '|'; }
+  isLava(c, r) { return this.get(c, r) === 'Z'; }
 }
 
 export function overlapsSolid(world, x, y, w, h) {
   const c0 = Math.floor(x / TS), c1 = Math.floor((x + w - 0.001) / TS);
   const r0 = Math.floor(y / TS), r1 = Math.floor((y + h - 0.001) / TS);
   for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) if (world.isSolid(c, r)) return true;
+  return false;
+}
+
+export function overlapsLava(world, x, y, w, h) {
+  const c0 = Math.floor(x / TS), c1 = Math.floor((x + w - 0.001) / TS);
+  const r0 = Math.floor(y / TS), r1 = Math.floor((y + h - 0.001) / TS);
+  for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) if (world.isLava(c, r)) return true;
   return false;
 }
 

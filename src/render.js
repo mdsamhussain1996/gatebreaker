@@ -7,6 +7,7 @@ import { TS, VIEW_W, VIEW_H } from './constants.js';
 import { bridgeSag } from './game.js';
 import { getTheme } from './themes.js';
 import { POWERUP_DEFS, BlasterBolt, FlameWave } from './items.js';
+import { hazardParticles } from './hazards.js';
 
 const hash = (c, r) => (((c * 73856093) ^ (r * 19349663)) >>> 0);
 
@@ -1162,6 +1163,12 @@ export class Renderer {
     this.drawShockwave(ctx, g);
     this.drawHints(ctx, g);
 
+    // Environmental Hazards & Lava
+    this.drawLavaPools(ctx, g, camX, camY);
+    this.drawHazards(ctx, g, camX, camY);
+    hazardParticles.draw(ctx);
+    if (g.risingLava) g.risingLava.draw(ctx, camX, camY, g.world.w, g.world.h);
+
     // Closed arena barrier
     if (g.arenaLocked && g.arenaLeft !== null) this.drawArenaBarrier(ctx, g);
     // Dropped key golden beam of light
@@ -1176,10 +1183,11 @@ export class Renderer {
     this.drawAtmosphere(ctx, theme, camX, camY);
     this.drawForeground(ctx, camX, camY, theme);
 
-    // 8. Screen space overlays: Gate edge arrow & Boss health bar
+    // 8. Screen space overlays: Gate edge arrow & Boss health bar & Lava rising
     this.drawGateArrow(ctx, g, camX, camY);
     if (g.boss && g.bossArenaEntered) this.drawBossHealthBar(ctx, g.boss);
     if (g.bossIntro) this.drawBossIntro(ctx, g.bossIntro);
+    if (g.risingLava) this.drawRisingLavaWarning(ctx, g);
   }
 
   // ------------------------------------------------------------ background
@@ -1405,6 +1413,86 @@ export class Renderer {
         ctx.fillRect(sx + 3, y + 3, 2, sp.h - 3);
         ctx.fillStyle = '#94a3b8';
       }
+    }
+  }
+
+  drawLavaPools(ctx, g, camX, camY) {
+    if (!g.level || !g.level.lavaPools || !g.level.lavaPools.length) return;
+    const minX = camX - 32, maxX = camX + VIEW_W + 32;
+    const minY = camY - 32, maxY = camY + VIEW_H + 32;
+
+    ctx.save();
+    for (const lp of g.level.lavaPools) {
+      if (lp.x < minX || lp.x > maxX || lp.y < minY || lp.y > maxY) continue;
+
+      // 1. Lava body
+      const grad = ctx.createLinearGradient(lp.x, lp.y, lp.x, lp.y + TS);
+      grad.addColorStop(0, '#f97316');
+      grad.addColorStop(0.4, '#dc2626');
+      grad.addColorStop(1, '#991b1b');
+      ctx.fillStyle = grad;
+      ctx.fillRect(lp.x, lp.y, TS, TS);
+
+      // 2. Animated glowing surface wave
+      const wave = Math.sin(this.t * 5 + lp.c * 0.9) * 2.5;
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(lp.x, lp.y + 1 + wave, TS, 3);
+      ctx.fillStyle = '#f97316';
+      ctx.fillRect(lp.x, lp.y + 4 + wave, TS, 2);
+
+      // 3. Heat shimmer distortion strip above lava
+      const shimmer = Math.sin(this.t * 6 + lp.c * 1.2) * 2;
+      ctx.fillStyle = 'rgba(254, 240, 138, 0.08)';
+      ctx.fillRect(lp.x + shimmer, lp.y - 12, TS, 12);
+    }
+    ctx.restore();
+  }
+
+  drawHazards(ctx, g, camX, camY) {
+    const minX = camX - 64, maxX = camX + VIEW_W + 64;
+    const minY = camY - 64, maxY = camY + VIEW_H + 64;
+    const inView = h => h.cx >= minX && h.cx <= maxX && h.cy >= minY && h.cy <= maxY;
+
+    for (const fj of (g.fireJets || [])) if (inView(fj)) fj.draw(ctx, camX, camY);
+    for (const ft of (g.flamethrowers || [])) if (inView(ft)) ft.draw(ctx, camX, camY);
+    for (const fb of (g.firebars || [])) if (inView(fb)) fb.draw(ctx, camX, camY);
+    for (const lb of (g.lavaBubbles || [])) if (inView(lb)) lb.draw(ctx, camX, camY);
+    for (const fd of (g.fireDrips || [])) if (inView(fd)) fd.draw(ctx, camX, camY);
+    for (const fi of (g.icicles || [])) if (inView(fi)) fi.draw(ctx, camX, camY);
+    for (const cl of (g.crystalLasers || [])) if (inView(cl)) cl.draw(ctx, camX, camY);
+    for (const br of (g.brambles || [])) if (inView(br)) br.draw(ctx, camX, camY);
+    for (const gy of (g.geysers || [])) if (inView(gy)) gy.draw(ctx, camX, camY);
+    for (const bp of (g.burningPlanks || [])) if (inView(bp)) bp.draw(ctx, camX, camY);
+  }
+
+  drawRisingLavaWarning(ctx, g) {
+    const p = g.player;
+    if (!g.risingLava || !p) return;
+    const dist = g.risingLava.currentY - (p.y + p.h);
+    if (dist <= 128) {
+      const pulse = Math.sin(this.t * 8) * 0.2 + 0.5;
+
+      ctx.save();
+      // Red edge vignette
+      const vg = ctx.createRadialGradient(VIEW_W / 2, VIEW_H / 2, VIEW_W * 0.35, VIEW_W / 2, VIEW_H / 2, VIEW_W * 0.65);
+      vg.addColorStop(0, 'rgba(220, 38, 38, 0)');
+      vg.addColorStop(1, `rgba(220, 38, 38, ${pulse * 0.6})`);
+      ctx.fillStyle = vg;
+      ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+
+      // Warning banner
+      ctx.fillStyle = `rgba(185, 28, 28, ${pulse * 0.85})`;
+      ctx.fillRect(VIEW_W / 2 - 120, 18, 240, 32);
+      ctx.strokeStyle = '#fef08a';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(VIEW_W / 2 - 120, 18, 240, 32);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 15px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🔥 LAVA RISING! 🔥', VIEW_W / 2, 34);
+      ctx.restore();
     }
   }
 
@@ -2861,6 +2949,21 @@ export class Renderer {
       ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
       ctx.beginPath();
       ctx.arc(-8, -26, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Hero caught fire effect (orange flicker + smoke for 0.5s)
+    if (p.onFire > 0) {
+      ctx.save();
+      const flicker = Math.sin(this.t * 30) * 0.2 + 0.8;
+      ctx.fillStyle = `rgba(249, 115, 22, ${0.45 * flicker})`;
+      ctx.beginPath();
+      ctx.arc(0, -18, 22 * flicker, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = `rgba(253, 224, 71, ${0.35 * flicker})`;
+      ctx.beginPath();
+      ctx.arc(0, -18, 14 * flicker, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     }

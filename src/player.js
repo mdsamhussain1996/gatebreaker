@@ -2,7 +2,7 @@
  * Gatebreaker — hero "Rook". DOM-free; all side effects go through the `g` (Game) object.
  */
 import { TS, HERO, PHYS, COMBAT, ABILITIES } from './constants.js';
-import { moveX, moveY, probeGround } from './physics.js';
+import { moveX, moveY, probeGround, overlapsLava } from './physics.js';
 
 const approach = (v, target, delta) =>
   v < target ? Math.min(v + delta, target) : Math.max(v - delta, target);
@@ -12,8 +12,10 @@ export class Player {
     this.w = HERO.w;
     this.h = HERO.h;
     this.hearts = 3;
+    this.maxHearts = 3;
     this.lives = 3;
     this.hasKey = false;
+    this.onFire = 0;
     this.place(0, 0);
   }
 
@@ -68,6 +70,7 @@ export class Player {
     this.grabCd = Math.max(0, this.grabCd - dt);
     this.dashCd = Math.max(0, this.dashCd - dt);
     this.blasterCd = Math.max(0, this.blasterCd - dt);
+    this.onFire = Math.max(0, this.onFire - dt);
     this.prevBottom = this.y + this.h;
 
     // Powerup durations and behaviors
@@ -102,7 +105,9 @@ export class Player {
     this.updateKnife(g, input);
     this.updateVisuals(dt);
 
-    if (this.y > w.h + 80) g.playerFell();
+    if (this.y > w.h + 80 || overlapsLava(w, this.x + 4, this.y + 4, this.w - 8, this.h - 8)) {
+      g.playerFell();
+    }
   }
 
   updateMove(g, input, dt) {

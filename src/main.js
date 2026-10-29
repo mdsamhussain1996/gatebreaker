@@ -7,7 +7,7 @@ import { Game } from './game.js';
 import { Renderer } from './render.js';
 import { InputManager } from './input.js';
 import { playSound, initAudio } from './audio.js';
-import { recordResult, loadSave, getUnlockedAbilities } from './save.js';
+import { recordResult, loadSave, getUnlockedAbilities, getDifficulty, setDifficulty } from './save.js';
 import * as ui from './ui.js';
 
 const canvas = document.getElementById('gameCanvas');
@@ -125,6 +125,29 @@ if (chkShake) {
   });
 }
 
+// Difficulty settings sync
+const curDiff = getDifficulty();
+const selDiffTitle = document.getElementById('selDifficultyTitle');
+const selDiffPause = document.getElementById('selDifficultyPause');
+if (selDiffTitle) {
+  selDiffTitle.value = curDiff;
+  selDiffTitle.addEventListener('change', () => {
+    const d = selDiffTitle.value;
+    setDifficulty(d);
+    game.difficultySetting = d;
+    if (selDiffPause) selDiffPause.value = d;
+  });
+}
+if (selDiffPause) {
+  selDiffPause.value = curDiff;
+  selDiffPause.addEventListener('change', () => {
+    const d = selDiffPause.value;
+    setDifficulty(d);
+    game.difficultySetting = d;
+    if (selDiffTitle) selDiffTitle.value = d;
+  });
+}
+
 // Button bindings
 const click = (id, fn) => {
   const el = document.getElementById(id);
@@ -198,4 +221,6 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+
+window.__gb = { game, renderer, loadLevel, startPlay, LEVELS };
 

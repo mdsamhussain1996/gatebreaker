@@ -187,6 +187,8 @@ export class Key {
 /** Exit gate: rocky cave with a portcullis and a red flag. Box is 2x3 tiles. */
 export class Gate {
   constructor(col, bottomRow) {
+    this.c = col;
+    this.r = bottomRow;
     this.w = TS * 2; this.h = TS * 3;
     this.x = col * TS;
     this.y = (bottomRow + 1) * TS - this.h;
@@ -442,6 +444,11 @@ export class FlameWave {
         this.hitEntities.add(b);
         b.hit(g, 1, this.dir);
         if (g.poof) g.poof(b.cx, b.cy, '#f97316');
+      }
+    }
+    for (const br of (g.brambles || [])) {
+      if (!br.destroyed && br.getHitbox && this.x < br.getHitbox().x + br.getHitbox().w && this.x + this.w > br.getHitbox().x && this.y < br.getHitbox().y + br.getHitbox().h && this.y + this.h > br.getHitbox().y) {
+        br.destroyWithFire(g);
       }
     }
   }

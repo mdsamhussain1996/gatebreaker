@@ -7,12 +7,23 @@ const defaults = () => ({
   unlocked: ['1-1'],
   abilities: [],
   best: {}, // { '1-1': { time: 42.5, coins: 85, stars: 3 } }
-  settings: { sfx: 0.8, music: 0.5, shake: true }
+  settings: { sfx: 0.8, music: 0.5, shake: true, difficulty: 'normal' }
 });
+
+let memStore = null;
+function getStorage() {
+  if (typeof localStorage !== 'undefined') return localStorage;
+  if (!memStore) memStore = {};
+  return {
+    getItem(k) { return memStore[k] || null; },
+    setItem(k, v) { memStore[k] = String(v); },
+    removeItem(k) { delete memStore[k]; }
+  };
+}
 
 export function loadSave() {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = getStorage().getItem(KEY);
     if (!raw) return defaults();
     const parsed = JSON.parse(raw);
     const def = defaults();
@@ -27,9 +38,20 @@ export function loadSave() {
   }
 }
 
+export function getDifficulty() {
+  const save = loadSave();
+  return save.settings.difficulty || 'normal';
+}
+
+export function setDifficulty(difficulty) {
+  const save = loadSave();
+  save.settings.difficulty = difficulty;
+  writeSave(save);
+}
+
 export function writeSave(data) {
   try {
-    localStorage.setItem(KEY, JSON.stringify(data));
+    getStorage().setItem(KEY, JSON.stringify(data));
   } catch (_) {
     /* storage unavailable in private mode or quota exceeded */
   }

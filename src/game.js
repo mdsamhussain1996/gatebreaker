@@ -20,18 +20,30 @@ import {
 } from './items.js';
 import { parseLevel } from './level.js';
 import { getTheme } from './themes.js';
-import { hasAbility } from './save.js';
+import { hasAbility, getDifficulty } from './save.js';
+import {
+  FireJet, WallFlamethrower, RotatingFirebar, LavaBubble, FireDrip,
+  BurningPlank, RisingLava, FallingIcicle, CrystalLaser, ThornBramble, SandGeyser,
+  hazardParticles
+} from './hazards.js';
 
 export class Game {
   /**
    * @param {object} opts  sfx(name), toast(text), onComplete(stats), onGameOver(), onHud()
    */
   constructor(opts = {}) {
-    this.sfx = opts.sfx || (() => {});
+    const baseSfx = opts.sfx || (() => {});
+    this.sfx = (name, x, y) => {
+      if (x !== undefined && y !== undefined && this.player) {
+        if (Math.hypot(this.player.cx - x, this.player.cy - y) > 600) return;
+      }
+      baseSfx(name);
+    };
     this.toast = opts.toast || (() => {});
     this.onComplete = opts.onComplete || (() => {});
     this.onGameOver = opts.onGameOver || (() => {});
     this.abilities = opts.abilities || null;
+    this.difficultySetting = opts.difficulty || opts.difficultySetting || getDifficulty();
     this.player = new Player();
     this.infiniteLives = false;
     this.state = 'idle';
@@ -42,6 +54,19 @@ export class Game {
     this.powerOrbs = [];
     this.iceBlocks = [];
     this.shakeEnabled = true;
+
+    // Environmental Hazards
+    this.fireJets = [];
+    this.flamethrowers = [];
+    this.firebars = [];
+    this.lavaBubbles = [];
+    this.fireDrips = [];
+    this.burningPlanks = [];
+    this.icicles = [];
+    this.crystalLasers = [];
+    this.brambles = [];
+    this.geysers = [];
+    this.risingLava = null;
   }
 
   load(levelDef) {
@@ -100,6 +125,28 @@ export class Game {
       })
     ];
 
+    // Environmental Hazards
+    hazardParticles.clear();
+    this.fireJets = (lv.fireJets || []).map(f => new FireJet(f.c, f.r, f));
+    this.flamethrowers = (lv.flamethrowers || []).map(f => new WallFlamethrower(f.c, f.r, f.dir, f));
+    this.firebars = (lv.firebars || []).map(o => new RotatingFirebar(o.c, o.r, { frost: lv.world === 4 || lv.theme === 'frost_mountain' }));
+    this.lavaBubbles = (lv.lavaBubbles || []).map(p => new LavaBubble(p.c, p.r, p));
+    this.fireDrips = (lv.fireDrips || []).map(d => new FireDrip(d.c, d.r, d));
+    this.burningPlanks = (lv.burningPlanks || []).map(b => new BurningPlank(b.c, b.r));
+    this.icicles = (lv.icicles || []).map(a => new FallingIcicle(a.c, a.r));
+    this.crystalLasers = (lv.crystalLasers || []).map(d => new CrystalLaser(d.c, d.r, d));
+    this.brambles = (lv.brambles || []).map(r => new ThornBramble(r.c, r.r));
+    this.geysers = (lv.geysers || []).map(e => new SandGeyser(e.c, e.r, e));
+    this.risingLava = lv.risingLava ? new RisingLava(lv.risingLava) : null;
+
+    // Difficulty settings adjustments
+    if (this.difficultySetting === 'hard') {
+      this.hearts = []; // no heart pickups in Hard
+      if (this.checkpoints.length > 1) {
+        this.checkpoints = [this.checkpoints[Math.floor(this.checkpoints.length / 2)]];
+      }
+    }
+
     this.key = lv.key ? new Key(lv.key.x, lv.key.y) : null;
     this.gate = lv.gate ? new Gate(lv.gate.c, lv.gate.r) : null;
     this.checkpoint = { x: lv.start.x, feetY: lv.start.feetY };
@@ -109,7 +156,8 @@ export class Game {
     this.coinCount = 0;
     this.score = 0;
     this.time = 0;
-    this.player.hearts = 3;
+    this.player.hearts = this.difficultySetting === 'easy' ? 4 : 3;
+    this.player.maxHearts = this.difficultySetting === 'easy' ? 4 : 3;
     if (!this.infiniteLives && this.player.lives <= 0) this.player.lives = 3;
     this.player.hasKey = false;
     this.player.place(lv.start.x, lv.start.feetY);
@@ -301,7 +349,10 @@ export class Game {
     }
     for (const cp of this.checkpoints) {
       cp.update(this, dt);
-      if (!cp.active && aabb(p, cp)) cp.activate(this);
+      if (!cp.active && aabb(p, cp)) {
+        cp.activate(this);
+        if (this.risingLava) this.risingLava.pause(3.0);
+      }
     }
     for (const sp of this.spikes) {
       if (aabb(p, sp)) {
@@ -328,6 +379,57 @@ export class Game {
         p.vy = 0;
         p.y = cp.y - p.h;
         cp.stepOn(this);
+      }
+    }
+
+    // Environmental Hazards
+    hazardParticles.update(dt);
+    if (this.risingLava) this.risingLava.update(this, dt);
+
+    const minX = this.cam.x - VIEW_W * 1.5;
+    const maxX = this.cam.x + VIEW_W * 2.5;
+    const minY = this.cam.y - VIEW_H * 1.5;
+    const maxY = this.cam.y + VIEW_H * 2.5;
+    const inRange = h => h.cx >= minX && h.cx <= maxX && h.cy >= minY && h.cy <= maxY;
+
+    // Check boss phase triggers for arena hazards
+    const activeBoss = this.activeBoss;
+    if (activeBoss && activeBoss.hp <= Math.ceil(activeBoss.maxHp * (2 / 3))) {
+      for (const fj of this.fireJets) if (fj.bossInactive) fj.bossInactive = false;
+      for (const ft of this.flamethrowers) if (ft.bossInactive) ft.bossInactive = false;
+      for (const cl of this.crystalLasers) if (cl.bossInactive) cl.bossInactive = false;
+    }
+    if (activeBoss && activeBoss.hp <= Math.ceil(activeBoss.maxHp / 3)) {
+      for (const fd of this.fireDrips) if (fd.bossInactive) fd.bossInactive = false;
+    }
+    if (activeBoss && activeBoss.type === 'frost_titan' && activeBoss.justStomped) {
+      for (const fi of this.icicles) {
+        if (fi.state === 'idle') {
+          fi.state = 'shaking';
+          fi.timer = 0;
+          fi.soundPlayed = false;
+        }
+      }
+    }
+
+    for (const fj of this.fireJets) if (inRange(fj)) fj.update(this, dt);
+    for (const ft of this.flamethrowers) if (inRange(ft)) ft.update(this, dt);
+    for (const fb of this.firebars) if (inRange(fb)) fb.update(this, dt);
+    for (const lb of this.lavaBubbles) if (inRange(lb)) lb.update(this, dt);
+    for (const fd of this.fireDrips) if (inRange(fd)) fd.update(this, dt);
+    for (const fi of this.icicles) if (inRange(fi)) fi.update(this, dt);
+    for (const cl of this.crystalLasers) if (inRange(cl)) cl.update(this, dt);
+    for (const br of this.brambles) if (inRange(br)) br.update(this, dt);
+    for (const gy of this.geysers) if (inRange(gy)) gy.update(this, dt);
+
+    // Burning Planks
+    for (const bp of this.burningPlanks) {
+      if (inRange(bp)) bp.update(this, dt);
+      if (bp.active && aabb(p, bp) && p.vy >= 0 && (p.y + p.h) <= bp.y + 10) {
+        p.grounded = true;
+        p.vy = 0;
+        p.y = bp.y - p.h;
+        bp.stepOn(this);
       }
     }
 
@@ -481,6 +583,14 @@ export class Game {
       if (!ch.opened && aabb(box, ch)) {
         ch.open(this);
         if (p.slashDown) p.bounce(COMBAT.pogoV);
+      }
+    }
+    // Thorn brambles (destroyed with fire knife)
+    if (p.powerup?.type === 'fire_knife') {
+      for (const br of this.brambles) {
+        if (!br.destroyed && aabb(box, br.getHitbox())) {
+          br.destroyWithFire(this);
+        }
       }
     }
     // Crates
@@ -708,7 +818,7 @@ export class Game {
       this.onGameOver();
       return;
     }
-    p.hearts = 3;
+    p.hearts = this.difficultySetting === 'easy' ? 4 : 3;
     this.toast('Lost a life — try again!');
     this.respawn();
   }

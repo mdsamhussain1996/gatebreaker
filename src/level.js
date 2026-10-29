@@ -9,7 +9,8 @@ const ENTITY_CHARS = new Set([
   'P', 'K', 'G', 'c', 'g', 's', 'h', 'C', '*', '^',
   'm', 'S', 'B', 'T', 'M', 'L', 'b', 'q', 'v', 'O', 'y', 'w', 'Y',
   'z', 'N', 'F', 'W', 'l', 'a', 'k', 'I', 'Q',
-  'J', 'U', 'V', 'j', 'u'
+  'J', 'U', 'V', 'j', 'u',
+  'f', '<', '>', 'o', 'p', 'd', 'Z', '!', 'A', 'D', 'R', 'E'
 ]);
 
 export function parseLevel(def) {
@@ -22,6 +23,8 @@ export function parseLevel(def) {
     theme: def.theme || 'green_hills',
     name: def.name,
     targetTime: def.targetTime,
+    risingLava: def.risingLava || null,
+    difficulty: def.difficulty || def.world || 1,
     hints: (def.hints || []).map(h => ({ x: (h.c + 0.5) * TS, y: (h.r + 0.5) * TS, text: h.text })),
     start: null,
     key: null,
@@ -53,6 +56,17 @@ export function parseLevel(def) {
     desertHawks: [],
     spinningSaws: [],
     bosses: [],
+    fireJets: [],
+    flamethrowers: [],
+    firebars: [],
+    lavaBubbles: [],
+    fireDrips: [],
+    lavaPools: [],
+    burningPlanks: [],
+    icicles: [],
+    crystalLasers: [],
+    brambles: [],
+    geysers: [],
     errors: []
   };
 
@@ -63,6 +77,9 @@ export function parseLevel(def) {
     let line = '';
     for (let c = 0; c < cols; c++) {
       const ch = row[c] || '.';
+      if (!ENTITY_CHARS.has(ch) && !'.#=~H|XZ'.includes(ch)) {
+        throw new Error(`unknown character '${ch}' at col ${c}, row ${r}`);
+      }
       if (ENTITY_CHARS.has(ch)) {
         const cx = (c + 0.5) * TS;
         const cy = (r + 0.5) * TS;
@@ -105,6 +122,23 @@ export function parseLevel(def) {
         else if (ch === 'V') out.bosses.push({ type: 'magma_overlord', x: cx, feetY, c, r });
         else if (ch === 'j') out.walkers.push({ x: cx, feetY, c, r, subtype: 'frost_walker' });
         else if (ch === 'u') out.walkers.push({ x: cx, feetY, c, r, subtype: 'crystal_crawler' });
+        const isBossLvl = !!(def.id && def.id.endsWith('-3'));
+        if (ch === 'f') out.fireJets.push({ c, r, x: cx, y: cy, bossArena: isBossLvl });
+        else if (ch === '<') out.flamethrowers.push({ c, r, dir: -1, x: cx, y: cy, bossArena: isBossLvl });
+        else if (ch === '>') out.flamethrowers.push({ c, r, dir: 1, x: cx, y: cy, bossArena: isBossLvl });
+        else if (ch === 'o') out.firebars.push({ c, r, x: cx, y: cy });
+        else if (ch === 'p') out.lavaBubbles.push({ c, r, x: cx, y: cy });
+        else if (ch === 'd') out.fireDrips.push({ c, r, x: cx, y: cy, bossArena: isBossLvl });
+        else if (ch === 'Z') {
+          out.lavaPools.push({ c, r, x: c * TS, y: r * TS });
+          line += 'Z';
+          continue;
+        }
+        else if (ch === '!') out.burningPlanks.push({ c, r, x: cx, y: cy });
+        else if (ch === 'A') out.icicles.push({ c, r, x: cx, y: cy });
+        else if (ch === 'D') out.crystalLasers.push({ c, r, x: cx, y: cy, bossArena: isBossLvl });
+        else if (ch === 'R') out.brambles.push({ c, r, x: cx, y: cy });
+        else if (ch === 'E') out.geysers.push({ c, r, x: cx, y: cy });
 
         line += '.';
       } else {

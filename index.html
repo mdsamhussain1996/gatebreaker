@@ -76,6 +76,14 @@
             <li><b>Knife</b> X / J <i>(↓ + X in air = pogo bounce)</i></li>
             <li><b>Goal</b> grab the golden key, unlock the exit gate</li>
           </ul>
+          <div class="difficulty-select" style="margin: 12px 0 6px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <label for="selDifficultyTitle" style="font-weight: 600; font-size: 0.9em;">Difficulty:</label>
+            <select id="selDifficultyTitle" style="padding: 4px 8px; border-radius: 6px; background: #1e293b; color: #f8fafc; border: 1px solid #475569; font-size: 0.9em; cursor: pointer;">
+              <option value="easy">Easy (25% slower, 4 hearts)</option>
+              <option value="normal" selected>Normal (default)</option>
+              <option value="hard">Hard (20% faster, mid-checkpoints only)</option>
+            </select>
+          </div>
           <div class="title-btns">
             <button id="btnStart" class="btn primary">▶ Play Game</button>
             <button id="btnMap" class="btn">🗺 Select Level / World Map</button>
@@ -111,9 +119,17 @@
           <div class="pause-powers" id="pausePowersList">
             <!-- Populated dynamically with unlocked powers -->
           </div>
-          <div class="pause-settings" style="margin: 12px 0; font-size: 0.95em;">
+          <div class="pause-settings" style="margin: 12px 0; font-size: 0.95em; display: flex; flex-direction: column; gap: 8px; align-items: center;">
             <label style="cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
               <input type="checkbox" id="chkShake" checked> Screen Shake
+            </label>
+            <label style="cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              <span>Difficulty:</span>
+              <select id="selDifficultyPause" style="padding: 4px 8px; border-radius: 6px; background: #1e293b; color: #f8fafc; border: 1px solid #475569; font-size: 0.9em; cursor: pointer;">
+                <option value="easy">Easy (25% slower, 4 hearts)</option>
+                <option value="normal" selected>Normal (default)</option>
+                <option value="hard">Hard (20% faster, mid-checkpoints only)</option>
+              </select>
             </label>
           </div>
           <div class="title-btns">
