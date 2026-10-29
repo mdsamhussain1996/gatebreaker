@@ -1264,6 +1264,7 @@ export class FrostTitan extends Enemy {
 
   update(g, dt) {
     if (this.dead) return;
+    this.justStomped = false;
     this.updateBase(g, dt);
     const w = g.world;
     const p = g.player;
@@ -1281,6 +1282,7 @@ export class FrostTitan extends Enemy {
       this.squash = 1.5;
       g.shake = 8;
       g.sfx('bossStomp');
+      this.justStomped = true;
 
       this.shockwaves.push({ x: this.x - 10, y: this.y + this.h - 14, vx: -210, life: 1.2 });
       this.shockwaves.push({ x: this.x + this.w + 10, y: this.y + this.h - 14, vx: 210, life: 1.2 });
