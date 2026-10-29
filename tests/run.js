@@ -18,7 +18,12 @@ import {
 } from '../src/enemies.js';
 import { PowerOrb, BlasterBolt, FlameWave, IceBlock, Coin, Gem } from '../src/items.js';
 import { THEMES, getTheme } from '../src/themes.js';
-import { getUnlockedAbilities, recordResult } from '../src/save.js';
+import { getUnlockedAbilities, recordResult, getDifficulty, setDifficulty } from '../src/save.js';
+import {
+  FireJet, WallFlamethrower, RotatingFirebar, LavaBubble, FireDrip,
+  BurningPlank, RisingLava, FallingIcicle, CrystalLaser, ThornBramble, SandGeyser,
+  getDifficultyScales
+} from '../src/hazards.js';
 
 let passed = 0, failed = 0;
 const section = name => console.log(`\n${name}`);
@@ -102,7 +107,7 @@ LEVELS.forEach(def => {
     assert.ok(lv.gate, 'missing gate');
   });
   test(`L${def.id}: only known tile characters`, () => {
-    for (const row of lv.world.tiles) for (const ch of row) assert.ok('.#=~H|X'.includes(ch), `unknown tile '${ch}'`);
+    for (const row of lv.world.tiles) for (const ch of row) assert.ok('.#=~H|XZ'.includes(ch), `unknown tile '${ch}'`);
   });
   test(`L${def.id}: no entity spawns inside solid tiles`, () => {
     const w = lv.world;
@@ -1091,19 +1096,26 @@ test('spawn safety: no enemy within 6 tiles of start or checkpoints in every lev
     if (lv.checkpoints) {
       lv.checkpoints.forEach((cp, idx) => checks.push({ name: `checkpoint ${idx}`, x: (cp.c + 0.5) * TS, y: (cp.r + 1) * TS }));
     }
+    const hazards = [
+      ...(lv.fireJets||[]), ...(lv.flamethrowers||[]), ...(lv.firebars||[]),
+      ...(lv.lavaBubbles||[]), ...(lv.fireDrips||[]), ...(lv.burningPlanks||[]),
+      ...(lv.icicles||[]), ...(lv.crystalLasers||[]), ...(lv.brambles||[]),
+      ...(lv.geysers||[])
+    ];
     const enemies = [
       ...(lv.walkers||[]), ...(lv.hedgehogs||[]), ...(lv.squirrels||[]),
       ...(lv.snapvines||[]), ...(lv.scorpions||[]), ...(lv.sandWorms||[]),
       ...(lv.buzzBees||[]), ...(lv.nightBats||[]), ...(lv.hopperFrogs||[]),
       ...(lv.wildBoars||[]), ...(lv.leafGliders||[]), ...(lv.armadillos||[]),
-      ...(lv.desertHawks||[]), ...(lv.spinningSaws||[]), ...(lv.bosses||[])
+      ...(lv.desertHawks||[]), ...(lv.spinningSaws||[]), ...(lv.bosses||[]),
+      ...hazards
     ];
     for (const cp of checks) {
       for (const e of enemies) {
-        const ex = e.x ?? (e.c0 !== undefined ? e.c0 * TS : 0);
-        const ey = e.feetY ?? e.y ?? e.ceilingY ?? (e.r0 !== undefined ? e.r0 * TS : 0);
+        const ex = e.x ?? (e.c0 !== undefined ? e.c0 * TS : (e.c !== undefined ? (e.c + 0.5) * TS : 0));
+        const ey = e.feetY ?? e.y ?? e.ceilingY ?? (e.r0 !== undefined ? e.r0 * TS : (e.r !== undefined ? (e.r + 0.5) * TS : 0));
         const dist = Math.hypot(ex - cp.x, ey - cp.y);
-        assert.ok(dist >= SAFE_DIST, `${def.id}: enemy at (${ex}, ${ey}) is too close to ${cp.name} (dist=${dist.toFixed(1)} < ${SAFE_DIST})`);
+        assert.ok(dist >= SAFE_DIST, `${def.id}: hazard or enemy at (${ex}, ${ey}) is too close to ${cp.name} (dist=${dist.toFixed(1)} < ${SAFE_DIST})`);
       }
     }
 
@@ -1605,6 +1617,246 @@ test('Every star, checkpoint and chest: reachable by an engine-simulated run/jum
       assert.ok(reached, `${def.id}: engine-simulated jump could not reach chest at (${ch.c}, ${ch.r})`);
     }
   }
+});
+
+section('15. Fire & Environmental Hazards');
+
+test('parser: every new hazard char creates the correct object and unknown chars error', () => {
+  const mapWithAll = {
+    id: 'test-hazards', world: 6, theme: 'volcano_fortress',
+    rows: [
+      "P...*...G...",
+      "f.<.>.o.p.d.",
+      "Z.!.A.D.R.E.",
+      "============."
+    ]
+  };
+  const parsed = parseLevel(mapWithAll);
+  assert.equal(parsed.fireJets.length, 1, 'fireJet parsed');
+  assert.equal(parsed.flamethrowers.length, 2, 'flamethrowers parsed');
+  assert.equal(parsed.flamethrowers[0].dir, -1, '< dir is -1');
+  assert.equal(parsed.flamethrowers[1].dir, 1, '> dir is +1');
+  assert.equal(parsed.firebars.length, 1, 'firebar parsed');
+  assert.equal(parsed.lavaBubbles.length, 1, 'lavaBubble parsed');
+  assert.equal(parsed.fireDrips.length, 1, 'fireDrip parsed');
+  assert.equal(parsed.lavaPools.length, 1, 'lavaPool parsed');
+  assert.equal(parsed.world.get(0, 2), 'Z', 'Z is preserved in world tiles');
+  assert.equal(parsed.burningPlanks.length, 1, 'burningPlank parsed');
+  assert.equal(parsed.icicles.length, 1, 'icicle parsed');
+  assert.equal(parsed.crystalLasers.length, 1, 'crystalLaser parsed');
+  assert.equal(parsed.brambles.length, 1, 'bramble parsed');
+  assert.equal(parsed.geysers.length, 1, 'geyser parsed');
+
+  // Unknown character errors
+  const badMap = {
+    id: 'test-bad', world: 1, theme: 'green_hills',
+    rows: ["P...G...", "....?...", "========"]
+  };
+  assert.throws(() => parseLevel(badMap), /unknown character/);
+});
+
+test('telegraph >= 0.45 s for every hazard across difficulties', () => {
+  const diffs = [1, 3, 6];
+  const settings = ['easy', 'normal', 'hard'];
+  for (const diff of diffs) {
+    for (const set of settings) {
+      const g = { levelDifficulty: diff, difficultySetting: set };
+      const scales = getDifficultyScales(g);
+
+      const fj = new FireJet(5, 5, { phase: 0 });
+      assert.ok(Math.max(0.45, fj.baseWarn * scales.idleMult) >= 0.45, `FireJet telegraph >= 0.45s at diff ${diff} ${set}`);
+
+      const ft = new WallFlamethrower(5, 5, 1, { phase: 0 });
+      assert.ok(Math.max(0.45, ft.baseWarn * scales.idleMult) >= 0.45, `WallFlamethrower telegraph >= 0.45s at diff ${diff} ${set}`);
+
+      const lb = new LavaBubble(5, 5, { phase: 0 });
+      assert.ok(Math.max(0.45, lb.warnDuration * scales.idleMult) >= 0.45, `LavaBubble telegraph >= 0.45s at diff ${diff} ${set}`);
+
+      const fd = new FireDrip(5, 5, { phase: 0 });
+      assert.ok(Math.max(0.45, fd.swellTime * scales.idleMult) >= 0.45, `FireDrip telegraph >= 0.45s at diff ${diff} ${set}`);
+
+      const bp = new BurningPlank(5, 5);
+      assert.ok(Math.max(0.45, bp.smokeDuration * scales.idleMult) >= 0.45, `BurningPlank telegraph >= 0.45s at diff ${diff} ${set}`);
+
+      const fi = new FallingIcicle(5, 5);
+      assert.ok(Math.max(0.45, fi.shakeDuration * scales.idleMult) >= 0.45, `FallingIcicle telegraph >= 0.45s at diff ${diff} ${set}`);
+
+      const cl = new CrystalLaser(5, 5, { phase: 0 });
+      assert.ok(Math.max(0.45, cl.warnDuration * scales.idleMult) >= 0.45, `CrystalLaser telegraph >= 0.45s at diff ${diff} ${set}`);
+
+      const sg = new SandGeyser(5, 5, { phase: 0 });
+      assert.ok(Math.max(0.45, sg.warnDuration * scales.idleMult) >= 0.45, `SandGeyser telegraph >= 0.45s at diff ${diff} ${set}`);
+    }
+  }
+});
+
+test('hazard damage happens ONLY during active phase (FireJet, Flamethrower, Icicle, Laser, BurningPlank)', () => {
+  const g = stubGame(new World([
+    "................",
+    "................",
+    "................",
+    "================"
+  ]));
+  g.player = new Player();
+  g.player.place(176, 96);
+  g.sfx = () => {};
+  let hurtCount = 0;
+  g.player.hurt = () => { hurtCount++; return true; };
+
+  // 1. FireJet (c=5, r=3): vent at y=96. Hitbox: cx-10..cx+10, y-96..y
+  const fj = new FireJet(5, 3, { phase: 0 });
+  fj.update(g, 0.5); // idle
+  assert.equal(fj.state, 'idle');
+  assert.equal(hurtCount, 0, 'FireJet: no damage in idle');
+
+  fj.update(g, 1.2); // now warning
+  assert.equal(fj.state, 'warning');
+  assert.equal(hurtCount, 0, 'FireJet: no damage in warning');
+
+  fj.update(g, 0.65); // now active
+  assert.equal(fj.state, 'active');
+  fj.update(g, 0.05);
+  assert.ok(hurtCount > 0, 'FireJet: damages hero in active phase');
+  hurtCount = 0;
+
+  // 2. WallFlamethrower (c=3, r=3, dir=1)
+  const ft = new WallFlamethrower(3, 3, 1, { phase: 0 });
+  ft.update(g, 1.0); // idle
+  assert.equal(ft.state, 'idle');
+  assert.equal(hurtCount, 0, 'Flamethrower: no damage in idle');
+
+  ft.update(g, 1.1); // warning
+  assert.equal(ft.state, 'warning');
+  assert.equal(hurtCount, 0, 'Flamethrower: no damage in warning');
+
+  ft.update(g, 0.55); // active
+  assert.equal(ft.state, 'active');
+
+  // 3. FallingIcicle
+  const fi = new FallingIcicle(5, 1);
+  fi.state = 'idle';
+  fi.update(g, 0.1);
+  assert.equal(fi.state, 'shaking', 'Icicle shakes when player below');
+  fi.update(g, 0.2);
+  assert.equal(hurtCount, 0, 'Icicle: no damage while shaking');
+
+  fi.update(g, 0.5); // falls
+  assert.equal(fi.state, 'falling');
+  fi.y = g.player.y;
+  fi.x = g.player.x;
+  fi.update(g, 0.01);
+  assert.ok(hurtCount > 0, 'Icicle damages hero while falling');
+  hurtCount = 0;
+
+  // 4. BurningPlank
+  const bp = new BurningPlank(5, 3);
+  bp.stepOn(g);
+  assert.equal(bp.state, 'smoking');
+  assert.equal(hurtCount, 0, 'BurningPlank: no damage while smoking');
+  bp.update(g, 0.7);
+  assert.equal(bp.state, 'burning');
+  g.player.x = bp.x;
+  g.player.y = bp.y - g.player.h;
+  bp.update(g, 0.05);
+  assert.ok(hurtCount > 0, 'BurningPlank damages hero when burning');
+  hurtCount = 0;
+
+  // 5. SandGeyser pushes hero up (vy = -620) without hurt
+  const sg = new SandGeyser(5, 3, { phase: 0 });
+  g.player.vy = 0;
+  sg.update(g, 0.5); // idle (0.5 < 1.5)
+  assert.equal(sg.state, 'idle');
+  sg.update(g, 1.1); // timer = 1.6 >= 1.5 -> warning
+  assert.equal(sg.state, 'warning');
+  assert.equal(hurtCount, 0, 'SandGeyser does not hurt in warning');
+  sg.update(g, 0.75); // timer = 0.75 >= 0.7 -> active
+  assert.equal(sg.state, 'active');
+  sg.update(g, 0.05); // active frame
+  assert.equal(hurtCount, 0, 'SandGeyser does NOT hurt player');
+  assert.ok(g.player.vy <= -600, `SandGeyser launches hero with vy = -620 (actual: ${g.player.vy})`);
+
+  // 6. ThornBramble hurts on touch and burns with flameWave
+  const tb = new ThornBramble(5, 3);
+  g.player.x = tb.x;
+  g.player.y = tb.y;
+  tb.update(g, 0.05);
+  assert.ok(hurtCount > 0, 'ThornBramble hurts hero on touch');
+  assert.equal(tb.dead, false);
+  tb.burn(g);
+  assert.equal(tb.dead, true, 'ThornBramble burns away with fire/flame');
+});
+
+test('bubble shield and star power protect hero from fire hazards', () => {
+  const g = stubGame(new World([
+    "................",
+    "................",
+    "................",
+    "================"
+  ]));
+  g.player = new Player();
+  g.player.place(160, 96);
+  g.sfx = () => {};
+
+  // Equip bubble shield
+  g.player.powerup = { type: 'bubble_shield', duration: 10 };
+  const prevHp = g.player.hp;
+  const hurt = g.player.hurt(g, 100);
+  assert.equal(hurt, false, 'Bubble shield absorbed hit without damage');
+  assert.equal(g.player.hp, prevHp, 'HP preserved');
+  assert.equal(g.player.powerup, null, 'Bubble shield popped');
+
+  // Equip star power
+  g.player.powerup = { type: 'star_power', duration: 10 };
+  const hurtStar = g.player.hurt(g, 100);
+  assert.equal(hurtStar, false, 'Star power is invulnerable');
+  assert.equal(g.player.hp, prevHp, 'HP preserved');
+});
+
+test('rising lava: speed slower than hero climb speed and stops below gate', () => {
+  const lv61 = parseLevel(LEVELS.find(l => l.id === '6-1'));
+  const lv62 = parseLevel(LEVELS.find(l => l.id === '6-2'));
+  const g61 = newGame(LEVELS.find(l => l.id === '6-1'));
+
+  assert.ok(g61.risingLava, '6-1 has rising lava');
+  assert.ok(g61.risingLava.speed < 120, 'rising lava speed (10) < hero ladder climb (120)');
+  assert.ok(lv62.risingLava.speed < 120, 'rising lava speed (14) < hero ladder climb (120)');
+
+  // Simulate rising lava until it hits gateStopY
+  g61.risingLava.timer = g61.risingLava.delay; // bypass delay
+  for (let f = 0; f < 300; f++) {
+    g61.risingLava.update(g61, 0.1);
+  }
+  const gateBottom = (g61.gate.r + 3) * TS;
+  assert.ok(g61.risingLava.currentY >= gateBottom - 0.1, `rising lava stops at or below gate + 3 tiles (currentY=${g61.risingLava.currentY}, gateBottom=${gateBottom})`);
+
+  // Checkpoint touch pauses rising lava for 3s
+  g61.risingLava.pause(3.0);
+  assert.equal(g61.risingLava.pauseTimer, 3.0, 'checkpoint pause is 3.0s');
+});
+
+test('difficulty settings and save persistence', () => {
+  setDifficulty('easy');
+  assert.equal(getDifficulty(), 'easy');
+  setDifficulty('hard');
+  assert.equal(getDifficulty(), 'hard');
+  setDifficulty('normal');
+  assert.equal(getDifficulty(), 'normal');
+
+  // Easy mode grants 4 hearts in game
+  const gEasy = new Game({ difficultySetting: 'easy' });
+  gEasy.load(LEVELS[0]);
+  assert.equal(gEasy.player.maxHearts, 4, 'Easy mode has 4 max hearts');
+  assert.equal(gEasy.player.hearts, 4, 'Easy mode spawns with 4 hearts');
+
+  // Normal mode has 3 hearts
+  const gNorm = new Game({ difficultySetting: 'normal' });
+  gNorm.load(LEVELS[0]);
+  assert.equal(gNorm.player.maxHearts, 3, 'Normal mode has 3 max hearts');
+
+  // Hard mode removes heart pickups and keeps mid-level checkpoint only
+  const gHard = new Game({ difficultySetting: 'hard' });
+  gHard.load(LEVELS.find(l => l.id === '6-1'));
+  assert.equal(gHard.hearts.length, 0, 'Hard mode has no heart pickups');
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

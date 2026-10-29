@@ -189,6 +189,10 @@
         <div class="tool-grid" id="terrainTools"></div>
       </div>
       <div class="palette-group">
+        <h3>Hazards & Traps</h3>
+        <div class="tool-grid" id="hazardTools"></div>
+      </div>
+      <div class="palette-group">
         <h3>Items & Props</h3>
         <div class="tool-grid" id="itemTools"></div>
       </div>
@@ -244,6 +248,19 @@
       { char: '*', name: 'Checkpoint', group: 'items', color: '#3b82f6' },
       { char: '^', name: 'Spikes', group: 'items', color: '#f87171' },
 
+      { char: 'Z', name: 'Lava Pool', group: 'hazards', color: '#ef4444' },
+      { char: 'f', name: 'Fire Jet', group: 'hazards', color: '#f97316' },
+      { char: '<', name: 'Flamethrower L', group: 'hazards', color: '#ea580c' },
+      { char: '>', name: 'Flamethrower R', group: 'hazards', color: '#ea580c' },
+      { char: 'o', name: 'Firebar', group: 'hazards', color: '#f59e0b' },
+      { char: 'p', name: 'Lava Bubble', group: 'hazards', color: '#dc2626' },
+      { char: 'd', name: 'Fire Drip', group: 'hazards', color: '#fb923c' },
+      { char: '!', name: 'Burning Plank', group: 'hazards', color: '#b45309' },
+      { char: 'A', name: 'Falling Icicle', group: 'hazards', color: '#60a5fa' },
+      { char: 'D', name: 'Crystal Laser', group: 'hazards', color: '#a855f7' },
+      { char: 'R', name: 'Thorn Bramble', group: 'hazards', color: '#16a34a' },
+      { char: 'E', name: 'Sand Geyser', group: 'hazards', color: '#d97706' },
+
       { char: 'm', name: 'Walker', group: 'enemies', color: '#ec4899' },
       { char: 'S', name: 'Hedgehog', group: 'enemies', color: '#f97316' },
       { char: 'B', name: 'World Boss', group: 'enemies', color: '#dc2626' }
@@ -272,6 +289,7 @@
       };
       const container = t.group === 'terrain' ? document.getElementById('terrainTools')
                       : t.group === 'items' ? document.getElementById('itemTools')
+                      : t.group === 'hazards' ? document.getElementById('hazardTools')
                       : document.getElementById('enemyTools');
       container.appendChild(btn);
     });

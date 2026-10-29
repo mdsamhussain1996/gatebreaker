@@ -65,6 +65,31 @@ node tests/run.js
 
 ---
 
+## 🔥 Environmental Hazards & Map Legend
+
+Gatebreaker features dynamic environmental hazards across all worlds, fully telegraphed for fair gameplay:
+
+| Character | Hazard | Behavior |
+|---|---|---|
+| `f` | **Fire Jet** | Floor vent; 0.6s warning glow & smoke, then 3-tile vertical flame column (1.0s). |
+| `<` | **Wall Flamethrower (Left)** | Mounted nozzle; 0.5s warning sparks, shoots 4-tile flame left (1.2s). |
+| `>` | **Wall Flamethrower (Right)** | Mounted nozzle; 0.5s warning sparks, shoots 4-tile flame right (1.2s). |
+| `o` | **Rotating Firebar** | Pivot block with 5 orbiting fireballs (80px radius); alternate spin directions. |
+| `p` | **Lava Bubble** | Placed on lava; bubbles 0.5s, then leaps straight up 4 tiles in a sine arc. |
+| `d` | **Fire Drip** | Ceiling drop; swells for 0.8s, falls with gravity, splashes harmless embers. |
+| `Z` | **Lava Pool** | Deadly molten surface tile with heat shimmer; touching triggers respawn. |
+| `!` | **Burning Plank** | One-way plank; step on it to trigger 0.6s smoke → 0.8s fire → crumbles for 4s. |
+| `A` | **Falling Icicle** | Ceiling icicle (World 4); shakes 0.6s when hero walks below, falls & shatters. |
+| `D` | **Crystal Laser** | Wall emitter (World 5); 0.8s aiming laser guide, followed by 0.5s piercing beam. |
+| `R` | **Thorn Bramble** | Spiky ground bush (Worlds 1–2); hurts on touch, can be burned away by Fire Knife. |
+| `E` | **Sand Geyser** | Traversal vent (World 3); bubbles 0.7s, blasts sand launching hero high (`vy = -620`). |
+
+### Level Options (`src/levels.js`)
+- `"difficulty": 1..6` — scales hazard cycle times and firebar rotation speeds.
+- `"risingLava": { "startRow": 44, "speed": 10, "delay": 4 }` — bottom lava rises up during vertical climbs (stops 3 tiles below gate row, pauses 3s at checkpoints).
+
+---
+
 ## 📜 Credits & License
 
 Made by **Dr. Md Samshad Hussain Ansari**.
