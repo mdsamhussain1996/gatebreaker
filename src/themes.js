@@ -1257,7 +1257,7 @@ export const THEME_VOLCANO_FORTRESS = {
   palette: { accent: '#ff5722', particle: '#ff9800' },
   ambientParticles: {
     type: 'ember',
-    count: 55,
+    count: 28,
     colors: ['#ffab40', '#ff5722', '#ffeb3b', '#d84315']
   },
   music: {

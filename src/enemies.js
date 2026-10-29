@@ -1010,8 +1010,8 @@ export class OldOakGuardian extends Enemy {
     this.isBoss = true;
     this.type = 'oak_guardian';
     this.name = 'Old Oak Guardian';
-    this.hp = 3;
-    this.maxHp = 3;
+    this.hp = 4;
+    this.maxHp = 4;
     this.invuln = 0;
     this.state = 'idle';
     this.timer = 1.4;
@@ -1073,8 +1073,8 @@ export class OldOakGuardian extends Enemy {
       }
     }
 
-    // Moving enemy summon phase at HP <= 2
-    if (this.hp <= 2 && !this.hasSummoned && g) {
+    // Moving enemy summon phase at HP <= 3 (~2/3 HP)
+    if (this.hp <= 3 && !this.hasSummoned && g) {
       this.hasSummoned = true;
       g.toast('The Ancient Oak calls upon the forest!');
       g.enemies.push(new LeafGlider(this.x - 80, this.y - 120, 200, 260));
@@ -1130,8 +1130,8 @@ export class SandWyrm extends Enemy {
     this.isBoss = true;
     this.type = 'sand_wyrm';
     this.name = 'Sand Wyrm';
-    this.hp = 3;
-    this.maxHp = 3;
+    this.hp = 5;
+    this.maxHp = 5;
     this.invuln = 0;
     this.state = 'idle';
     this.timer = 1.2;
@@ -1193,8 +1193,8 @@ export class SandWyrm extends Enemy {
       }
     }
 
-    // Moving enemy summon phase at HP <= 2
-    if (this.hp <= 2 && !this.hasSummoned && g) {
+    // Moving enemy summon phase at HP <= 3 (~2/3 HP)
+    if (this.hp <= 3 && !this.hasSummoned && g) {
       this.hasSummoned = true;
       g.toast('The desert tremors with subterranean life!');
       g.enemies.push(new RollingArmadillo(this.x - 90, this.homeY));
@@ -1250,8 +1250,8 @@ export class FrostTitan extends Enemy {
     this.isBoss = true;
     this.type = 'frost_titan';
     this.name = 'Frost Titan';
-    this.hp = 3;
-    this.maxHp = 3;
+    this.hp = 6;
+    this.maxHp = 6;
     this.invuln = 0;
     this.state = 'idle';
     this.timer = 1.2;
@@ -1328,7 +1328,8 @@ export class FrostTitan extends Enemy {
       g.sfx('bossPhase');
     }
 
-    if (this.hp <= 2 && !this.hasSummoned && g) {
+    // Moving enemy summon phase at HP <= 4 (2/3 HP)
+    if (this.hp <= 4 && !this.hasSummoned && g) {
       this.hasSummoned = true;
       g.toast('Frost Titan summons the blizzard flurries!');
       g.enemies.push(new NightBat(this.x - 80, this.y - 100));
@@ -1384,8 +1385,8 @@ export class CrystalBehemoth extends Enemy {
     this.isBoss = true;
     this.type = 'crystal_behemoth';
     this.name = 'Crystal Behemoth';
-    this.hp = 3;
-    this.maxHp = 3;
+    this.hp = 7;
+    this.maxHp = 7;
     this.invuln = 0;
     this.state = 'idle';
     this.timer = 1.3;
@@ -1462,7 +1463,8 @@ export class CrystalBehemoth extends Enemy {
       g.sfx('bossPhase');
     }
 
-    if (this.hp <= 2 && !this.hasSummoned && g) {
+    // Moving enemy summon phase at HP <= 5 (~2/3 HP)
+    if (this.hp <= 5 && !this.hasSummoned && g) {
       this.hasSummoned = true;
       g.toast('Crystal Behemoth summons the amethyst brood!');
       g.enemies.push(new HopperFrog(this.x - 70, this.y + this.h));
@@ -1518,8 +1520,8 @@ export class MagmaOverlord extends Enemy {
     this.isBoss = true;
     this.type = 'magma_overlord';
     this.name = 'Magma Overlord';
-    this.hp = 3;
-    this.maxHp = 3;
+    this.hp = 8;
+    this.maxHp = 8;
     this.invuln = 0;
     this.state = 'idle';
     this.timer = 1.3;
@@ -1538,6 +1540,7 @@ export class MagmaOverlord extends Enemy {
     this.invuln = Math.max(0, this.invuln - dt);
     this.timer -= dt;
     this.dir = p.cx > this.x + this.w / 2 ? 1 : -1;
+    const enraged = this.hp <= 3;
 
     this.vy = Math.min(this.vy + 1600 * dt, 720);
     moveX(w, this, this.vx * dt);
@@ -1545,28 +1548,29 @@ export class MagmaOverlord extends Enemy {
 
     if (res.floor && this.state === 'jump') {
       this.state = 'idle';
-      this.timer = 1.5;
+      this.timer = enraged ? 0.9 : 1.5;
       this.squash = 1.6;
       g.shake = 10;
       g.sfx('bossStomp');
 
-      this.shockwaves.push({ x: this.x - 10, y: this.y + this.h - 14, vx: -220, life: 1.3 });
-      this.shockwaves.push({ x: this.x + this.w + 10, y: this.y + this.h - 14, vx: 220, life: 1.3 });
+      const swSpeed = enraged ? 270 : 220;
+      this.shockwaves.push({ x: this.x - 10, y: this.y + this.h - 14, vx: -swSpeed, life: 1.3 });
+      this.shockwaves.push({ x: this.x + this.w + 10, y: this.y + this.h - 14, vx: swSpeed, life: 1.3 });
     }
 
     if (this.state === 'idle') {
       this.vx = 0;
       if (this.timer <= 0) {
         this.state = 'telegraph';
-        this.timer = 0.65;
+        this.timer = enraged ? 0.45 : 0.65;
         this.squash = 0.65;
       }
     } else if (this.state === 'telegraph') {
-      this.telegraph = 0.65;
+      this.telegraph = enraged ? 0.45 : 0.65;
       if (this.timer <= 0) {
         this.state = 'jump';
-        this.vy = -580;
-        this.vx = this.dir * 140;
+        this.vy = enraged ? -640 : -580;
+        this.vx = this.dir * (enraged ? 175 : 140);
         this.squash = 1.3;
       }
     }
@@ -1596,7 +1600,8 @@ export class MagmaOverlord extends Enemy {
       g.sfx('bossPhase');
     }
 
-    if (this.hp <= 2 && !this.hasSummoned && g) {
+    // Moving enemy summon phase at HP <= 5 (~2/3 HP)
+    if (this.hp <= 5 && !this.hasSummoned && g) {
       this.hasSummoned = true;
       g.toast('Magma Overlord erupts! Fire drakes awaken!');
       g.enemies.push(new DesertHawk(this.x - 80, this.y - 120));
@@ -1666,7 +1671,7 @@ export class FrostWalker extends Enemy {
     const ry = moveY(w, this, this.vy * dt);
     if (ry.floor) {
       const probeAheadX = this.vx > 0 ? this.x + this.w + 4 : this.x - 4;
-      if (!probeGround(w, probeAheadX, this.y + this.h + 2)) {
+      if (!groundAtPoint(w, probeAheadX, this.y + this.h)) {
         this.vx = -this.vx;
       }
     }
@@ -1694,7 +1699,7 @@ export class CrystalCrawler extends Enemy {
     const ry = moveY(w, this, this.vy * dt);
     if (ry.floor) {
       const probeAheadX = this.vx > 0 ? this.x + this.w + 4 : this.x - 4;
-      if (!probeGround(w, probeAheadX, this.y + this.h + 2)) {
+      if (!groundAtPoint(w, probeAheadX, this.y + this.h)) {
         this.vx = -this.vx;
       }
     }

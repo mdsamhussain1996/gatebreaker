@@ -80,6 +80,12 @@ async function runBrowserCheck() {
           }
         });
 
+        // Wait for game module to initialize
+        await evaluate(`new Promise(r => {
+          const chk = () => (window.__gb && window.__gb.game) ? r(true) : setTimeout(chk, 50);
+          chk();
+        })`);
+
         // 1. Laptop view (1366x768)
         await rpc('Emulation.setDeviceMetricsOverride', {
           width: 1366, height: 768, deviceScaleFactor: 1, mobile: false

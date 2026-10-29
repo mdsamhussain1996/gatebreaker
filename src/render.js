@@ -960,11 +960,67 @@ export function bakeTerrain(world, theme = getTheme('green_hills')) {
 
 /** Pre-render a parallax layer into an offscreen canvas */
 function bakeParallax(painter, w, h) {
+  if (typeof document === 'undefined') return null;
   const cv = document.createElement('canvas');
   cv.width = w;
   cv.height = h;
   const ctx = cv.getContext('2d');
   painter(ctx, w, h);
+  return cv;
+}
+
+/** Pre-render static sky gradient */
+function bakeSky(theme, w, h) {
+  if (typeof document === 'undefined') return null;
+  const cv = document.createElement('canvas');
+  cv.width = w;
+  cv.height = h;
+  const ctx = cv.getContext('2d');
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  for (const [stop, color] of theme.sky) {
+    grad.addColorStop(stop, color);
+  }
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+  return cv;
+}
+
+/** Pre-render static atmosphere layers (depth fog, color grade, vignette) */
+function bakeAtmosphere(theme, w, h) {
+  if (typeof document === 'undefined') return null;
+  const cv = document.createElement('canvas');
+  cv.width = w;
+  cv.height = h;
+  const ctx = cv.getContext('2d');
+
+  // 1. Depth fog
+  const depthFog = ctx.createLinearGradient(0, h * 0.42, 0, h * 0.78);
+  depthFog.addColorStop(0, 'rgba(255, 255, 255, 0)');
+  const fogColor = theme.id === 'desert_ruins' ? 'rgba(234, 179, 8, 0.07)' :
+    (theme.id === 'autumn_forest' ? 'rgba(217, 119, 6, 0.07)' :
+    (theme.id === 'green_hills' ? 'rgba(254, 243, 199, 0.06)' : 'rgba(203, 213, 225, 0.06)'));
+  depthFog.addColorStop(0.5, fogColor);
+  depthFog.addColorStop(1, 'rgba(255, 255, 255, 0)');
+  ctx.fillStyle = depthFog;
+  ctx.fillRect(0, h * 0.42, w, h * 0.36);
+
+  // 2. Color grade for forest themes
+  if (theme.id === 'green_hills' || theme.id === 'autumn_forest') {
+    const grade = ctx.createLinearGradient(0, 0, w, 0);
+    grade.addColorStop(0, 'rgba(251, 146, 60, 0.08)');
+    grade.addColorStop(0.45, 'rgba(245, 158, 11, 0.03)');
+    grade.addColorStop(1, 'rgba(30, 58, 138, 0.07)');
+    ctx.fillStyle = grade;
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  // 3. Vignette
+  const vigGrad = ctx.createRadialGradient(w / 2, h / 2, w * 0.42, w / 2, h / 2, w * 0.76);
+  vigGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+  vigGrad.addColorStop(1, 'rgba(27, 26, 20, 0.18)');
+  ctx.fillStyle = vigGrad;
+  ctx.fillRect(0, 0, w, h);
+
   return cv;
 }
 
@@ -977,6 +1033,8 @@ export class Renderer {
     this.parallaxMid = null;
     this.parallaxNear = null;
     this.parallaxFoliage = null;
+    this.bakedSky = null;
+    this.bakedAtmosphere = null;
     this.theme = null;
     this.reduced = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.t = 0;
@@ -986,6 +1044,10 @@ export class Renderer {
   setLevel(world, theme = getTheme('green_hills')) {
     this.theme = theme;
     this.terrain = bakeTerrain(world, theme);
+
+    // Bake static sky and atmosphere layers
+    this.bakedSky = bakeSky(theme, VIEW_W, VIEW_H);
+    this.bakedAtmosphere = bakeAtmosphere(theme, VIEW_W, VIEW_H);
 
     // Bake 4 parallax layers (wrap width 1400 px, height 540 px)
     const pw = 1400, ph = VIEW_H;
@@ -998,11 +1060,12 @@ export class Renderer {
       this.parallaxFoliage = null;
     }
 
-    // Initialize ambient particles
+    // Initialize ambient particles (capped to 32 max for smooth 60fps)
     this.ambientParticles = [];
     const cfg = theme.ambientParticles;
     if (cfg && cfg.count > 0) {
-      for (let i = 0; i < cfg.count; i++) {
+      const pCount = Math.min(cfg.count, 32);
+      for (let i = 0; i < pCount; i++) {
         this.ambientParticles.push({
           x: Math.random() * VIEW_W,
           y: Math.random() * VIEW_H,
@@ -1121,13 +1184,16 @@ export class Renderer {
 
   // ------------------------------------------------------------ background
   drawSky(ctx, camX, camY, world, theme) {
-    // Sky gradient
-    const grad = ctx.createLinearGradient(0, 0, 0, VIEW_H);
-    for (const [stop, color] of theme.sky) {
-      grad.addColorStop(stop, color);
+    if (this.bakedSky) {
+      ctx.drawImage(this.bakedSky, 0, 0);
+    } else {
+      const grad = ctx.createLinearGradient(0, 0, 0, VIEW_H);
+      for (const [stop, color] of theme.sky) {
+        grad.addColorStop(stop, color);
+      }
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, VIEW_W, VIEW_H);
     }
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
 
     const pw = 1400;
 
@@ -3562,33 +3628,36 @@ export class Renderer {
       ctx.fillRect(0, VIEW_H - 110 + wave, VIEW_W, 55);
     }
 
-    // 3. Depth fog / horizontal haze band across playfield
-    const depthFog = ctx.createLinearGradient(0, VIEW_H * 0.42, 0, VIEW_H * 0.78);
-    depthFog.addColorStop(0, 'rgba(255, 255, 255, 0)');
-    const fogColor = theme.id === 'desert_ruins' ? 'rgba(234, 179, 8, 0.07)' :
-      (theme.id === 'autumn_forest' ? 'rgba(217, 119, 6, 0.07)' :
-      (theme.id === 'green_hills' ? 'rgba(254, 243, 199, 0.06)' : 'rgba(203, 213, 225, 0.06)'));
-    depthFog.addColorStop(0.5, fogColor);
-    depthFog.addColorStop(1, 'rgba(255, 255, 255, 0)');
-    ctx.fillStyle = depthFog;
-    ctx.fillRect(0, VIEW_H * 0.42, VIEW_W, VIEW_H * 0.36);
+    // 3, 4, 5. Static atmosphere layers (depth fog, color grade, vignette)
+    if (this.bakedAtmosphere) {
+      ctx.drawImage(this.bakedAtmosphere, 0, 0);
+    } else {
+      // Fallback if not baked
+      const depthFog = ctx.createLinearGradient(0, VIEW_H * 0.42, 0, VIEW_H * 0.78);
+      depthFog.addColorStop(0, 'rgba(255, 255, 255, 0)');
+      const fogColor = theme.id === 'desert_ruins' ? 'rgba(234, 179, 8, 0.07)' :
+        (theme.id === 'autumn_forest' ? 'rgba(217, 119, 6, 0.07)' :
+        (theme.id === 'green_hills' ? 'rgba(254, 243, 199, 0.06)' : 'rgba(203, 213, 225, 0.06)'));
+      depthFog.addColorStop(0.5, fogColor);
+      depthFog.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = depthFog;
+      ctx.fillRect(0, VIEW_H * 0.42, VIEW_W, VIEW_H * 0.36);
 
-    // 4. Screen-space warm color grade (orange tint near sun side, cool blue on far side)
-    if (theme.id === 'green_hills' || theme.id === 'autumn_forest') {
-      const grade = ctx.createLinearGradient(0, 0, VIEW_W, 0);
-      grade.addColorStop(0, 'rgba(251, 146, 60, 0.08)');
-      grade.addColorStop(0.45, 'rgba(245, 158, 11, 0.03)');
-      grade.addColorStop(1, 'rgba(30, 58, 138, 0.07)');
-      ctx.fillStyle = grade;
+      if (theme.id === 'green_hills' || theme.id === 'autumn_forest') {
+        const grade = ctx.createLinearGradient(0, 0, VIEW_W, 0);
+        grade.addColorStop(0, 'rgba(251, 146, 60, 0.08)');
+        grade.addColorStop(0.45, 'rgba(245, 158, 11, 0.03)');
+        grade.addColorStop(1, 'rgba(30, 58, 138, 0.07)');
+        ctx.fillStyle = grade;
+        ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+      }
+
+      const vigGrad = ctx.createRadialGradient(VIEW_W / 2, VIEW_H / 2, VIEW_W * 0.42, VIEW_W / 2, VIEW_H / 2, VIEW_W * 0.76);
+      vigGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      vigGrad.addColorStop(1, 'rgba(27, 26, 20, 0.18)');
+      ctx.fillStyle = vigGrad;
       ctx.fillRect(0, 0, VIEW_W, VIEW_H);
     }
-
-    // 5. Subtle screen-space vignette (dark edges at 16-18% alpha)
-    const vigGrad = ctx.createRadialGradient(VIEW_W / 2, VIEW_H / 2, VIEW_W * 0.42, VIEW_W / 2, VIEW_H / 2, VIEW_W * 0.76);
-    vigGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
-    vigGrad.addColorStop(1, 'rgba(27, 26, 20, 0.18)');
-    ctx.fillStyle = vigGrad;
-    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
 
     ctx.restore();
   }

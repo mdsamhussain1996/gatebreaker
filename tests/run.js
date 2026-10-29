@@ -631,37 +631,70 @@ test('boss: Mushroom King can be defeated with 3 hits, key drops on death', () =
   assert.ok(g.key, 'key did not spawn on boss defeat');
   assert.equal(g.key.state, 'rest');
 });
-test('boss: Old Oak Guardian (World 2) takes 3 hits and drops key on death', () => {
+test('boss: Old Oak Guardian (World 2) takes 4 hits and drops key on death', () => {
   const g = newGame(LEVELS.find(l => l.id === '2-3'));
   assert.ok(g.bosses.length === 1, 'boss not spawned in 2-3');
   const boss = g.bosses[0];
-  assert.equal(boss.hp, 3);
-  boss.hit(g);
-  assert.equal(boss.hp, 2);
-  stepGame(g, 60);
-  boss.hit(g);
-  assert.equal(boss.hp, 1);
-  stepGame(g, 60);
-  boss.hit(g);
-  assert.equal(boss.hp, 0);
+  assert.equal(boss.hp, 4);
+  for (let h = 4; h > 0; h--) {
+    boss.hit(g);
+    assert.equal(boss.hp, h - 1);
+    if (h > 1) stepGame(g, 60);
+  }
   assert.ok(boss.dead);
   assert.ok(g.key, 'key not dropped by Old Oak Guardian');
 });
-test('boss: Sand Wyrm (World 3) takes 3 hits and drops key on death', () => {
+test('boss: Sand Wyrm (World 3) takes 5 hits and drops key on death', () => {
   const g = newGame(LEVELS.find(l => l.id === '3-3'));
   assert.ok(g.bosses.length === 1, 'boss not spawned in 3-3');
   const boss = g.bosses[0];
-  assert.equal(boss.hp, 3);
-  boss.hit(g);
-  assert.equal(boss.hp, 2);
-  stepGame(g, 60);
-  boss.hit(g);
-  assert.equal(boss.hp, 1);
-  stepGame(g, 60);
-  boss.hit(g);
-  assert.equal(boss.hp, 0);
+  assert.equal(boss.hp, 5);
+  for (let h = 5; h > 0; h--) {
+    boss.hit(g);
+    assert.equal(boss.hp, h - 1);
+    if (h > 1) stepGame(g, 60);
+  }
   assert.ok(boss.dead);
   assert.ok(g.key, 'key not dropped by Sand Wyrm');
+});
+test('boss: Frost Titan (World 4) takes 6 hits and drops key on death', () => {
+  const g = newGame(LEVELS.find(l => l.id === '4-3'));
+  assert.ok(g.bosses.length === 1, 'boss not spawned in 4-3');
+  const boss = g.bosses[0];
+  assert.equal(boss.hp, 6);
+  for (let h = 6; h > 0; h--) {
+    boss.hit(g);
+    assert.equal(boss.hp, h - 1);
+    if (h > 1) stepGame(g, 60);
+  }
+  assert.ok(boss.dead);
+  assert.ok(g.key, 'key not dropped by Frost Titan');
+});
+test('boss: Crystal Behemoth (World 5) takes 7 hits and drops key on death', () => {
+  const g = newGame(LEVELS.find(l => l.id === '5-3'));
+  assert.ok(g.bosses.length === 1, 'boss not spawned in 5-3');
+  const boss = g.bosses[0];
+  assert.equal(boss.hp, 7);
+  for (let h = 7; h > 0; h--) {
+    boss.hit(g);
+    assert.equal(boss.hp, h - 1);
+    if (h > 1) stepGame(g, 60);
+  }
+  assert.ok(boss.dead);
+  assert.ok(g.key, 'key not dropped by Crystal Behemoth');
+});
+test('boss: Magma Overlord (World 6) takes 8 hits and drops key on death', () => {
+  const g = newGame(LEVELS.find(l => l.id === '6-3'));
+  assert.ok(g.bosses.length === 1, 'boss not spawned in 6-3');
+  const boss = g.bosses[0];
+  assert.equal(boss.hp, 8);
+  for (let h = 8; h > 0; h--) {
+    boss.hit(g);
+    assert.equal(boss.hp, h - 1);
+    if (h > 1) stepGame(g, 60);
+  }
+  assert.ok(boss.dead);
+  assert.ok(g.key, 'key not dropped by Magma Overlord');
 });
 test('mushroom spring launches hero high (vy < -650)', () => {
   const g = newGame(LEVELS.find(l => l.id === '2-1'));
@@ -1308,6 +1341,14 @@ test('coins: max 8 straight coins enforced across all 18 levels', () => {
 });
 
 test('bosses: 3-4x hero height with procedural tracking eyes, damage phases', () => {
+  const expectedHp = {
+    '1-3': 3,
+    '2-3': 4,
+    '3-3': 5,
+    '4-3': 6,
+    '5-3': 7,
+    '6-3': 8
+  };
   const bossLevels = ['1-3', '2-3', '3-3', '4-3', '5-3', '6-3'];
   for (const bid of bossLevels) {
     const def = LEVELS.find(l => l.id === bid);
@@ -1315,7 +1356,254 @@ test('bosses: 3-4x hero height with procedural tracking eyes, damage phases', ()
     const boss = g.boss;
     assert.ok(boss, `boss missing in ${bid}`);
     assert.ok(boss.h >= 114, `boss ${boss.name} height ${boss.h} < 114 (hero is 28-30px, boss must be 3-4x)`);
-    assert.equal(boss.maxHp, 3, `boss ${boss.name} must have 3 HP damage phases`);
+    assert.equal(boss.maxHp, expectedHp[bid], `boss ${boss.name} must have ${expectedHp[bid]} HP`);
+  }
+});
+
+// ------------------------------------------------------------------ 14. Full Level Playtest Bug Fixes & Verifications
+section('14. Full Level Playtest Bug Fixes & Verifications');
+
+test('Every level: load -> idle 10 s -> no errors with all enemies active', () => {
+  for (const def of LEVELS) {
+    const g = newGame(def);
+    assert.doesNotThrow(() => {
+      for (let f = 0; f < 600; f++) {
+        g.update(I(), DT);
+      }
+    }, `${def.id}: 10s idle simulation threw an error`);
+  }
+});
+
+test('L5-3: hidden chest reachable via stepping stone by engine-simulated run-and-jump', () => {
+  const def = LEVELS.find(l => l.id === '5-3');
+  const g = newGame(def);
+  const chest = g.chests.find(ch => ch.c === 43 && ch.r === 18);
+  assert.ok(chest, 'Chest at col 43, row 18 not found in 5-3');
+
+  // Hero starts on row 19 ledge at col 26
+  g.player.place(26 * TS, 19 * TS);
+  stepGame(g, 5, I());
+  assert.ok(g.player.grounded, 'hero must start on ground');
+
+  // 1. Run and jump to stepping stone (cols 37-38)
+  let j1 = -1;
+  let landedStone = false;
+  for (let i = 0; i < 150; i++) {
+    const nearEdge = g.player.x >= 1040 && j1 === -1;
+    if (nearEdge) j1 = i;
+    const jumping = j1 !== -1 && (i - j1 < 28);
+    const jumpPressed = j1 === i;
+    stepGame(g, 1, I({ right: true, jumpPressed, jumpHeld: jumping }));
+    if (j1 !== -1 && i > j1 + 10 && g.player.grounded) {
+      landedStone = true;
+      break;
+    }
+  }
+  assert.ok(landedStone, `hero failed to land on stepping stone: x=${g.player.x}, y=${g.player.y}`);
+
+  // 2. Run and jump from stone to island (cols 42-44)
+  let j2 = -1;
+  let landedIsland = false;
+  for (let i = 0; i < 150; i++) {
+    const nearEdge = g.player.x >= 1215 && j2 === -1;
+    if (nearEdge) j2 = i;
+    const jumping = j2 !== -1 && (i - j2 < 28);
+    const jumpPressed = j2 === i;
+    stepGame(g, 1, I({ right: true, jumpPressed, jumpHeld: jumping }));
+    if (j2 !== -1 && i > j2 + 10 && g.player.grounded) {
+      landedIsland = true;
+      break;
+    }
+  }
+  assert.ok(landedIsland, `hero failed to land on chest island: x=${g.player.x}, y=${g.player.y}`);
+
+  // 3. Move next to chest and knife slash
+  for (let i = 0; i < 30; i++) {
+    const nearChest = g.player.x >= chest.x - 30;
+    stepGame(g, 1, I({ right: !nearChest, knifePressed: nearChest }));
+    if (chest.opened) break;
+  }
+  assert.ok(chest.opened, 'chest was not opened on island');
+});
+
+test('Every level: key reachable and gate completes (teleport & interaction)', () => {
+  for (const def of LEVELS) {
+    const g = newGame(def);
+    if (g.boss) {
+      const b = g.boss;
+      while (!b.dead) {
+        b.hit(g);
+        stepGame(g, 40);
+      }
+      assert.ok(b.dead, `${def.id}: boss not dead`);
+      assert.ok(g.key, `${def.id}: boss did not drop key`);
+    }
+    // Collect key
+    g.player.place(g.key.homeX, g.key.homeY + 14);
+    stepGame(g, 5);
+    assert.ok(g.player.hasKey, `${def.id}: key not collected`);
+
+    // Enter gate
+    g.player.place(g.gate.x + 32, g.gate.y + g.gate.h);
+    stepGame(g, 5);
+    stepGame(g, 180);
+    assert.equal(g.state, 'complete', `${def.id}: level not completed at gate`);
+    assert.ok(g.completed, `${def.id}: onComplete callback not triggered`);
+  }
+});
+
+test('Every boss: arena lock → defeat → key drop inside the arena → gate → complete', () => {
+  const bossLevels = ['1-3', '2-3', '3-3', '4-3', '5-3', '6-3'];
+  for (const bid of bossLevels) {
+    const def = LEVELS.find(l => l.id === bid);
+    const g = newGame(def);
+    const boss = g.boss;
+    assert.ok(boss, `boss missing in ${bid}`);
+
+    // Trigger arena
+    g.player.place(boss.x - 120, boss.y + boss.h);
+    stepGame(g, 5);
+    assert.equal(g.bossArenaEntered, true, `${bid}: arena not entered`);
+    assert.equal(g.arenaLocked, true, `${bid}: arena not locked`);
+    g.skipBossIntro();
+
+    // Defeat boss
+    while (!boss.dead) {
+      boss.hit(g);
+      stepGame(g, 40);
+    }
+    assert.equal(g.arenaLocked, false, `${bid}: arena did not unlock on boss defeat`);
+    assert.ok(g.key, `${bid}: boss did not drop key`);
+
+    // Key dropped inside arena (within 400px of boss)
+    const distToBoss = Math.abs(g.key.homeX - boss.x);
+    assert.ok(distToBoss < 400, `${bid}: key dropped too far from boss (${distToBoss}px)`);
+
+    // Collect key
+    g.player.place(g.key.homeX, g.key.homeY + 14);
+    stepGame(g, 5);
+    assert.ok(g.player.hasKey, `${bid}: key not collected`);
+
+    // Reach gate and complete
+    g.player.place(g.gate.x + 32, g.gate.y + g.gate.h);
+    stepGame(g, 5);
+    stepGame(g, 180);
+    assert.equal(g.state, 'complete', `${bid}: gate did not complete level`);
+    assert.ok(g.completed, `${bid}: onComplete callback not triggered`);
+  }
+});
+
+test('Every star, checkpoint and chest: reachable by an engine-simulated run/jump', () => {
+  for (const def of LEVELS) {
+    const lv = parseLevel(def);
+    const graph = buildGraph(lv.world);
+    const startKey = graph.key(lv.start.c, lv.start.r);
+    const fromStart = bfs(graph, startKey);
+    const standNodes = [...fromStart].map(k => graph.nodes.get(k)).filter(n => n && n.kind === 'stand');
+
+    // 1. Stars simulation
+    for (const s of lv.stars) {
+      const sc = Math.floor(s.x / TS), sr = Math.floor(s.y / TS);
+      const candidates = standNodes.filter(n => Math.abs(n.c - sc) <= 2 && sr >= n.r - 4 && sr <= n.r + 1);
+      assert.ok(candidates.length > 0, `${def.id}: no standing node near star at (${sc}, ${sr})`);
+      
+      let reached = false;
+      for (const node of candidates) {
+        const g = newGame(def);
+        g.player.place(node.c * TS + TS / 2, (node.r + 1) * TS);
+        stepGame(g, 3);
+        const dir = s.x > g.player.cx ? 1 : -1;
+        const needJump = s.y < g.player.cy - 10;
+        for (let frame = 0; frame < 50; frame++) {
+          const inp = I({
+            left: dir < 0,
+            right: dir > 0,
+            jumpPressed: needJump && frame === 0,
+            jumpHeld: needJump && frame < 20
+          });
+          stepGame(g, 1, inp);
+          if (Math.hypot(g.player.cx - s.x, g.player.cy - s.y) <= 32) {
+            reached = true;
+            break;
+          }
+        }
+        if (reached) break;
+      }
+      assert.ok(reached, `${def.id}: engine-simulated jump could not reach star at (${sc}, ${sr})`);
+    }
+
+    // 2. Checkpoints simulation
+    for (const cp of lv.checkpoints) {
+      const candidates = standNodes.filter(n => Math.abs(n.c - cp.c) <= 2 && cp.r >= n.r - 3 && cp.r <= n.r);
+      assert.ok(candidates.length > 0, `${def.id}: no standing node near checkpoint at (${cp.c}, ${cp.r})`);
+      let reached = false;
+      const targetX = (cp.c + 0.5) * TS, targetY = (cp.r + 0.5) * TS;
+      for (const node of candidates) {
+        const g = newGame(def);
+        g.player.place(node.c * TS + TS / 2, (node.r + 1) * TS);
+        stepGame(g, 3);
+        const dir = targetX > g.player.cx ? 1 : -1;
+        const needJump = targetY < g.player.cy - 10;
+        for (let frame = 0; frame < 50; frame++) {
+          const inp = I({
+            left: dir < 0,
+            right: dir > 0,
+            jumpPressed: needJump && frame === 0,
+            jumpHeld: needJump && frame < 20
+          });
+          stepGame(g, 1, inp);
+          if (Math.hypot(g.player.cx - targetX, g.player.cy - targetY) <= 36) {
+            reached = true;
+            break;
+          }
+        }
+        if (reached) break;
+      }
+      assert.ok(reached, `${def.id}: engine-simulated jump could not reach checkpoint at (${cp.c}, ${cp.r})`);
+    }
+
+    // 3. Chests simulation
+    const w = lv.world;
+    const isStanding = (c, r) => !w.isSolid(c, r) && !w.isSolid(c, r - 1) && (w.isSolid(c, r + 1) || w.isOneWay(c, r + 1));
+    for (const ch of lv.chests) {
+      const targetX = (ch.c + 0.5) * TS, targetY = (ch.r + 0.5) * TS;
+      const candidates = [];
+      for (let dc = -3; dc <= 3; dc++) {
+        for (let dr = -1; dr <= 3; dr++) {
+          const c = ch.c + dc, r = ch.r + dr;
+          if (c >= 0 && c < w.cols && r >= 0 && r < w.rowCount && isStanding(c, r)) {
+            candidates.push({ c, r });
+          }
+        }
+      }
+      assert.ok(candidates.length > 0, `${def.id}: no standing surface near chest at (${ch.c}, ${ch.r})`);
+      let reached = false;
+      for (const node of candidates) {
+        const g = newGame(def);
+        const chest = g.chests.find(c => c.c === ch.c && c.r === ch.r);
+        g.player.place(node.c * TS + TS / 2, (node.r + 1) * TS);
+        stepGame(g, 3);
+        const dir = targetX > g.player.cx ? 1 : -1;
+        const needJump = targetY < g.player.cy - 10;
+        for (let frame = 0; frame < 50; frame++) {
+          const close = Math.abs(g.player.cx - targetX) < 28;
+          const inp = I({
+            left: dir < 0 && !close,
+            right: dir > 0 && !close,
+            jumpPressed: needJump && frame === 0,
+            jumpHeld: needJump && frame < 20,
+            knifePressed: frame > 10 && close
+          });
+          stepGame(g, 1, inp);
+          if ((chest && chest.opened) || Math.hypot(g.player.cx - targetX, g.player.cy - targetY) <= 36) {
+            reached = true;
+            break;
+          }
+        }
+        if (reached) break;
+      }
+      assert.ok(reached, `${def.id}: engine-simulated jump could not reach chest at (${ch.c}, ${ch.r})`);
+    }
   }
 });
 
