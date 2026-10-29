@@ -2,7 +2,9 @@ import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
-const outDir = '/Users/newtonuser/.gemini/antigravity-ide/brain/3d548fb5-2b76-41d6-95e2-088477819984';
+const defaultOutDir = '/Users/newtonuser/.gemini/antigravity-ide/brain/3d548fb5-2b76-41d6-95e2-088477819984';
+const outDir = fs.existsSync(defaultOutDir) ? defaultOutDir : path.resolve(process.cwd(), 'screenshots');
+if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 
 async function runBrowserCheck() {
   console.log('--- Starting Browser Check for v2.2 Moving Enemies (1366x768 & 844x390) ---');

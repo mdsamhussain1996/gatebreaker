@@ -48,97 +48,390 @@ function drawBakedProp(ctx, theme, px, py, h) {
   ctx.strokeStyle = '#0f172a';
 
   if (tid === 'green_hills') {
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#1b1a14';
+
     if (type === 0) {
-      // Ancient stone lantern with glowing amber flame (height 26px)
-      ctx.fillStyle = '#64748b';
-      ctx.fillRect(x + 5, y - 24, 14, 24);
-      ctx.strokeRect(x + 5, y - 24, 14, 24);
-      ctx.fillStyle = '#fef08a';
-      ctx.fillRect(x + 8, y - 18, 8, 8);
-      ctx.fillStyle = '#334155';
-      ctx.fillRect(x + 3, y - 26, 18, 4);
-    } else if (type === 1) {
-      // Tall flowering woodland shrub (height 25px)
-      ctx.fillStyle = '#15803d';
-      ctx.fillRect(x + 9, y - 22, 6, 22);
-      ctx.fillStyle = '#22c55e';
+      // 1. Hanging lantern on carved wooden gallows post with warm amber halo
+      // Warm glow halo behind lantern
+      const glowGrad = ctx.createRadialGradient(x + 19, y - 18, 2, x + 19, y - 18, 16);
+      glowGrad.addColorStop(0, 'rgba(254, 240, 138, 0.45)');
+      glowGrad.addColorStop(0.5, 'rgba(249, 115, 22, 0.20)');
+      glowGrad.addColorStop(1, 'rgba(249, 115, 22, 0)');
+      ctx.fillStyle = glowGrad;
       ctx.beginPath();
-      ctx.arc(x + 12, y - 18, 11, 0, Math.PI * 2);
+      ctx.arc(x + 19, y - 18, 16, 0, Math.PI * 2);
       ctx.fill();
+
+      // Timber post: upright + diagonal brace + arm
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(x + 7, y - 28, 4, 28);
+      ctx.strokeRect(x + 7, y - 28, 4, 28);
+      // Arm
+      ctx.fillRect(x + 7, y - 28, 14, 4);
+      ctx.strokeRect(x + 7, y - 28, 14, 4);
+      // Angle brace
+      ctx.beginPath();
+      ctx.moveTo(x + 7, y - 21);
+      ctx.lineTo(x + 14, y - 24);
       ctx.stroke();
-      ctx.fillStyle = '#ec4899';
-      ctx.beginPath();
-      ctx.arc(x + 8, y - 22, 4, 0, Math.PI * 2);
-      ctx.arc(x + 16, y - 20, 3.5, 0, Math.PI * 2);
-      ctx.arc(x + 12, y - 14, 4, 0, Math.PI * 2);
-      ctx.fill();
-    } else if (type === 2) {
-      // Wooden milestone signpost (height 26px)
-      ctx.fillStyle = '#78350f';
-      ctx.fillRect(x + 10, y - 26, 4, 26);
-      ctx.strokeRect(x + 10, y - 26, 4, 26);
+      // Rim highlight on post
       ctx.fillStyle = '#92400e';
-      ctx.fillRect(x + 2, y - 24, 20, 10);
-      ctx.strokeRect(x + 2, y - 24, 20, 10);
-      ctx.fillStyle = '#fef3c7';
-      ctx.fillRect(x + 5, y - 20, 14, 2);
-    } else if (type === 3) {
-      // Large wooden keg barrel (height 24px)
-      ctx.fillStyle = '#92400e';
+      ctx.fillRect(x + 7, y - 28, 1.5, 28);
+      ctx.fillRect(x + 7, y - 28, 14, 1.2);
+
+      // Hanging lantern
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.roundRect(x + 3, y - 24, 18, 24, 5);
-      ctx.fill();
+      ctx.moveTo(x + 19, y - 24);
+      ctx.lineTo(x + 19, y - 21);
       ctx.stroke();
-      ctx.fillStyle = '#475569';
-      ctx.fillRect(x + 3, y - 20, 18, 3);
-      ctx.fillRect(x + 3, y - 7, 18, 3);
-    } else if (type === 4) {
-      // Young hilltop pine sapling (height 28px)
-      ctx.fillStyle = '#78350f';
-      ctx.fillRect(x + 10, y - 28, 4, 28);
-      ctx.fillStyle = '#16a34a';
+      // Lantern cap
+      ctx.fillStyle = '#1e293b';
       ctx.beginPath();
-      ctx.moveTo(x + 12, y - 28);
-      ctx.lineTo(x + 22, y - 10);
-      ctx.lineTo(x + 2, y - 10);
+      ctx.moveTo(x + 15, y - 21);
+      ctx.lineTo(x + 19, y - 24);
+      ctx.lineTo(x + 23, y - 21);
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
-    } else if (type === 5) {
-      // Large mossy boulder with clover (height 24px)
-      ctx.fillStyle = '#64748b';
+      // Glowing glass
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(x + 16, y - 21, 6, 8);
+      ctx.strokeRect(x + 16, y - 21, 6, 8);
+      ctx.fillStyle = '#fb923c';
+      ctx.fillRect(x + 18, y - 18, 2, 4);
+      // Base
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(x + 15, y - 13, 8, 2.5);
+      ctx.strokeRect(x + 15, y - 13, 8, 2.5);
+    } else if (type === 1) {
+      // 2. Wooden lookout tea pavilion / shelter (planked walls, sloped shingle roof, bench)
+      // Sloped shingled roof overhang
+      ctx.fillStyle = '#3f200e';
       ctx.beginPath();
-      ctx.ellipse(x + 12, y - 12, 11, 12, 0, 0, Math.PI * 2);
+      ctx.moveTo(x - 2, y - 22);
+      ctx.lineTo(x + 13, y - 31);
+      ctx.lineTo(x + 28, y - 22);
+      ctx.closePath();
       ctx.fill();
       ctx.stroke();
-      ctx.fillStyle = '#4ade80';
-      ctx.fillRect(x + 6, y - 20, 12, 4);
-    } else if (type === 6) {
-      // Cluster of giant forest toadstools (height 26px)
-      ctx.fillStyle = '#f8fafc';
-      ctx.fillRect(x + 8, y - 18, 6, 18);
-      ctx.fillRect(x + 16, y - 12, 4, 12);
+
+      // Shingle ridges & warm sun highlight
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(x + 1, y - 24);
+      ctx.lineTo(x + 13, y - 31);
+      ctx.lineTo(x + 25, y - 24);
+      ctx.stroke();
+      ctx.strokeStyle = '#fef08a';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(x - 2, y - 22);
+      ctx.lineTo(x + 13, y - 31);
+      ctx.stroke();
+
+      // Back plank wall
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(x + 2, y - 22, 22, 22);
+      ctx.strokeRect(x + 2, y - 22, 22, 22);
+      ctx.strokeStyle = '#451a03';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x + 7, y - 22); ctx.lineTo(x + 7, y);
+      ctx.moveTo(x + 13, y - 22); ctx.lineTo(x + 13, y);
+      ctx.moveTo(x + 19, y - 22); ctx.lineTo(x + 19, y);
+      ctx.stroke();
+
+      // Sturdy upright corner timber posts
+      ctx.fillStyle = '#451a03';
+      ctx.strokeStyle = '#1b1a14';
+      ctx.lineWidth = 1.5;
+      ctx.fillRect(x + 1, y - 23, 4, 23);
+      ctx.strokeRect(x + 1, y - 23, 4, 23);
+      ctx.fillRect(x + 21, y - 23, 4, 23);
+      ctx.strokeRect(x + 21, y - 23, 4, 23);
+
+      // Wooden bench inside
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(x + 5, y - 8, 16, 4);
+      ctx.strokeRect(x + 5, y - 8, 16, 4);
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(x + 5, y - 8, 16, 1);
+
+      // Tiny moss patch on roof
+      ctx.fillStyle = '#84cc16';
+      ctx.beginPath();
+      ctx.ellipse(x + 6, y - 25, 4, 2.5, -0.4, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (type === 2) {
+      // 3. Giant jungle fern & leaf fronds with cel shading
+      const frond = (fx, fy, angle, len, colBase, colShad, colHi) => {
+        ctx.save();
+        ctx.translate(fx, fy);
+        ctx.rotate(angle);
+        ctx.fillStyle = colShad;
+        ctx.strokeStyle = '#1b1a14';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(-4, -len * 0.5, 0, -len);
+        ctx.quadraticCurveTo(5, -len * 0.5, 0, 0);
+        ctx.fill();
+        ctx.stroke();
+        // Base & highlight
+        ctx.fillStyle = colBase;
+        ctx.beginPath();
+        ctx.moveTo(-1, 0);
+        ctx.quadraticCurveTo(-3, -len * 0.5, 0, -len);
+        ctx.quadraticCurveTo(1, -len * 0.5, -1, 0);
+        ctx.fill();
+        ctx.fillStyle = colHi;
+        ctx.fillRect(-0.8, -len * 0.8, 1.6, len * 0.5);
+        ctx.restore();
+      };
+
+      frond(x + 13, y, -0.65, 22, '#059669', '#064e3b', '#6ee7b7');
+      frond(x + 13, y, 0.55, 20, '#10b981', '#064e3b', '#6ee7b7');
+      frond(x + 13, y, -0.25, 26, '#059669', '#064e3b', '#a7f3d0');
+      frond(x + 13, y, 0.15, 24, '#10b981', '#065f46', '#6ee7b7');
+
+      // Center fiddlehead curl & base moss
+      ctx.strokeStyle = '#047857';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x + 13, y - 8, 3, 0, Math.PI * 1.5);
+      ctx.stroke();
+      ctx.fillStyle = '#15803d';
+      ctx.beginPath();
+      ctx.ellipse(x + 13, y - 2, 7, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (type === 3) {
+      // 4. Hollow mossy fallen log with tree rings & mushrooms
+      // Main log trunk
+      ctx.fillStyle = '#3b1d0e';
+      ctx.strokeStyle = '#1b1a14';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(x + 2, y - 10, 22, 10, [3, 2, 2, 3]);
+      ctx.fill();
+      ctx.stroke();
+
+      // Wood bark highlight & groove
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(x + 4, y - 9, 17, 3);
+      ctx.fillStyle = '#271207';
+      ctx.fillRect(x + 6, y - 5, 12, 1.5);
+
+      // Hollow log end (cut face on right)
+      ctx.fillStyle = '#92400e';
+      ctx.beginPath();
+      ctx.ellipse(x + 22, y - 5, 3, 4.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      // Hollow center cavity
+      ctx.fillStyle = '#1b1a14';
+      ctx.beginPath();
+      ctx.ellipse(x + 22, y - 5, 1.6, 2.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Thick bright moss cap draped over log
+      ctx.fillStyle = '#65a30d';
+      ctx.beginPath();
+      ctx.roundRect(x + 5, y - 12, 14, 4, 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#bef264';
+      ctx.fillRect(x + 6, y - 12, 12, 1.2);
+
+      // Tiny red bracket mushroom
       ctx.fillStyle = '#ef4444';
       ctx.beginPath();
-      ctx.arc(x + 11, y - 18, 11, Math.PI, 0);
+      ctx.arc(x + 8, y - 4, 2.5, Math.PI, 0);
+      ctx.fill();
+    } else if (type === 4) {
+      // 5. Ancient inscribed stone marker / cairn with golden rune
+      // Base river rocks
+      ctx.fillStyle = '#475569';
+      ctx.strokeStyle = '#1b1a14';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.ellipse(x + 8, y - 4, 6, 4, 0, 0, Math.PI * 2);
+      ctx.ellipse(x + 18, y - 4, 5, 3.5, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
+
+      // Main weathered standing monolith
+      ctx.fillStyle = '#64748b';
+      ctx.strokeStyle = '#1b1a14';
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(x + 18, y - 12, 7, Math.PI, 0);
+      ctx.moveTo(x + 8, y - 4);
+      ctx.lineTo(x + 9, y - 24);
+      ctx.quadraticCurveTo(x + 13, y - 27, x + 17, y - 24);
+      ctx.lineTo(x + 18, y - 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Cel shading & sunset rim
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(x + 14, y - 23, 3.5, 19);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(x + 9, y - 24, 2, 20);
+
+      // Glowing carved ancient spiral rune
+      ctx.strokeStyle = '#fde047';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(x + 13, y - 15, 3.5, 0, Math.PI * 1.6);
+      ctx.stroke();
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(x + 12.5, y - 15.5, 1.5, 1.5);
+
+      // Moss creeping up stone base
+      ctx.fillStyle = '#84cc16';
+      ctx.fillRect(x + 8, y - 6, 4, 3);
+    } else if (type === 5) {
+      // 6. Flowering jungle bush with rose-coral blossom clusters
+      ctx.strokeStyle = '#451a03';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x + 13, y);
+      ctx.quadraticCurveTo(x + 11, y - 10, x + 7, y - 18);
+      ctx.moveTo(x + 13, y - 8);
+      ctx.quadraticCurveTo(x + 16, y - 14, x + 20, y - 20);
+      ctx.stroke();
+
+      // Lush foliage rosettes
+      const drawLeafCluster = (lx, ly, rad) => {
+        ctx.fillStyle = '#166534';
+        ctx.strokeStyle = '#1b1a14';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(lx, ly, rad, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#22c55e';
+        ctx.beginPath();
+        ctx.arc(lx - 1, ly - 1, rad * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+      };
+      drawLeafCluster(x + 7, y - 18, 7);
+      drawLeafCluster(x + 19, y - 20, 6);
+      drawLeafCluster(x + 13, y - 12, 6.5);
+
+      // Rose-coral flowers with dark ink outlines
+      const drawFlower = (fx, fy) => {
+        ctx.fillStyle = '#f43f5e';
+        ctx.strokeStyle = '#1b1a14';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(fx - 2, fy, 2.2, 0, Math.PI * 2);
+        ctx.arc(fx + 2, fy, 2.2, 0, Math.PI * 2);
+        ctx.arc(fx, fy - 2, 2.2, 0, Math.PI * 2);
+        ctx.arc(fx, fy + 2, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(fx - 1, fy - 1, 2, 2);
+      };
+      drawFlower(x + 6, y - 21);
+      drawFlower(x + 10, y - 15);
+      drawFlower(x + 18, y - 22);
+      drawFlower(x + 21, y - 16);
+    } else if (type === 6) {
+      // 7. Cluster of giant woodland toadstools with cel-shaded scarlet caps
+      // Stems
+      ctx.fillStyle = '#dcd0a8';
+      ctx.strokeStyle = '#1b1a14';
+      ctx.lineWidth = 1.5;
+      ctx.fillRect(x + 9, y - 15, 6, 15);
+      ctx.strokeRect(x + 9, y - 15, 6, 15);
+      ctx.fillStyle = '#fef3c7';
+      ctx.fillRect(x + 9, y - 15, 3, 15);
+
+      // Smaller companion stem
+      ctx.fillStyle = '#dcd0a8';
+      ctx.fillRect(x + 18, y - 10, 4, 10);
+      ctx.strokeRect(x + 18, y - 10, 4, 10);
+      ctx.fillStyle = '#fef3c7';
+      ctx.fillRect(x + 18, y - 10, 2, 10);
+
+      // Big cap
+      ctx.fillStyle = '#991b1b';
+      ctx.strokeStyle = '#1b1a14';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x + 12, y - 15, 11, Math.PI, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#dc2626';
+      ctx.beginPath();
+      ctx.arc(x + 11, y - 16, 9.5, Math.PI, 0);
+      ctx.fill();
+      ctx.fillStyle = '#f87171';
+      ctx.fillRect(x + 4, y - 21, 5, 2);
+
+      // White spots on big cap
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(x + 8, y - 21, 2.5, 0, Math.PI * 2);
+      ctx.arc(x + 15, y - 19, 2, 0, Math.PI * 2);
+      ctx.arc(x + 12, y - 24, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Small cap
+      ctx.fillStyle = '#dc2626';
+      ctx.strokeStyle = '#1b1a14';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(x + 20, y - 10, 6.5, Math.PI, 0);
+      ctx.closePath();
       ctx.fill();
       ctx.stroke();
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(x + 8, y - 25, 3, 3);
-      ctx.fillRect(x + 13, y - 22, 2.5, 2.5);
+      ctx.beginPath();
+      ctx.arc(x + 19, y - 13, 1.6, 0, Math.PI * 2);
+      ctx.fill();
     } else {
-      // Ancient stone marker cairn (height 25px)
+      // 8. Rustic timber bench with stone supports & rim highlight
+      // Cobblestone legs
       ctx.fillStyle = '#475569';
-      ctx.fillRect(x + 4, y - 8, 16, 8);
-      ctx.strokeRect(x + 4, y - 8, 16, 8);
-      ctx.fillRect(x + 6, y - 16, 12, 8);
-      ctx.strokeRect(x + 6, y - 16, 12, 8);
-      ctx.fillRect(x + 8, y - 24, 8, 8);
-      ctx.strokeRect(x + 8, y - 24, 8, 8);
+      ctx.strokeStyle = '#1b1a14';
+      ctx.lineWidth = 1.5;
+      ctx.fillRect(x + 5, y - 7, 5, 7);
+      ctx.strokeRect(x + 5, y - 7, 5, 7);
+      ctx.fillRect(x + 17, y - 7, 5, 7);
+      ctx.strokeRect(x + 17, y - 7, 5, 7);
+
+      // Thick timber plank seat
+      ctx.fillStyle = '#3b1d0e';
+      ctx.strokeStyle = '#1b1a14';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(x + 2, y - 12, 23, 6, 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Wood cel shading
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(x + 3, y - 11, 20, 2);
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(x + 3, y - 12, 20, 1.2);
+
+      // Backrest posts & rail
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(x + 5, y - 20, 3, 9);
+      ctx.fillRect(x + 19, y - 20, 3, 9);
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(x + 3, y - 21, 21, 4);
+      ctx.strokeRect(x + 3, y - 21, 21, 4);
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(x + 3, y - 21, 21, 1);
     }
   } else if (tid === 'autumn_forest') {
     if (type === 0) {
@@ -906,15 +1199,37 @@ export class Renderer {
       for (let c = c0; c <= c1; c++) {
         if (w.get(c, r) !== 'X') continue;
         const x = c * TS, y = r * TS;
-        ctx.fillStyle = '#c98a4b';
-        ctx.fillRect(x + 1, y + 1, TS - 2, TS - 2);
-        ctx.strokeStyle = '#7a4a1e';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x + 2, y + 2, TS - 4, TS - 4);
+        // Cel-shaded wooden crate with inked outline
+        ctx.strokeStyle = '#1b1a14';
+        ctx.lineWidth = 2.0;
+        ctx.fillStyle = '#b45309'; // base
         ctx.beginPath();
-        ctx.moveTo(x + 3, y + 3); ctx.lineTo(x + TS - 3, y + TS - 3);
-        ctx.moveTo(x + TS - 3, y + 3); ctx.lineTo(x + 3, y + TS - 3);
+        ctx.roundRect(x + 1, y + 1, TS - 2, TS - 2, 3);
+        ctx.fill();
         ctx.stroke();
+
+        // 3-tone shading: top-left rim highlight & bottom-right shadow
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(x + 2, y + 2, TS - 4, 2);
+        ctx.fillRect(x + 2, y + 2, 2, TS - 4);
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(x + 2, y + TS - 4, TS - 4, 2);
+        ctx.fillRect(x + TS - 4, y + 2, 2, TS - 4);
+
+        // Cross braces with dark outline
+        ctx.strokeStyle = '#451a03';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(x + 4, y + 4); ctx.lineTo(x + TS - 4, y + TS - 4);
+        ctx.moveTo(x + TS - 4, y + 4); ctx.lineTo(x + 4, y + TS - 4);
+        ctx.stroke();
+
+        // Iron corner rivets
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(x + 3, y + 3, 2, 2);
+        ctx.fillRect(x + TS - 5, y + 3, 2, 2);
+        ctx.fillRect(x + 3, y + TS - 5, 2, 2);
+        ctx.fillRect(x + TS - 5, y + TS - 5, 2, 2);
       }
     }
   }
@@ -1031,18 +1346,27 @@ export class Renderer {
     const bob = c.pop ? 0 : Math.sin(c.phase) * 2;
     const sx = Math.abs(Math.cos(c.phase * 0.9)) * 0.7 + 0.3;
     const cx = c.x + c.w / 2, cy = c.y + c.h / 2 + bob;
-    const glowCv = getCachedGlow('rgba(250, 204, 21, 0.45)', 14);
-    if (glowCv) ctx.drawImage(glowCv, cx - 14, cy - 14);
-    ctx.fillStyle = '#b45309';
-    ctx.beginPath(); ctx.ellipse(cx, cy, 7.5 * sx, 8, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#facc15';
+    // Warm glow halo + small sparkle
+    const glowCv = getCachedGlow('rgba(251, 191, 36, 0.55)', 16);
+    if (glowCv) ctx.drawImage(glowCv, cx - 16, cy - 16);
+
+    // Inked outline & 3-tone cel-shaded coin
+    ctx.strokeStyle = '#1b1a14';
+    ctx.lineWidth = 1.3;
+    ctx.fillStyle = '#b45309'; // shadow
+    ctx.beginPath(); ctx.ellipse(cx, cy, 7.5 * sx, 8, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#f59e0b'; // base
     ctx.beginPath(); ctx.ellipse(cx, cy, 6.5 * sx, 7, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#fef08a';
+    ctx.fillStyle = '#fef08a'; // highlight
     ctx.fillRect(cx - 1.2 * sx, cy - 3.5, 2.4 * sx, 7);
-    // Specular shine sweep line
-    const sweep = Math.sin(c.phase * 2) * 4;
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
-    ctx.fillRect(cx - 2 * sx + sweep * 0.4, cy - 4, 1.5 * sx, 8);
+
+    // Rotating sparkle cross
+    const spAlpha = Math.max(0, Math.sin(c.phase * 3));
+    if (spAlpha > 0.45) {
+      ctx.fillStyle = `rgba(255, 255, 255, ${spAlpha})`;
+      ctx.fillRect(cx + 2 * sx, cy - 5, 1.5, 5);
+      ctx.fillRect(cx + 2 * sx - 1.7, cy - 3.2, 5, 1.5);
+    }
   }
 
   drawGem(ctx, g) {
@@ -1134,36 +1458,70 @@ export class Renderer {
 
   drawKey(ctx, k) {
     const cx = k.x + k.w / 2, cy = k.y + k.h / 2;
-    const glowCv = getCachedGlow('rgba(255, 224, 102, 0.6)', 26);
-    if (glowCv) ctx.drawImage(glowCv, cx - 26, cy - 26);
-    ctx.fillStyle = '#ffd84a';
-    ctx.strokeStyle = '#8a5a00';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(cx, cy - 6, 5.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#33435f';
-    ctx.beginPath(); ctx.arc(cx, cy - 6, 2, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#ffd84a';
-    ctx.fillRect(cx - 1.8, cy - 1, 3.6, 13);
-    ctx.fillRect(cx + 1.8, cy + 5, 4, 2.5);
-    ctx.fillRect(cx + 1.8, cy + 9, 3, 2.5);
-    ctx.strokeRect(cx - 1.8, cy - 1, 3.6, 13);
+    // Warm glow halo + small rotating sparkle
+    const glowCv = getCachedGlow('rgba(251, 191, 36, 0.7)', 28);
+    if (glowCv) ctx.drawImage(glowCv, cx - 28, cy - 28);
+    ctx.strokeStyle = '#1b1a14';
+    ctx.lineWidth = 1.8;
+
+    // Bow ring with cel shading
+    ctx.fillStyle = '#b45309';
+    ctx.beginPath(); ctx.arc(cx, cy - 6, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#f59e0b';
+    ctx.beginPath(); ctx.arc(cx, cy - 6, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fef08a';
+    ctx.beginPath(); ctx.arc(cx - 1, cy - 7, 3.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#1e293b';
+    ctx.beginPath(); ctx.arc(cx, cy - 6, 2.2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+    // Key stem with teeth
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillRect(cx - 2, cy - 1, 4, 13);
+    ctx.strokeRect(cx - 2, cy - 1, 4, 13);
+    ctx.fillRect(cx + 2, cy + 5, 4.5, 2.5);
+    ctx.strokeRect(cx + 2, cy + 5, 4.5, 2.5);
+    ctx.fillRect(cx + 2, cy + 9, 3.5, 2.5);
+    ctx.strokeRect(cx + 2, cy + 9, 3.5, 2.5);
+    // Highlight rim
+    ctx.fillStyle = '#fef08a';
+    ctx.fillRect(cx - 2, cy - 1, 1.5, 13);
+
+    // Rotating sparkle cross
+    const sp = Math.sin(this.t * 4);
+    if (sp > 0.25) {
+      ctx.fillStyle = `rgba(255, 255, 255, ${sp})`;
+      ctx.fillRect(cx - 4, cy - 10, 1.5, 6);
+      ctx.fillRect(cx - 6.2, cy - 7.7, 6, 1.5);
+    }
   }
 
   drawGate(ctx, gt) {
     if (!gt) return;
     const x = gt.x, y = gt.y, w = gt.w, h = gt.h;
-    // Rocky mound
-    ctx.fillStyle = '#6b6258';
+    // Hand-painted cartoon cave entrance with thick dark outline and chunky moss cap
+    ctx.strokeStyle = '#1b1a14';
+    ctx.lineWidth = 2.5;
+
+    // Rocky mound body
+    ctx.fillStyle = '#342b1f';
     ctx.beginPath();
     ctx.moveTo(x - 14, y + h); ctx.lineTo(x - 6, y + 26); ctx.lineTo(x + 16, y + 4);
     ctx.lineTo(x + w / 2, y - 12); ctx.lineTo(x + w - 14, y + 6); ctx.lineTo(x + w + 6, y + 28);
-    ctx.lineTo(x + w + 14, y + h); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#857a6d';
+    ctx.lineTo(x + w + 14, y + h); ctx.closePath(); ctx.fill(); ctx.stroke();
+
+    // Rock cel shading highlight & shadow
+    ctx.fillStyle = '#4a3d2c';
     ctx.beginPath();
     ctx.moveTo(x + 10, y + 18); ctx.lineTo(x + w / 2, y - 10); ctx.lineTo(x + w / 2 + 6, y + 12); ctx.lineTo(x + 18, y + 34);
     ctx.fill();
-    ctx.fillStyle = '#4fb83a';
-    ctx.beginPath(); ctx.ellipse(x + w / 2, y - 10, 16, 5, 0, 0, Math.PI * 2); ctx.fill();
+
+    // Lush moss cap draped on gate top
+    ctx.fillStyle = '#65a30d';
+    ctx.beginPath();
+    ctx.roundRect(x + w / 2 - 20, y - 14, 40, 8, [4, 4, 2, 2]);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#bef264';
+    ctx.fillRect(x + w / 2 - 18, y - 14, 36, 2);
 
     // Cave opening
     const ox = x + 10, oy = y + 30, ow = w - 20, oh = h - 30;
@@ -1173,49 +1531,102 @@ export class Renderer {
     ctx.quadraticCurveTo(ox + ow / 2, oy - 8, ox + ow, oy + 12);
     ctx.lineTo(ox + ow, oy + oh);
     ctx.fill();
+    ctx.stroke();
 
     // Portcullis
     ctx.save();
     ctx.beginPath(); ctx.rect(ox, oy - 4, ow, oh + 4); ctx.clip();
     const lift = gt.lift * (oh + 6);
-    ctx.fillStyle = '#9a6a35';
-    for (let i = 0; i < 5; i++) ctx.fillRect(ox + 3 + i * (ow - 8) / 4, oy - lift, 3, oh + 4);
-    for (let j = 0; j < 4; j++) ctx.fillRect(ox, oy + 8 + j * 9 - lift, ow, 3);
+    ctx.fillStyle = '#78350f';
+    ctx.strokeStyle = '#1b1a14';
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 5; i++) {
+      const bx = ox + 3 + i * (ow - 8) / 4;
+      ctx.fillRect(bx, oy - lift, 3, oh + 4);
+      ctx.strokeRect(bx, oy - lift, 3, oh + 4);
+    }
+    for (let j = 0; j < 4; j++) {
+      const by = oy + 8 + j * 9 - lift;
+      ctx.fillRect(ox, by, ow, 3);
+      ctx.strokeRect(ox, by, ow, 3);
+    }
     ctx.restore();
 
-    // Red flag
+    // Red banner flag atop gate
     const fx = x + w / 2, fy = y - 12;
-    ctx.fillStyle = '#5a3818'; ctx.fillRect(fx - 1, fy - 30, 2.5, 32);
-    const wave = Math.sin(gt.t * (gt.state === 'closed' ? 3 : 8)) * 3;
-    ctx.fillStyle = '#e63946';
+    ctx.fillStyle = '#451a03'; ctx.fillRect(fx - 1.5, fy - 30, 3, 32);
+    ctx.strokeStyle = '#1b1a14'; ctx.strokeRect(fx - 1.5, fy - 30, 3, 32);
+    const wave = Math.sin(gt.t * (gt.state === 'closed' ? 3 : 8)) * 3.5;
+    ctx.fillStyle = '#dc2626';
     ctx.beginPath();
     ctx.moveTo(fx + 1.5, fy - 30);
-    ctx.quadraticCurveTo(fx + 12, fy - 28 + wave, fx + 22, fy - 24 + wave * 0.5);
+    ctx.quadraticCurveTo(fx + 12, fy - 28 + wave, fx + 24, fy - 24 + wave * 0.5);
     ctx.quadraticCurveTo(fx + 12, fy - 20 - wave, fx + 1.5, fy - 18);
+    ctx.closePath();
     ctx.fill();
+    ctx.stroke();
+    // Flag highlight
+    ctx.fillStyle = '#f87171';
+    ctx.fillRect(fx + 2, fy - 29, 6, 2);
   }
 
   drawMushroom(ctx, e) {
     const cx = e.x + e.w / 2, by = e.y + e.h;
     const bob = Math.abs(Math.sin(e.walkPhase)) * 2;
+
+    // Soft contact shadow (dark ellipse, 25% alpha)
+    ctx.save();
+    ctx.translate(cx, by);
+    ctx.fillStyle = 'rgba(27, 26, 20, 0.25)';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 11, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
     ctx.save();
     ctx.translate(cx, by - bob);
     ctx.scale(e.dir < 0 ? 1 : -1, 1);
-    ctx.fillStyle = e.flash > 0 ? '#fff' : '#f3e3c3';
-    ctx.beginPath(); ctx.roundRect(-7, -14, 14, 14, 4); ctx.fill();
-    ctx.fillStyle = '#6b4a2a';
+    ctx.strokeStyle = '#1b1a14';
+    ctx.lineWidth = 2.0;
+
+    // Stem with cel shading
+    ctx.fillStyle = e.flash > 0 ? '#fff' : '#fef3c7';
+    ctx.beginPath(); ctx.roundRect(-7, -14, 14, 14, 4); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#dcd0a8';
+    ctx.fillRect(-7, -14, 4, 14);
+
+    // Feet
+    ctx.fillStyle = '#451a03';
     const f = Math.sin(e.walkPhase) * 3;
     ctx.fillRect(-8 + f, -3, 6, 3); ctx.fillRect(2 - f, -3, 6, 3);
-    ctx.fillStyle = e.flash > 0 ? '#fff' : '#d83a3a';
+
+    // Cap with 3-tone cel shading & outline
+    ctx.fillStyle = e.flash > 0 ? '#fff' : '#991b1b'; // shadow
     ctx.beginPath();
     ctx.moveTo(-14, -12);
     ctx.quadraticCurveTo(-14, -30, 0, -30);
     ctx.quadraticCurveTo(14, -30, 14, -12);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#fff';
+    ctx.stroke();
+
+    ctx.fillStyle = e.flash > 0 ? '#fff' : '#dc2626'; // base
+    ctx.beginPath();
+    ctx.moveTo(-12, -13);
+    ctx.quadraticCurveTo(-12, -28, 0, -28);
+    ctx.quadraticCurveTo(12, -28, 12, -13);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#f87171'; // highlight rim
+    ctx.fillRect(-8, -26, 6, 2);
+
+    // Cream spots
+    ctx.fillStyle = '#ffffff';
     ctx.beginPath(); ctx.arc(-6, -22, 2.6, 0, Math.PI * 2); ctx.arc(5, -24, 2.2, 0, Math.PI * 2); ctx.arc(8, -17, 1.8, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#2b1a14';
+
+    // Eyes
+    ctx.fillStyle = '#1b1a14';
     ctx.fillRect(-5, -11, 3, 4); ctx.fillRect(2, -11, 3, 4);
     ctx.restore();
   }
@@ -2229,9 +2640,19 @@ export class Renderer {
   drawHero(ctx, p) {
     if (p.invuln > 0 && Math.floor(this.t * 16) % 2 === 0 && p.hurtT <= 0) return;
     const cx = p.cx, feet = p.y + p.h + p.visDy;
+    const gs = p.giantScale || 1;
+
+    // Soft contact shadow under hero (dark ellipse, 25% alpha)
     ctx.save();
     ctx.translate(cx, feet);
-    const gs = p.giantScale || 1;
+    ctx.fillStyle = 'rgba(27, 26, 20, 0.25)';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 11 * gs, 4 * gs, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(cx, feet);
     const heroScale = 1.18; // 18% larger hero with 2px outline for cartoon clarity
     ctx.scale(heroScale * p.sx * gs, heroScale * p.sy * gs);
     ctx.scale(p.face, 1);
@@ -2299,7 +2720,7 @@ export class Renderer {
 
     // Body with shading
     ctx.fillStyle = '#fef3c7';
-    ctx.strokeStyle = '#0f172a';
+    ctx.strokeStyle = '#1b1a14';
     ctx.lineWidth = 2.0;
     ctx.beginPath();
     ctx.roundRect(-8, -26 + idleBob, 16, 17, 5);
@@ -3106,16 +3527,22 @@ export class Renderer {
 
   drawAtmosphere(ctx, theme, camX, camY) {
     ctx.save();
-    // 1. Light shafts in forest & autumn forest
+
+    // 1. Light shafts in green_hills & autumn_forest (fanning out from the sunset backlight)
     if (theme.id === 'green_hills' || theme.id === 'autumn_forest') {
-      const col = theme.id === 'autumn_forest' ? 'rgba(251, 191, 36, 0.05)' : 'rgba(254, 240, 138, 0.04)';
+      const pulse = 0.05 + Math.sin(this.t * 1.4) * 0.02; // subtle alpha pulse
+      const col = theme.id === 'autumn_forest' ? `rgba(251, 191, 36, ${pulse})` : `rgba(254, 240, 138, ${pulse})`;
       ctx.fillStyle = col;
-      ctx.beginPath();
-      ctx.moveTo(100, 0); ctx.lineTo(240, 0); ctx.lineTo(80, VIEW_H); ctx.lineTo(-60, VIEW_H); ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(420, 0); ctx.lineTo(580, 0); ctx.lineTo(430, VIEW_H); ctx.lineTo(270, VIEW_H); ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(760, 0); ctx.lineTo(920, 0); ctx.lineTo(800, VIEW_H); ctx.lineTo(640, VIEW_H); ctx.fill();
+      const sx = VIEW_W * 0.24, sy = VIEW_H * 0.46; // sun origin
+      const angles = [-0.68, -0.36, -0.05, 0.28, 0.58, 0.88];
+      for (const ang of angles) {
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(sx + Math.cos(ang - 0.07) * 780, sy + Math.sin(ang - 0.07) * 780);
+        ctx.lineTo(sx + Math.cos(ang + 0.07) * 780, sy + Math.sin(ang + 0.07) * 780);
+        ctx.closePath();
+        ctx.fill();
+      }
     }
 
     // 2. Heat haze and sun disc in desert
@@ -3135,20 +3562,34 @@ export class Renderer {
       ctx.fillRect(0, VIEW_H - 110 + wave, VIEW_W, 55);
     }
 
-    // 3. Fog bands at bottom of screen
-    const fogGrad = ctx.createLinearGradient(0, VIEW_H - 50, 0, VIEW_H);
-    fogGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
-    const fogCol = theme.id === 'desert_ruins' ? 'rgba(234, 179, 8, 0.08)' : (theme.id === 'autumn_forest' ? 'rgba(180, 83, 9, 0.07)' : 'rgba(203, 213, 225, 0.07)');
-    fogGrad.addColorStop(1, fogCol);
-    ctx.fillStyle = fogGrad;
-    ctx.fillRect(0, VIEW_H - 50, VIEW_W, 50);
+    // 3. Depth fog / horizontal haze band across playfield
+    const depthFog = ctx.createLinearGradient(0, VIEW_H * 0.42, 0, VIEW_H * 0.78);
+    depthFog.addColorStop(0, 'rgba(255, 255, 255, 0)');
+    const fogColor = theme.id === 'desert_ruins' ? 'rgba(234, 179, 8, 0.07)' :
+      (theme.id === 'autumn_forest' ? 'rgba(217, 119, 6, 0.07)' :
+      (theme.id === 'green_hills' ? 'rgba(254, 243, 199, 0.06)' : 'rgba(203, 213, 225, 0.06)'));
+    depthFog.addColorStop(0.5, fogColor);
+    depthFog.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = depthFog;
+    ctx.fillRect(0, VIEW_H * 0.42, VIEW_W, VIEW_H * 0.36);
 
-    // 4. Subtle vignette at screen edges
-    const vigGrad = ctx.createRadialGradient(VIEW_W / 2, VIEW_H / 2, VIEW_W * 0.45, VIEW_W / 2, VIEW_H / 2, VIEW_W * 0.75);
+    // 4. Screen-space warm color grade (orange tint near sun side, cool blue on far side)
+    if (theme.id === 'green_hills' || theme.id === 'autumn_forest') {
+      const grade = ctx.createLinearGradient(0, 0, VIEW_W, 0);
+      grade.addColorStop(0, 'rgba(251, 146, 60, 0.08)');
+      grade.addColorStop(0.45, 'rgba(245, 158, 11, 0.03)');
+      grade.addColorStop(1, 'rgba(30, 58, 138, 0.07)');
+      ctx.fillStyle = grade;
+      ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+    }
+
+    // 5. Subtle screen-space vignette (dark edges at 16-18% alpha)
+    const vigGrad = ctx.createRadialGradient(VIEW_W / 2, VIEW_H / 2, VIEW_W * 0.42, VIEW_W / 2, VIEW_H / 2, VIEW_W * 0.76);
     vigGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
-    vigGrad.addColorStop(1, 'rgba(0, 0, 0, 0.25)');
+    vigGrad.addColorStop(1, 'rgba(27, 26, 20, 0.18)');
     ctx.fillStyle = vigGrad;
     ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+
     ctx.restore();
   }
 
@@ -3158,6 +3599,45 @@ export class Renderer {
     const fgX = camX * speed;
     const fgY = camY * 0.35;
     ctx.save();
+
+    // Corner fern silhouettes for green_hills & autumn_forest (hand-painted platformer framing)
+    if (theme.id === 'green_hills' || theme.id === 'autumn_forest') {
+      ctx.save();
+      ctx.fillStyle = '#1b1a14';
+      ctx.globalAlpha = 0.52;
+
+      // Bottom-left corner fern fronds
+      const swayL = Math.sin(t * 1.3) * 3;
+      ctx.beginPath();
+      ctx.moveTo(-15, VIEW_H + 10);
+      ctx.quadraticCurveTo(30, VIEW_H - 45 + swayL, 85, VIEW_H - 68 + swayL);
+      ctx.quadraticCurveTo(55, VIEW_H - 25, 45, VIEW_H + 10);
+      ctx.fill();
+      // Little side leaflets
+      for (let j = 0; j < 5; j++) {
+        const lfX = 10 + j * 14;
+        const lfY = VIEW_H - 12 - j * 10 + swayL * (j / 5);
+        ctx.beginPath();
+        ctx.ellipse(lfX, lfY, 9, 4, -0.6 + j * 0.1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Bottom-right corner fern fronds
+      const swayR = Math.sin(t * 1.5 + 1) * 3;
+      ctx.beginPath();
+      ctx.moveTo(VIEW_W + 15, VIEW_H + 10);
+      ctx.quadraticCurveTo(VIEW_W - 35, VIEW_H - 40 + swayR, VIEW_W - 80, VIEW_H - 62 + swayR);
+      ctx.quadraticCurveTo(VIEW_W - 50, VIEW_H - 20, VIEW_W - 40, VIEW_H + 10);
+      ctx.fill();
+      for (let j = 0; j < 5; j++) {
+        const lfX = VIEW_W - 12 - j * 13;
+        const lfY = VIEW_H - 10 - j * 9 + swayR * (j / 5);
+        ctx.beginPath();
+        ctx.ellipse(lfX, lfY, 8.5, 3.8, 0.6 - j * 0.1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
 
     for (let i = 0; i < 20; i++) {
       const seedX = (i * 137.5) % (VIEW_W + 120);
@@ -3176,41 +3656,36 @@ export class Renderer {
       } else if (theme.id === 'desert_ruins') {
         // Desert: sand dust grains + heat shimmer motes ONLY (NEVER leaves)
         if (i % 3 === 0) {
-          // Heat shimmer circular mote with subtle glow
           ctx.globalAlpha = 0.20 + Math.sin(t * 4 + i) * 0.12;
           ctx.fillStyle = '#fef08a';
           ctx.beginPath();
           ctx.arc(x, y, 2.5, 0, Math.PI * 2);
           ctx.fill();
         } else {
-          // Sand dust speck
           ctx.globalAlpha = 0.30;
           ctx.fillStyle = i % 2 === 0 ? '#f59e0b' : '#d97706';
           ctx.fillRect(x, y, 2.5, 2.5);
         }
       } else if (theme.id === 'frozen_peaks') {
-        // Drifting snow flurries
         ctx.globalAlpha = 0.35;
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
         ctx.arc(x, y, 2 + (i % 3), 0, Math.PI * 2);
         ctx.fill();
       } else if (theme.id === 'crystal_caves') {
-        // Floating crystal sparkles
         ctx.globalAlpha = 0.30;
         ctx.fillStyle = i % 2 === 0 ? '#c084fc' : '#38bdf8';
         ctx.fillRect(x, y, 3, 3);
       } else if (theme.id === 'volcano_fortress') {
-        // Rising fiery embers
         ctx.globalAlpha = 0.38;
         ctx.fillStyle = i % 2 === 0 ? '#f97316' : '#ef4444';
         ctx.fillRect(x, y - (t * 20 % 30), 2.5, 2.5);
       } else {
-        // Green hills: soft floating pollen motes
-        ctx.globalAlpha = 0.25;
-        ctx.fillStyle = '#86efac';
+        // Green hills: soft floating golden pollen motes / fireflies near sun
+        ctx.globalAlpha = 0.32 + Math.sin(t * 3 + i) * 0.15;
+        ctx.fillStyle = i % 3 === 0 ? '#fef08a' : (i % 3 === 1 ? '#facc15' : '#bef264');
         ctx.beginPath();
-        ctx.arc(x, y, 2, 0, Math.PI * 2);
+        ctx.arc(x, y, 2 + (i % 2) * 0.8, 0, Math.PI * 2);
         ctx.fill();
       }
     }
